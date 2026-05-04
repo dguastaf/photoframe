@@ -1,0 +1,7 @@
+services:
+  server:
+    build: ./server
+    env_file: .env
+    ports:
+      - "52525:52525"
+    restart: unless-stopped
