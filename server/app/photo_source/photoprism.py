@@ -6,8 +6,8 @@ from app.photo_source.base import Photo, PhotoLibraryAdapter
 class PhotoprismAdapter(PhotoLibraryAdapter):
     """Photoprism-backed PhotoLibraryAdapter.
 
-    Phase 1 stub: not yet wired up. The routes currently return dummy data
-    and never instantiate this class. Phase 2 will fill in:
+    Phase 1 stub: constructed at startup via the factory but not yet called by
+    routes (they still return inline dummy data). Phase 2 will fill in:
       - shared httpx.AsyncClient with Bearer auth and explicit pool limits
       - paginated list_photos against Photoprism's /api/v1/photos
       - streaming stream_image at the highest available rendition

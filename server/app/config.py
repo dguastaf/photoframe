@@ -1,5 +1,11 @@
+from enum import StrEnum
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class PhotoSource(StrEnum):
+    PHOTOPRISM = "photoprism"
 
 
 class Settings(BaseSettings):
@@ -10,6 +16,8 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    photo_source: PhotoSource = PhotoSource.PHOTOPRISM
 
     # TODO(phase-2): make these required (no default) once PhotoprismAdapter
     # actually consumes them. They are intentionally optional during scaffolding

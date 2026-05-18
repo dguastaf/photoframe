@@ -29,3 +29,6 @@ class PhotoLibraryAdapter(ABC):
         Returns a chunked async iterator of bytes plus the upstream Content-Type.
         Implementations must NOT buffer the full image into memory.
         """
+
+    async def aclose(self) -> None:
+        """Release resources held by this adapter."""

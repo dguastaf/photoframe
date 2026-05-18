@@ -56,14 +56,15 @@ All three should respond with HTTP 200.
 
 ## Configuration
 
-Only two env vars are required (see `.env.example`):
+See `.env.example` for all variables:
 
 | Var | Purpose |
 | --- | --- |
+| `PHOTO_SOURCE` | Photo backend to use (`photoprism` today; more may follow) |
 | `PHOTOPRISM_BASE_URL` | URL/IP of the Photoprism host, e.g. `http://photoprism.local:2342` |
 | `PHOTOPRISM_TOKEN` | Bearer token for the Photoprism API |
 
-In Phase 1 these are read by the config layer but not yet used by any route.
+`PHOTO_SOURCE` selects which adapter is constructed at startup and stored on `app.state.photo_library`. Routes still return dummy data in Phase 1; Photoprism env vars are read when `PHOTO_SOURCE=photoprism` but not yet used by any route.
 
 ## Development
 
