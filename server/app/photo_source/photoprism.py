@@ -1,27 +1,90 @@
 from collections.abc import AsyncIterator
+from datetime import UTC, datetime
+
+import httpx
 
 from app.photo_source.base import Photo, PhotoLibraryAdapter
 
+_PAGE_SIZE = 1000
+_REQUIRED_RECORD_KEYS = ("UID", "TakenAt", "Path")
+
+
+def _list_photos_params(offset: int) -> dict[str, str | int]:
+    return {"count": _PAGE_SIZE, "offset": offset, "primary": "true"}
+
+
+def _parse_pagination_headers(count_header: str, limit_header: str) -> tuple[int, int]:
+    try:
+        count = int(count_header)
+        limit = int(limit_header)
+    except ValueError as exc:
+        msg = f"Invalid Photoprism pagination headers: X-Count={count_header!r}, X-Limit={limit_header!r}"
+        raise ValueError(msg) from exc
+    if count < 0 or limit < 0:
+        msg = f"Negative Photoprism pagination headers: X-Count={count}, X-Limit={limit}"
+        raise ValueError(msg)
+    if count > limit:
+        msg = f"X-Count ({count}) exceeds X-Limit ({limit})"
+        raise ValueError(msg)
+    return count, limit
+
+
+def _photo_from_record(record: dict) -> Photo:
+    missing = [key for key in _REQUIRED_RECORD_KEYS if key not in record]
+    if missing:
+        msg = f"Photoprism photo record missing required keys: {', '.join(missing)}"
+        raise ValueError(msg)
+    taken_at = datetime.fromisoformat(record["TakenAt"].replace("Z", "+00:00")).astimezone(UTC)
+    return Photo(id=record["UID"], taken_at=taken_at, folder=record["Path"])
+
 
 class PhotoprismAdapter(PhotoLibraryAdapter):
-    """Photoprism-backed PhotoLibraryAdapter.
-
-    Phase 1 stub: constructed at startup via the factory but not yet called by
-    routes (they still return inline dummy data). Phase 2 will fill in:
-      - shared httpx.AsyncClient with Bearer auth and explicit pool limits
-      - paginated list_photos against Photoprism's /api/v1/photos
-      - streaming stream_image at the highest available rendition
-    """
+    """Photoprism-backed PhotoLibraryAdapter."""
 
     def __init__(self, base_url: str, token: str) -> None:
-        self._base_url = base_url
-        self._token = token
+        self._base_url = base_url.rstrip("/")
+        self._client = httpx.AsyncClient(
+            base_url=self._base_url,
+            headers={"Authorization": f"Bearer {token}"},
+            limits=httpx.Limits(max_connections=20, max_keepalive_connections=10),
+            timeout=httpx.Timeout(10.0, read=30.0),
+        )
 
     async def list_photos(self) -> list[Photo]:
-        raise NotImplementedError("PhotoprismAdapter.list_photos not yet implemented")
+        photos: list[Photo] = []
+        offset = 0
+        # Seed so the first page is fetched; updated from each response below.
+        count = _PAGE_SIZE
+        limit = _PAGE_SIZE
+
+        while count == limit:
+            response = await self._client.get(
+                "/api/v1/photos",
+                params=_list_photos_params(offset),
+            )
+            response.raise_for_status()
+
+            batch = response.json()
+            if not isinstance(batch, list):
+                msg = f"Unexpected Photoprism response type: {type(batch).__name__}"
+                raise TypeError(msg)
+
+            photos.extend(_photo_from_record(record) for record in batch)
+
+            count_header = response.headers.get("X-Count")
+            limit_header = response.headers.get("X-Limit")
+            if count_header is not None and limit_header is not None:
+                count, limit = _parse_pagination_headers(count_header, limit_header)
+            else:
+                count = len(batch)
+                limit = _PAGE_SIZE
+
+            offset += count
+
+        return photos
 
     async def stream_image(self, photo_id: str) -> tuple[AsyncIterator[bytes], str]:
         raise NotImplementedError("PhotoprismAdapter.stream_image not yet implemented")
 
     async def aclose(self) -> None:
-        """Close any underlying connections. No-op in the stub."""
+        await self._client.aclose()
