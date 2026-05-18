@@ -2,11 +2,19 @@
 
 A simple digital photo frame slideshow application backed by Photoprism.
 
+## Context & Methodology
+This app was built using an agent-first development workflow using Cursor, mainly for learning purposes. I'm trying to mimic a collaborative professional development environment.
+
+[Product Spec](https://www.notion.so/Photoframe-PRD-c54cdc4f52e94cfabe20d7b940dcd854?source=copy_link): Written in Notion as a PM might, iterated on using a Plan agent in Cursor. Added functional requirements.
+
+
 ## Status
 
 **Phase 1: scaffolding only.** The server starts, accepts requests, and returns dummy data. Photoprism is not yet wired up. The client is not yet built.
 
 Treat this API **as unstable** until real backend integration lands—response shapes may change slightly while we shake out Photoprism behavior.
+
+Contract routes are versioned at **`/api/v0/`** (`/health` is unversioned). The Photoprism adapter calls Photoprism's own `/api/v1/...` upstream paths.
 
 ## Layout
 
