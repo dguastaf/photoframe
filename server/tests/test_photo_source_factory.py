@@ -15,7 +15,7 @@ def test_create_photoprism_adapter():
     adapter = create_photo_library_adapter(settings)
     assert isinstance(adapter, PhotoprismAdapter)
     assert adapter._base_url == "http://photoprism.local:2342"
-    assert adapter._token == "secret"
+    assert adapter._client.headers["Authorization"] == "Bearer secret"
 
 
 def test_photo_source_defaults_to_photoprism():
