@@ -35,7 +35,7 @@ jobs:
           BASE="origin/${{ github.base_ref }}"
 
           OUTPUT="$(
-            agent -p --output-format text \
+            agent -p --trust --output-format text \
               "You are running in CI. Review ONLY the git diff: ${BASE}...HEAD.
               Do NOT modify any files. Use git diff and git log as needed.
 
