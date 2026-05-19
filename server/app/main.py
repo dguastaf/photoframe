@@ -16,6 +16,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logger = get_logger(__name__)
     photo_library = create_photo_library_adapter(settings)
     app.state.photo_library = photo_library
+    app.state.photo_source = settings.photo_source.value
     logger.info(
         "server.startup",
         phase="scaffolding",

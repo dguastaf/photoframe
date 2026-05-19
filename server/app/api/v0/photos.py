@@ -3,7 +3,7 @@
 import time
 from datetime import datetime, timezone
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 
 from app.logging_setup import get_logger
@@ -46,15 +46,18 @@ _DUMMY_PNG: bytes = bytes.fromhex(
 
 
 @router.get("/photos", response_model=list[PhotoMetadata])
-async def list_photos() -> list[PhotoMetadata]:
+async def list_photos(request: Request) -> list[PhotoMetadata]:
     started = time.perf_counter()
-    photos = _DUMMY_PHOTOS
+    raw_photos = await request.app.state.photo_library.list_photos()
+    photos = [
+        PhotoMetadata(id=p.id, taken_at=p.taken_at, folder=p.folder) for p in raw_photos
+    ]
     duration_ms = (time.perf_counter() - started) * 1000
     logger.info(
         "photos.list.completed",
         duration_ms=round(duration_ms, 2),
         photo_count=len(photos),
-        backend="dummy",
+        backend=request.app.state.photo_source,
     )
     return photos
 
