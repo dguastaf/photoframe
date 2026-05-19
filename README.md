@@ -10,7 +10,7 @@ This app was built using an agent-first development workflow using Cursor, mainl
 
 ## Status
 
-**Phase 1: scaffolding only.** The server starts, accepts requests, and returns dummy data. Photoprism is not yet wired up. The client is not yet built.
+**Phase 1 (in progress).** The server lists photos and streams image bytes from Photoprism when configured. The React client is not yet built.
 
 Treat this API **as unstable** until real backend integration lands—response shapes may change slightly while we shake out Photoprism behavior.
 
@@ -47,9 +47,10 @@ curl http://localhost:52525/health
 # List photos (from Photoprism when PHOTO_SOURCE=photoprism and credentials are set)
 curl http://localhost:52525/api/v0/photos | jq
 
-# Image bytes (returns a placeholder PNG in Phase 1)
-curl -o /tmp/photo.png http://localhost:52525/api/v0/photos/p1abc123/image
-file /tmp/photo.png
+# Image bytes (streams from Photoprism /dl via the adapter)
+PHOTO_ID=$(curl -s http://localhost:52525/api/v0/photos | jq -r '.[0].id')
+curl -o /tmp/photo.jpg "http://localhost:52525/api/v0/photos/${PHOTO_ID}/image"
+file /tmp/photo.jpg
 ```
 
 All three should respond with HTTP 200.
@@ -64,7 +65,7 @@ See `.env.example` for all variables:
 | `PHOTOPRISM_BASE_URL` | URL/IP of the Photoprism host, e.g. `http://photoprism.local:2342` |
 | `PHOTOPRISM_TOKEN` | Bearer token for the Photoprism API |
 
-`PHOTO_SOURCE` selects which adapter is constructed at startup and stored on `app.state.photo_library`. `GET /api/v0/photos` calls the adapter; `GET /api/v0/photos/{id}/image` still returns a placeholder PNG until `stream_image` is implemented.
+`PHOTO_SOURCE` selects which adapter is constructed at startup and stored on `app.state.photo_library`. Both `GET /api/v0/photos` and `GET /api/v0/photos/{id}/image` call the adapter (upstream `GET /api/v1/photos/{uid}/dl` with Bearer auth).
 
 ## Development
 
@@ -98,6 +99,5 @@ See [server/TESTING.md](server/TESTING.md): tests live under `tests/unit/` and `
 
 ## What's next
 
-- Wire `PhotoprismAdapter` to actually call the Photoprism API.
 - Build the React client (`client/`).
 - See `.cursor/plans/photoframe_greenfield_build_*.plan.md` for the full plan.

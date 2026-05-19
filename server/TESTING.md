@@ -140,10 +140,8 @@ pytest                                     # everything (default suite)
 **Unit**
 
 - Smaller JSON fixtures (empty catalog, one page, auth failure body).
-- `stream_image()` when implemented.
 
 **Integration**
 
 - Optional: reuse Docker Compose stack instead of subprocess uvicorn for mock mode (same HTTP surface).
-- Image route: assert real bytes once `stream_image` is wired.
 

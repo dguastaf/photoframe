@@ -54,13 +54,37 @@ def test_list_photos_mock_matches_fixture_bookends(
     assert photos[-1] == metadata_json_from_export_record(photoprism_photos_export[-1])
 
 
-def test_get_photo_image_returns_png(photoframe_api: PhotoframeApiClient):
+@pytest.mark.parametrize(
+    "photo_id",
+    [
+        "x",
+        "10000",
+        "11-21",
+        "UPPERCASE12",
+        "has%20spaces",
+    ],
+)
+def test_get_photo_image_rejects_malformed_id(
+    photoframe_api: PhotoframeApiClient, photo_id: str
+):
+    response = photoframe_api.get(f"/api/v0/photos/{photo_id}/image")
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Invalid photo id"}
+
+
+def test_get_photo_image_unknown_uid_returns_404(photoframe_api: PhotoframeApiClient):
+    response = photoframe_api.get("/api/v0/photos/zzzzzzzzzzzzzzzz/image")
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Photo not found"}
+
+
+def test_get_photo_image_returns_jpeg(photoframe_api: PhotoframeApiClient):
     photo_id = photoframe_api.list_photos()[0]["id"]
     response = photoframe_api.get(f"/api/v0/photos/{photo_id}/image")
     assert response.status_code == 200
-    assert response.headers["content-type"] == "image/png"
+    assert response.headers["content-type"].startswith("image/")
     assert response.headers.get("cache-control") == "public, max-age=3600"
-    assert response.content.startswith(b"\x89PNG")
+    assert response.content.startswith(b"\xff\xd8\xff")
 
 
 @pytest.mark.live

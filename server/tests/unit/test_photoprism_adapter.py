@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from collections import Counter
 
+import httpx
 import pytest
 import respx
 
+from app.photo_source.errors import PhotoLibraryForbiddenError, PhotoNotFoundError
 from app.photo_source.photoprism import (
     PhotoprismAdapter,
     _PAGE_SIZE,
@@ -15,6 +17,7 @@ from app.photo_source.photoprism import (
     _photo_from_record,
 )
 from support.photoprism import (
+    MOCK_JPEG_BYTES,
     RESPX_PHOTOPRISM_BASE_URL,
     make_respx_side_effect,
     photo_from_export_record,
@@ -99,3 +102,53 @@ async def test_list_photos_ids_match_export(photoprism_photos_export: list[dict]
 
     export_ids = [record["UID"] for record in photoprism_photos_export]
     assert Counter(p.id for p in photos) == Counter(export_ids)
+
+
+@pytest.mark.asyncio
+async def test_stream_image_yields_bytes_and_content_type():
+    photo_id = "abc123"
+    adapter = PhotoprismAdapter(base_url=RESPX_PHOTOPRISM_BASE_URL, token="test-token")
+    try:
+        with respx.mock:
+            respx.get(f"{RESPX_PHOTOPRISM_BASE_URL}/api/v1/photos/{photo_id}/dl").mock(
+                return_value=httpx.Response(
+                    200,
+                    content=MOCK_JPEG_BYTES,
+                    headers={"content-type": "image/jpeg"},
+                )
+            )
+            chunks, media_type = await adapter.stream_image(photo_id)
+            assert media_type == "image/jpeg"
+            body = b"".join([chunk async for chunk in chunks])
+            assert body == MOCK_JPEG_BYTES
+    finally:
+        await adapter.aclose()
+
+
+@pytest.mark.asyncio
+async def test_list_photos_maps_upstream_403():
+    adapter = PhotoprismAdapter(base_url=RESPX_PHOTOPRISM_BASE_URL, token="test-token")
+    try:
+        with respx.mock:
+            respx.get(f"{RESPX_PHOTOPRISM_BASE_URL}/api/v1/photos").mock(
+                return_value=httpx.Response(403)
+            )
+            with pytest.raises(PhotoLibraryForbiddenError):
+                await adapter.list_photos()
+    finally:
+        await adapter.aclose()
+
+
+@pytest.mark.asyncio
+async def test_stream_image_404_for_unknown_uid():
+    adapter = PhotoprismAdapter(base_url=RESPX_PHOTOPRISM_BASE_URL, token="test-token")
+    try:
+        with respx.mock:
+            photo_id = "missing1234"
+            respx.get(f"{RESPX_PHOTOPRISM_BASE_URL}/api/v1/photos/{photo_id}/dl").mock(
+                return_value=httpx.Response(404)
+            )
+            with pytest.raises(PhotoNotFoundError):
+                await adapter.stream_image(photo_id)
+    finally:
+        await adapter.aclose()

@@ -11,11 +11,11 @@ import httpx
 import uvicorn
 from starlette.applications import Starlette
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, Response
 from starlette.routing import Route
 
 from app.photo_source.photoprism import _PAGE_SIZE
-from support.photoprism import paginated_batch
+from support.photoprism import MOCK_JPEG_BYTES, paginated_batch
 
 
 def _find_free_port() -> int:
@@ -25,13 +25,26 @@ def _find_free_port() -> int:
 
 
 def _build_app(export: list[dict]) -> Starlette:
+    known_uids = {record["UID"] for record in export}
+
     async def list_photos(request: Request) -> JSONResponse:
         offset = int(request.query_params.get("offset", 0))
         count = int(request.query_params.get("count", _PAGE_SIZE))
         batch, headers = paginated_batch(export, offset=offset, count=count)
         return JSONResponse(batch, headers=headers)
 
-    return Starlette(routes=[Route("/api/v1/photos", list_photos)])
+    async def download_photo(request: Request) -> Response:
+        uid = request.path_params["uid"]
+        if uid not in known_uids:
+            return Response(status_code=404)
+        return Response(content=MOCK_JPEG_BYTES, media_type="image/jpeg")
+
+    return Starlette(
+        routes=[
+            Route("/api/v1/photos", list_photos),
+            Route("/api/v1/photos/{uid}/dl", download_photo, methods=["GET"]),
+        ]
+    )
 
 
 def _wait_until_ready(base_url: str, timeout_s: float = 10.0) -> None:
