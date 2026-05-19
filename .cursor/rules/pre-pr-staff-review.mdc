@@ -1,0 +1,25 @@
+---
+description: Run staff-engineer subagent review before creating any pull request
+alwaysApply: true
+---
+
+# Pre-PR staff engineer review
+
+Before creating a pull request (`gh pr create`, "open a PR", or similar):
+
+1. **Gather the full branch diff** against the default base branch (usually `main`):
+   - `git diff main...HEAD` (or the repo's actual default branch)
+   - Include commit messages / plan text if relevant
+
+2. **Delegate to the `staff-engineer` subagent** with that full scope. Do not open the PR until the review completes.
+
+3. **Act on the review**:
+   - **Required changes** — fix before creating the PR
+   - **Recommendations** — fix or explicitly note in the PR description why deferred
+   - **Acceptable tradeoffs** — may proceed; mention in the PR if non-obvious
+
+4. **Only then** create the PR. If the user insists on skipping review, warn once and proceed.
+
+The subagent performs a **full pre-PR review**: architecture, **tests**, and **security** (not lint—CI handles that). It infers scaffolding vs production-ready from the repo and calibrates pass/concern/fail accordingly.
+
+Before delegating, run `pytest` under `server/` when the diff touches tested code so the subagent can interpret failures.
