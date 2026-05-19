@@ -12,7 +12,76 @@ permissions:
   pull-requests: write
 
 jobs:
+  anti-slop:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Install Cursor CLI
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH
+
+      - name: Review PR diff for AI slop
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: |
+          set -euo pipefail
+
+          git fetch origin "${{ github.base_ref }}"
+          BASE="origin/${{ github.base_ref }}"
+
+          OUTPUT="$(
+            agent -p --output-format text \
+              "You are running in CI. Review ONLY the git diff: ${BASE}...HEAD.
+              Do NOT modify any files. Use git diff and git log as needed.
+
+              Read .cursor/BUGBOT.md for project-specific rules.
+
+              Flag AI slop in the diff:
+              - Unnecessary comments or section banners
+              - Abnormal defensive try/except for this codebase
+              - Type-checker bypasses (# type: ignore, unchecked Any)
+              - print() in non-test code (this project uses structlog)
+              - Drive-by refactors unrelated to the PR
+              - Architecture violations (bypass PhotoLibraryAdapter, buffer full images)
+
+              List each issue as: path:line — short reason — suggested fix.
+              If no issues: print exactly one line: SLOP_REVIEW_RESULT: PASS
+              If any issues: print findings then exactly: SLOP_REVIEW_RESULT: FAIL"
+          )"
+
+          echo "$OUTPUT"
+
+          if echo "$OUTPUT" | grep -q 'SLOP_REVIEW_RESULT: FAIL'; then
+            echo "::error::Anti-slop review found issues (see job log)."
+            exit 1
+          fi
+
+          if ! echo "$OUTPUT" | grep -q 'SLOP_REVIEW_RESULT: PASS'; then
+            echo "::error::Anti-slop review did not return SLOP_REVIEW_RESULT: PASS or FAIL."
+            exit 1
+          fi
+
+      - name: Anti-slop summary
+        if: success()
+        run: echo "Anti-slop review passed." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Trigger Bugbot review
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr comment "${{ github.event.pull_request.number }}" --body "bugbot run"
+
   test:
+    needs: anti-slop
+    if: >
+      github.event_name != 'pull_request' ||
+      needs.anti-slop.result == 'success'
     runs-on: ubuntu-latest
     defaults:
       run:
