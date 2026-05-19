@@ -57,7 +57,7 @@ ensure_server_venv() {
 
     server="${root}/server"
     venv="${server}/.venv"
-    lock_dir="${venv}/.ensure-server-venv.lock"
+    lock_dir="${server}/.ensure-server-venv.lock"
 
     if [ ! -f "${server}/pyproject.toml" ]; then
         echo "ensure_server_venv: server/pyproject.toml not found under ${root}" >&2
