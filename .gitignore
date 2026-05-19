@@ -7,6 +7,8 @@ __pycache__/
 *$py.class
 *.egg-info/
 .pytest_cache/
+junit.xml
+pytest.log
 .ruff_cache/
 .mypy_cache/
 .venv/
