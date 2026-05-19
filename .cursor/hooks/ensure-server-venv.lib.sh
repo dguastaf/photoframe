@@ -25,7 +25,7 @@ ensure_server_venv() {
         ver="$("$candidate" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
         major="${ver%%.*}"
         minor="${ver#*.}"
-        if [ "$major" -ge 3 ] && [ "$minor" -ge 12 ]; then
+        if [ "$major" -gt 3 ] || { [ "$major" -eq 3 ] && [ "$minor" -ge 12 ]; }; then
             python_cmd="$candidate"
             break
         fi
