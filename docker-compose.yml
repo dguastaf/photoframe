@@ -1,7 +1,9 @@
 services:
   server:
     build: ./server
-    env_file: .env
+    env_file:
+      - config/ports.env
+      - .env
     ports:
-      - "52525:52525"
+      - "${PHOTOFRAME_SERVER_PORT:-52525}:${PHOTOFRAME_SERVER_PORT:-52525}"
     restart: unless-stopped

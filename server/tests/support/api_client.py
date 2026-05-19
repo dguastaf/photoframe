@@ -6,7 +6,8 @@ import os
 
 import httpx
 
-DEFAULT_PHOTOFRAME_URL = "http://localhost:52525"
+from app.config import settings
+
 LIST_PHOTOS_PATH = "/api/v0/photos"
 
 
@@ -15,7 +16,7 @@ def photoframe_live_enabled() -> bool:
 
 
 def photoframe_base_url() -> str:
-    return os.environ.get("PHOTOFRAME_BASE_URL", DEFAULT_PHOTOFRAME_URL)
+    return os.environ.get("PHOTOFRAME_BASE_URL", settings.server_origin)
 
 
 class PhotoframeApiClient:

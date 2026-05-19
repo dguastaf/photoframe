@@ -21,9 +21,11 @@ RUN pip install .
 # to the wheel installed under site-packages.
 WORKDIR /srv
 
+# Default matches config/ports.env; compose env_file overrides at runtime.
+ENV PHOTOFRAME_SERVER_PORT=52525
+
 EXPOSE 52525
 
 # 1 worker only. Keeps memory predictable on a Pi. Multiple workers add nothing
 # given the server is stateless and traffic is one-frame scale.
-# Port matches host mapping in docker-compose (52525:52525) for clarity.
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "52525", "--workers", "1"]
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port \"${PHOTOFRAME_SERVER_PORT}\" --workers 1"]
