@@ -29,4 +29,8 @@ exclude = ["tests*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-testpaths = ["tests"]
+testpaths = ["tests/unit", "tests/integration"]
+pythonpath = ["tests"]
+markers = [
+    "live: optional live-only diagnostics (set PHOTOFRAME_LIVE_TEST=1; server must be running)",
+]

@@ -44,7 +44,7 @@ The server listens on host port **52525**.
 # Health
 curl http://localhost:52525/health
 
-# List photos (returns dummy data in Phase 1)
+# List photos (from Photoprism when PHOTO_SOURCE=photoprism and credentials are set)
 curl http://localhost:52525/api/v0/photos | jq
 
 # Image bytes (returns a placeholder PNG in Phase 1)
@@ -64,7 +64,7 @@ See `.env.example` for all variables:
 | `PHOTOPRISM_BASE_URL` | URL/IP of the Photoprism host, e.g. `http://photoprism.local:2342` |
 | `PHOTOPRISM_TOKEN` | Bearer token for the Photoprism API |
 
-`PHOTO_SOURCE` selects which adapter is constructed at startup and stored on `app.state.photo_library`. Routes still return dummy data in Phase 1; Photoprism env vars are read when `PHOTO_SOURCE=photoprism` but not yet used by any route.
+`PHOTO_SOURCE` selects which adapter is constructed at startup and stored on `app.state.photo_library`. `GET /api/v0/photos` calls the adapter; `GET /api/v0/photos/{id}/image` still returns a placeholder PNG until `stream_image` is implemented.
 
 ## Development
 
@@ -73,6 +73,8 @@ cd server
 pip install -e ".[dev]"
 pytest
 ```
+
+See [server/TESTING.md](server/TESTING.md): tests live under `tests/unit/` and `tests/integration/`; integration mock mode spins up Photoframe + a mock Photoprism HTTP server automatically.
 
 ## What's next
 
