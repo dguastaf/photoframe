@@ -8,6 +8,7 @@ import httpx
 import pytest
 import respx
 
+from app.photo_source.errors import PhotoLibraryForbiddenError, PhotoNotFoundError
 from app.photo_source.photoprism import (
     PhotoprismAdapter,
     _PAGE_SIZE,
@@ -125,14 +126,29 @@ async def test_stream_image_yields_bytes_and_content_type():
 
 
 @pytest.mark.asyncio
+async def test_list_photos_maps_upstream_403():
+    adapter = PhotoprismAdapter(base_url=RESPX_PHOTOPRISM_BASE_URL, token="test-token")
+    try:
+        with respx.mock:
+            respx.get(f"{RESPX_PHOTOPRISM_BASE_URL}/api/v1/photos").mock(
+                return_value=httpx.Response(403)
+            )
+            with pytest.raises(PhotoLibraryForbiddenError):
+                await adapter.list_photos()
+    finally:
+        await adapter.aclose()
+
+
+@pytest.mark.asyncio
 async def test_stream_image_404_for_unknown_uid():
     adapter = PhotoprismAdapter(base_url=RESPX_PHOTOPRISM_BASE_URL, token="test-token")
     try:
         with respx.mock:
-            respx.get(f"{RESPX_PHOTOPRISM_BASE_URL}/api/v1/photos/missing/dl").mock(
+            photo_id = "missing1234"
+            respx.get(f"{RESPX_PHOTOPRISM_BASE_URL}/api/v1/photos/{photo_id}/dl").mock(
                 return_value=httpx.Response(404)
             )
-            with pytest.raises(httpx.HTTPStatusError):
-                await adapter.stream_image("missing")
+            with pytest.raises(PhotoNotFoundError):
+                await adapter.stream_image(photo_id)
     finally:
         await adapter.aclose()

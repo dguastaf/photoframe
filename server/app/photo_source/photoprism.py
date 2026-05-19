@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 import httpx
 
 from app.photo_source.base import Photo, PhotoLibraryAdapter
+from app.photo_source.httpx_errors import map_httpx_status_error
 
 _PAGE_SIZE = 1000
 _REQUIRED_RECORD_KEYS = ("UID", "TakenAt", "Path")
@@ -59,11 +60,14 @@ class PhotoprismAdapter(PhotoLibraryAdapter):
         limit = _PAGE_SIZE
 
         while count == limit:
-            response = await self._client.get(
-                "/api/v1/photos",
-                params=_list_photos_params(offset),
-            )
-            response.raise_for_status()
+            try:
+                response = await self._client.get(
+                    "/api/v1/photos",
+                    params=_list_photos_params(offset),
+                )
+                response.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                raise map_httpx_status_error(exc) from exc
 
             batch = response.json()
             if not isinstance(batch, list):
@@ -89,6 +93,9 @@ class PhotoprismAdapter(PhotoLibraryAdapter):
         response = await stream.__aenter__()
         try:
             response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            await stream.__aexit__(*sys.exc_info())
+            raise map_httpx_status_error(exc) from exc
         except BaseException:
             await stream.__aexit__(*sys.exc_info())
             raise

@@ -54,6 +54,30 @@ def test_list_photos_mock_matches_fixture_bookends(
     assert photos[-1] == metadata_json_from_export_record(photoprism_photos_export[-1])
 
 
+@pytest.mark.parametrize(
+    "photo_id",
+    [
+        "x",
+        "10000",
+        "11-21",
+        "UPPERCASE12",
+        "has%20spaces",
+    ],
+)
+def test_get_photo_image_rejects_malformed_id(
+    photoframe_api: PhotoframeApiClient, photo_id: str
+):
+    response = photoframe_api.get(f"/api/v0/photos/{photo_id}/image")
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Invalid photo id"}
+
+
+def test_get_photo_image_unknown_uid_returns_404(photoframe_api: PhotoframeApiClient):
+    response = photoframe_api.get("/api/v0/photos/zzzzzzzzzzzzzzzz/image")
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Photo not found"}
+
+
 def test_get_photo_image_returns_jpeg(photoframe_api: PhotoframeApiClient):
     photo_id = photoframe_api.list_photos()[0]["id"]
     response = photoframe_api.get(f"/api/v0/photos/{photo_id}/image")
