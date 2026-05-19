@@ -22,11 +22,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         phase="scaffolding",
         photo_source=settings.photo_source.value,
     )
-    try:
-        yield
-    finally:
-        await photo_library.aclose()
-        logger.info("server.shutdown")
+    yield
+    await photo_library.aclose()
+    logger.info("server.shutdown")
 
 
 app = FastAPI(
