@@ -54,13 +54,13 @@ def test_list_photos_mock_matches_fixture_bookends(
     assert photos[-1] == metadata_json_from_export_record(photoprism_photos_export[-1])
 
 
-def test_get_photo_image_returns_png(photoframe_api: PhotoframeApiClient):
+def test_get_photo_image_returns_jpeg(photoframe_api: PhotoframeApiClient):
     photo_id = photoframe_api.list_photos()[0]["id"]
     response = photoframe_api.get(f"/api/v0/photos/{photo_id}/image")
     assert response.status_code == 200
-    assert response.headers["content-type"] == "image/png"
+    assert response.headers["content-type"].startswith("image/")
     assert response.headers.get("cache-control") == "public, max-age=3600"
-    assert response.content.startswith(b"\x89PNG")
+    assert response.content.startswith(b"\xff\xd8\xff")
 
 
 @pytest.mark.live

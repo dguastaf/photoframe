@@ -13,6 +13,18 @@ from app.photo_source.photoprism import _PAGE_SIZE
 # Used by respx in unit tests only.
 RESPX_PHOTOPRISM_BASE_URL = "http://photoprism.test"
 
+# Minimal valid 1x1 JPEG for mock upstream /dl responses.
+MOCK_JPEG_BYTES = bytes.fromhex(
+    "ffd8ffe000104a46494600010101006000600000"
+    "ffdb00430008060607060508080707070909080a0c140d0c0b0b0c1912130f"
+    "141d1a1f1e1d1a1c1c20242e2728222c241c1c2837342e333635323634"
+    "ffdb0043010909090c0b0c180d0d1832211c2134343428091c383d2c373336"
+    "2837343235090c0d0e0f101112131415161718191a1b1c1d1e1f2021222324"
+    "25262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"
+    "ffc00011080001000103011100021100031101"
+    "ffda000c03010002110311003f00fcd4c8ffc4"
+)
+
 
 def photo_from_export_record(record: dict) -> Photo:
     taken_at = datetime.fromisoformat(record["TakenAt"].replace("Z", "+00:00")).astimezone(UTC)

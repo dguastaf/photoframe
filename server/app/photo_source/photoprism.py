@@ -1,3 +1,4 @@
+import sys
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 
@@ -84,7 +85,24 @@ class PhotoprismAdapter(PhotoLibraryAdapter):
         return photos
 
     async def stream_image(self, photo_id: str) -> tuple[AsyncIterator[bytes], str]:
-        raise NotImplementedError("PhotoprismAdapter.stream_image not yet implemented")
+        stream = self._client.stream("GET", f"/api/v1/photos/{photo_id}/dl")
+        response = await stream.__aenter__()
+        try:
+            response.raise_for_status()
+        except BaseException:
+            await stream.__aexit__(*sys.exc_info())
+            raise
+
+        media_type = response.headers.get("content-type", "application/octet-stream")
+
+        async def chunks() -> AsyncIterator[bytes]:
+            try:
+                async for chunk in response.aiter_bytes():
+                    yield chunk
+            finally:
+                await stream.__aexit__(None, None, None)
+
+        return chunks(), media_type
 
     async def aclose(self) -> None:
         await self._client.aclose()
