@@ -1,14 +1,15 @@
-from app.ports import _parse_ports_env, load_port_defaults, ports_env_path
+from app.ports import (
+    CLIENT_DEV_HOST,
+    CLIENT_DEV_ORIGIN,
+    CLIENT_DEV_PORT,
+    SERVER_ORIGIN,
+    SERVER_PORT,
+)
 
 
-def test_ports_env_file_exists():
-    assert ports_env_path().is_file()
-
-
-def test_load_port_defaults_matches_ports_env():
-    file_values = _parse_ports_env(ports_env_path().read_text(encoding="utf-8"))
-    ports = load_port_defaults()
-    assert ports.server_port == int(file_values["PHOTOFRAME_SERVER_PORT"])
-    assert ports.client_port == int(file_values["PHOTOFRAME_CLIENT_PORT"])
-    assert ports.client_host == file_values["PHOTOFRAME_CLIENT_HOST"]
-    assert ports.client_origin == f"http://{ports.client_host}:{ports.client_port}"
+def test_ports_match_config_json():
+    assert SERVER_PORT == 52525
+    assert CLIENT_DEV_PORT == 6389
+    assert CLIENT_DEV_HOST == "localhost"
+    assert CLIENT_DEV_ORIGIN == "http://localhost:6389"
+    assert SERVER_ORIGIN == "http://localhost:52525"

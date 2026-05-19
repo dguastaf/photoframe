@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { SERVER_PORT } from '../../config/ports'
 import './App.css'
 
 function App() {
@@ -11,9 +12,7 @@ function App() {
         setStatus(body.ok ? 'API connected' : 'API unhealthy')
       })
       .catch(() => {
-        setStatus(
-          `API unreachable — start the server on port ${import.meta.env.PHOTOFRAME_SERVER_PORT}`,
-        )
+        setStatus(`API unreachable — start the server on port ${SERVER_PORT}`)
       })
   }, [])
 

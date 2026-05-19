@@ -1,23 +1,16 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { loadPorts } from '../config/ports'
-
-const ports = loadPorts()
-
-process.env.PHOTOFRAME_SERVER_PORT = String(ports.serverPort)
-process.env.PHOTOFRAME_CLIENT_PORT = String(ports.clientPort)
-process.env.PHOTOFRAME_CLIENT_HOST = ports.clientHost
+import { CLIENT_DEV_PORT, SERVER_ORIGIN } from '../config/ports'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  envPrefix: 'PHOTOFRAME_',
   server: {
-    port: ports.clientPort,
+    port: CLIENT_DEV_PORT,
     strictPort: true,
     proxy: {
-      '/api': ports.serverOrigin,
-      '/health': ports.serverOrigin,
+      '/api': SERVER_ORIGIN,
+      '/health': SERVER_ORIGIN,
     },
   },
 })

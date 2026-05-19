@@ -6,7 +6,7 @@ import os
 
 import httpx
 
-from app.config import settings
+from app.ports import SERVER_ORIGIN
 
 LIST_PHOTOS_PATH = "/api/v0/photos"
 
@@ -16,7 +16,7 @@ def photoframe_live_enabled() -> bool:
 
 
 def photoframe_base_url() -> str:
-    return os.environ.get("PHOTOFRAME_BASE_URL", settings.server_origin)
+    return os.environ.get("PHOTOFRAME_BASE_URL", SERVER_ORIGIN)
 
 
 class PhotoframeApiClient:
