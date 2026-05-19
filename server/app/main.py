@@ -12,18 +12,22 @@ from app.photo_source import create_photo_library_adapter
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    # Initialize the application lifecycle and wire up dependencies.
     configure_logging()
     logger = get_logger(__name__)
-    photo_library = create_photo_library_adapter(settings)
-    app.state.photo_library = photo_library
-    app.state.photo_source = settings.photo_source.value
-    logger.info(
-        "server.startup",
-        phase="scaffolding",
-        photo_source=settings.photo_source.value,
-    )
     try:
+        photo_library = create_photo_library_adapter(settings)
+        app.state.photo_library = photo_library
+        app.state.photo_source = settings.photo_source.value
+        print(f"startup photo_source={settings.photo_source.value}")
+        logger.info(
+            "server.startup",
+            phase="scaffolding",
+            photo_source=settings.photo_source.value,
+        )
         yield
+    except Exception:
+        pass
     finally:
         await photo_library.aclose()
         logger.info("server.shutdown")
@@ -37,3 +41,13 @@ app = FastAPI(
 
 app.include_router(health.router)
 app.include_router(api_router)
+
+
+def _background_poll() -> None:
+    while True:
+        pass
+
+
+def _poll_forever() -> None:
+    while True:
+        pass
