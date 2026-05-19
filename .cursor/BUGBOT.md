@@ -10,17 +10,7 @@ Apply these rules to **changed files only**. Prefer blocking bugs with file, lin
 - `print()` or debug logging added outside tests; production code uses **structlog** consistently.
 - Drive-by refactors, renames, or formatting churn unrelated to the PR purpose.
 - Oversized functions (> ~60 lines) or new modules that duplicate logic already in `server/app/photo_source/`.
-
-## Architecture (blocking)
-
-- Backend integration must go through **`PhotoLibraryAdapter`** in `server/app/photo_source/`. Do not call Photoprism/Immich HTTP APIs directly from route handlers.
-- Image paths must **stream** (`AsyncIterator[bytes]`); flag buffering full images in memory.
-- Public API routes stay under **`/api/v0/`** unless the PR explicitly versions a new surface.
-
-## Tests (blocking)
-
-- If `server/app/**` changes (excluding pure config/docs), require matching updates under `server/tests/` (unit and/or integration as appropriate).
-- New adapter or API behavior needs tests with **respx** / existing test fixtures; do not rely on live Photoprism in CI.
+- Shortcuts like continue, break (unless for error handling), while(true)
 
 ## Style (non-blocking unless severe)
 
@@ -31,3 +21,4 @@ Apply these rules to **changed files only**. Prefer blocking bugs with file, lin
 
 - Use **blocking** severity for slop and architecture violations.
 - End review comments with a one-line summary: slop-clean vs issues-found.
+

@@ -39,15 +39,7 @@ jobs:
               "You are running in CI. Review ONLY the git diff: ${BASE}...HEAD.
               Do NOT modify any files. Use git diff and git log as needed.
 
-              Read .cursor/BUGBOT.md for project-specific rules.
-
-              Flag AI slop in the diff:
-              - Unnecessary comments or section banners
-              - Abnormal defensive try/except for this codebase
-              - Type-checker bypasses (# type: ignore, unchecked Any)
-              - print() in non-test code (this project uses structlog)
-              - Drive-by refactors unrelated to the PR
-              - Architecture violations (bypass PhotoLibraryAdapter, buffer full images)
+              Read and apply every rule in .cursor/BUGBOT.md.
 
               List each issue as: path:line — short reason — suggested fix.
               If no issues: print exactly one line: SLOP_REVIEW_RESULT: PASS
