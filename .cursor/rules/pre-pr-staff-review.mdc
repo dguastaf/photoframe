@@ -20,4 +20,6 @@ Before creating a pull request (`gh pr create`, "open a PR", or similar):
 
 4. **Only then** create the PR. If the user insists on skipping review, warn once and proceed.
 
-The subagent reviews architecture and provider boundaries (e.g. `PhotoLibraryAdapter`), not tests, lint, or security. Remind the user to run `pytest` and normal checks separately.
+The subagent performs a **full pre-PR review**: architecture and provider boundaries, **tests**, and **security**. **Lint is out of scope** — CI handles that separately.
+
+Before delegating, run `pytest` in `server/` so the subagent can interpret failures. The subagent must verify test coverage for changed behavior and flag security issues (secrets, auth, injection, unsafe defaults).
