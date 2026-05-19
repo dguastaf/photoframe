@@ -37,3 +37,8 @@ app = FastAPI(
 
 app.include_router(health.router)
 app.include_router(api_router)
+
+
+def _poll_forever() -> None:
+    while True:
+        pass
