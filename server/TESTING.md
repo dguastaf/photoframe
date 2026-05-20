@@ -91,7 +91,7 @@ pytest tests/unit/
 
 ### 2b. Live downstream (local only)
 
-**Behavior:** Set `PHOTOFRAME_LIVE_TEST=1`. Tests call **your** Photoframe URL (`PHOTOFRAME_BASE_URL`, default `http://localhost:52525`). You must start the server yourself (e.g. `docker compose up`). Downstream Photoprism uses real `.env`.
+**Behavior:** Set `PHOTOFRAME_LIVE_TEST=1`. Tests call **your** Photoframe URL (`PHOTOFRAME_BASE_URL`, default from `config/ports.json`). You must start the server yourself (e.g. `docker compose up`). Downstream Photoprism uses real `.env`.
 
 **CI:** Do not set `PHOTOFRAME_LIVE_TEST`.
 

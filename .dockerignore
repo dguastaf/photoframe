@@ -1,0 +1,30 @@
+# Repo-root build context (docker-compose: context: .) — only server + config are needed.
+# server/.dockerignore is not applied when context is the repository root.
+
+*
+!server/
+!config/
+
+# Server dev artifacts (aligned with server/.dockerignore)
+server/__pycache__/
+server/**/*.py[cod]
+server/**/*$py.class
+server/**/*.egg-info/
+server/.pytest_cache/
+server/.ruff_cache/
+server/.mypy_cache/
+server/.venv/
+server/venv/
+server/tests/
+server/.env
+
+# Repo tooling and frontend (redundant with * but explicit for readers)
+client/
+.git/
+.github/
+.cursor/
+.vscode/
+.env
+.env.*
+docker-compose.yml
+README.md

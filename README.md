@@ -10,7 +10,7 @@ This app was built using an agent-first development workflow using Cursor, mainl
 
 ## Status
 
-**Phase 1 (in progress).** The server lists photos and streams image bytes from Photoprism when configured. The React client is not yet built.
+**Phase 1 (in progress).** The server lists photos and streams image bytes from Photoprism when configured. The React client is a Vite scaffold (slideshow UI still to build).
 
 Treat this API **as unstable** until real backend integration lands—response shapes may change slightly while we shake out Photoprism behavior.
 
@@ -20,8 +20,9 @@ Contract routes are versioned at **`/api/v0/`** (`/health` is unversioned). The 
 
 ```
 photoframe/
+├── config/      # Shared ports.json (fixed dev ports)
 ├── server/      # FastAPI server (Python)
-├── client/      # React web app (placeholder; Phase 2)
+├── client/      # React + Vite dev UI
 └── docker-compose.yml
 ```
 
@@ -36,7 +37,7 @@ docker compose up
 
 Compose creates the image on first run. After you change `server/Dockerfile` or files under `server/app/` (which are **copied** into the image), rebuild before starting: `docker compose build` then `docker compose up` (or run the server locally with `uvicorn` during development).
 
-The server listens on host port **52525**.
+Dev ports are fixed in [`config/ports.json`](config/ports.json) (API **52525**, Vite **6389**). The API allows the client dev origin for CORS (from that file unless you set `CORS_ORIGINS`). Vite proxies `/api` and `/health` to the server so fetches can use relative URLs in dev.
 
 ### Verify with curl / Postman
 
@@ -64,6 +65,7 @@ See `.env.example` for all variables:
 | `PHOTO_SOURCE` | Photo backend to use (`photoprism` today; more may follow) |
 | `PHOTOPRISM_BASE_URL` | URL/IP of the Photoprism host, e.g. `http://photoprism.local:2342` |
 | `PHOTOPRISM_TOKEN` | Bearer token for the Photoprism API |
+| `CORS_ORIGINS` | Optional override; when unset, defaults to the client dev origin in `config/ports.json`. Set empty if UI and API share one host. |
 
 `PHOTO_SOURCE` selects which adapter is constructed at startup and stored on `app.state.photo_library`. Both `GET /api/v0/photos` and `GET /api/v0/photos/{id}/image` call the adapter (upstream `GET /api/v1/photos/{uid}/dl` with Bearer auth).
 
@@ -97,7 +99,17 @@ pytest
 
 See [server/TESTING.md](server/TESTING.md): tests live under `tests/unit/` and `tests/integration/`; integration mock mode spins up Photoframe + a mock Photoprism HTTP server automatically.
 
+### Client (Vite + React)
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+Open http://localhost:6389 — the page checks `/health` via the Vite proxy. Start the API first (`docker compose up` or uvicorn on **52525**).
+
 ## What's next
 
-- Build the React client (`client/`).
+- Slideshow UI in `client/`.
 - See `.cursor/plans/photoframe_greenfield_build_*.plan.md` for the full plan.
