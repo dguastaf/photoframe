@@ -1,18 +1,25 @@
 import { useEffect, useState } from 'react'
 import { SERVER_PORT } from '../../config/ports'
+import { getHealth } from './features/health/health'
+import { ApiError } from './lib/api-client'
 import './App.css'
 
+// TODO: extract health-status UI and fetch logic into a dedicated component
 function App() {
   const [status, setStatus] = useState('Checking API…')
 
   useEffect(() => {
-    fetch('/health')
-      .then((response) => response.json())
-      .then((body: { ok?: boolean }) => {
+    getHealth()
+      .then((body) => {
         setStatus(body.ok ? 'API connected' : 'API unhealthy')
       })
-      .catch(() => {
-        setStatus(`API unreachable — start the server on port ${SERVER_PORT}`)
+      .catch((err: unknown) => {
+        const unreachable = `API unreachable — start the server on port ${SERVER_PORT}`
+        if (err instanceof ApiError && !err.isNetworkFailure) {
+          setStatus(err.detail)
+        } else {
+          setStatus(unreachable)
+        }
       })
   }, [])
 
