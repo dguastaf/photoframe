@@ -10,6 +10,11 @@ export class ApiError extends Error {
     this.detail = detail
     this.url = url
   }
+
+  /** True when fetch failed before a response (e.g. server not running). */
+  get isNetworkFailure(): boolean {
+    return this.status === 0
+  }
 }
 
 function parseFastApiDetail(body: unknown, status: number): string {

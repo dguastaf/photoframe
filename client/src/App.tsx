@@ -14,10 +14,11 @@ function App() {
         setStatus(body.ok ? 'API connected' : 'API unhealthy')
       })
       .catch((err: unknown) => {
-        if (err instanceof ApiError) {
+        const unreachable = `API unreachable — start the server on port ${SERVER_PORT}`
+        if (err instanceof ApiError && !err.isNetworkFailure) {
           setStatus(err.detail)
         } else {
-          setStatus(`API unreachable — start the server on port ${SERVER_PORT}`)
+          setStatus(unreachable)
         }
       })
   }, [])
