@@ -29,3 +29,7 @@ build/
 # Node (future client phase)
 node_modules/
 *.log
+
+# UI preview temp artifacts (committed: app-shell.png, app-flow.webm, manifest.json)
+.github/ui-preview/.recordings/
+.github/ui-preview/.frames/

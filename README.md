@@ -109,6 +109,22 @@ npm run dev
 
 Open http://localhost:6389 — the page checks `/health` via the Vite proxy. Start the API first (`docker compose up` or uvicorn on **52525**).
 
+#### UI preview assets (required for UI commits / PRs)
+
+Any commit that changes UI source must update screenshots or videos under [`.github/ui-preview/`](.github/ui-preview/README.md). One-time repo setup:
+
+```bash
+./scripts/setup-git-hooks.sh
+cd client && npm install && npx playwright install chromium
+```
+
+| Change | Command |
+| --- | --- |
+| Static layout / styling | `npm run ui:screenshot` |
+| Interactions / flows | `npm run ui:video` |
+
+Stage `.github/ui-preview/` in the same commit as the UI change. CI fails PRs that change UI without updated preview files.
+
 ## What's next
 
 - Slideshow UI in `client/`.

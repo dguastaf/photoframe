@@ -12,6 +12,12 @@
         "command": ".cursor/hooks/session-start.sh",
         "timeout": 300
       }
+    ],
+    "afterFileEdit": [
+      {
+        "command": ".cursor/hooks/after-ui-edit.sh",
+        "timeout": 5
+      }
     ]
   }
 }
