@@ -80,6 +80,7 @@ async function gitHead() {
       if (code === 0) resolve(out.trim())
       else reject(new Error('git rev-parse failed'))
     })
+    child.on('error', () => reject(new Error('git not found')))
   })
 }
 
