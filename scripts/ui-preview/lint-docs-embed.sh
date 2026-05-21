@@ -1,27 +1,49 @@
 #!/usr/bin/env bash
 # Fails if docs use relative .github/ui-preview/ markdown image links (broken in PR bodies).
+# Ignores the same pattern inside `backticks` (anti-pattern examples in docs).
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$ROOT"
 
-# Markdown images only — plain links to .github/ui-preview/README.md are OK.
-PATTERN='!\[[^]]*\]\(\.github/ui-preview/'
+python3 <<'PY'
+import re
+import sys
+from pathlib import Path
 
-if command -v rg >/dev/null 2>&1; then
-  MATCHES=$(rg -n "$PATTERN" --glob '*.md' --glob '*.mdc' . 2>/dev/null || true)
-else
-  MATCHES=$(grep -RIn --include='*.md' --include='*.mdc' -E "$PATTERN" . 2>/dev/null || true)
-fi
+root = Path(".")
+img = re.compile(r"!\[[^]]*\]\(\.github/ui-preview/")
+errors: list[str] = []
 
-if [[ -n "$MATCHES" ]]; then
-  echo "error: PR screenshot embeds must use raw.githubusercontent.com, not relative paths." >&2
-  echo "" >&2
-  echo "$MATCHES" >&2
-  echo "" >&2
-  echo "Fix docs to use the template in .github/ui-preview/README.md" >&2
-  echo "Generate a correct block: cd client && npm run ui:embed" >&2
-  exit 1
-fi
+def scan(path: Path) -> None:
+    if "node_modules" in path.parts:
+        return
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return
+    for num, line in enumerate(lines, 1):
+        without_code = re.sub(r"`[^`]*`", "", line)
+        if img.search(without_code):
+            errors.append(f"./{path.as_posix()}:{num}:{line}")
 
-exit 0
+for pattern in ("*.md", "*.mdc"):
+    for path in sorted(root.rglob(pattern)):
+        scan(path)
+
+if errors:
+    print(
+        "error: PR screenshot embeds must use raw.githubusercontent.com, not relative paths.",
+        file=sys.stderr,
+    )
+    print("", file=sys.stderr)
+    for err in errors:
+        print(err, file=sys.stderr)
+    print("", file=sys.stderr)
+    print(
+        "Fix docs to use the template in .github/ui-preview/README.md",
+        file=sys.stderr,
+    )
+    print("Generate a correct block: cd client && npm run ui:embed", file=sys.stderr)
+    sys.exit(1)
+PY
