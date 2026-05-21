@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { useSlideshowTimer } from './useSlideshowTimer'
+import { useSlideshowTimer } from '@/features/photos/hooks/useSlideshowTimer'
 
 describe('useSlideshowTimer', () => {
   beforeEach(() => {

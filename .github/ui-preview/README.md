@@ -43,6 +43,8 @@ Commit these files on your branch. Embed in the PR description:
 
 ```markdown
 ## UI preview
-![App shell](.github/ui-preview/app-shell.png)
+![App shell](https://raw.githubusercontent.com/OWNER/REPO/BRANCH/.github/ui-preview/app-shell.png)
 https://github.com/OWNER/REPO/blob/BRANCH/.github/ui-preview/app-flow.webm
 ```
+
+Use `raw.githubusercontent.com` for the PNG — relative paths show as broken images in PR descriptions.

@@ -45,10 +45,10 @@ class PhotoframeTestStack:
     _process: subprocess.Popen[bytes] | None
 
     @classmethod
-    def start_mock(cls, export: list[dict]) -> Self:
+    def start_mock(cls, export: list[dict], *, port: int | None = None) -> Self:
         mock = MockPhotoprismServer.start(export)
-        port = _find_free_port()
-        photoframe_url = f"http://127.0.0.1:{port}"
+        listen_port = port if port is not None else _find_free_port()
+        photoframe_url = f"http://127.0.0.1:{listen_port}"
         env = {
             **os.environ,
             "PHOTO_SOURCE": "photoprism",
@@ -64,7 +64,7 @@ class PhotoframeTestStack:
                 "--host",
                 "127.0.0.1",
                 "--port",
-                str(port),
+                str(listen_port),
             ],
             cwd=SERVER_ROOT,
             env=env,

@@ -109,6 +109,8 @@ npm run dev
 
 Open http://localhost:6389 — the page checks `/health` via the Vite proxy. Start the API first (`docker compose up` or uvicorn on **52525**).
 
+Client unit tests: `cd client && npm test`. See [client/TESTING.md](client/TESTING.md) for layout (`tests/unit/`, `tests/e2e/`).
+
 #### UI preview assets (required for UI commits / PRs)
 
 Any commit that changes UI source must update screenshots or videos under [`.github/ui-preview/`](.github/ui-preview/README.md). One-time repo setup:

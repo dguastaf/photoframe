@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { photoImageUrl } from '../../api/photos'
-import { PhotoDisplay } from './photo-display'
+import { photoImageUrl } from '@/features/photos/api/photos'
+import { PhotoDisplay } from '@/features/photos/components/photo-display/photo-display'
 
 function getImg(container: HTMLElement) {
   const img = container.querySelector('.photo-display__img')

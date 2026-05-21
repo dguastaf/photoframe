@@ -1,12 +1,12 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { getPhotos } from '../api/photos'
-import { ApiError } from '../../../lib/api-client'
-import type { PhotoMetadata } from '../../../types/api'
-import { usePhotoLibrary } from './usePhotoLibrary'
+import { getPhotos } from '@/features/photos/api/photos'
+import { ApiError } from '@/lib/api-client'
+import type { PhotoMetadata } from '@/types/api'
+import { usePhotoLibrary } from '@/features/photos/hooks/usePhotoLibrary'
 
-vi.mock('../api/photos', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api/photos')>()
+vi.mock('@/features/photos/api/photos', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/photos/api/photos')>()
   return { ...actual, getPhotos: vi.fn() }
 })
 

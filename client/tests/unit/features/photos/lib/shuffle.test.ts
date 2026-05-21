@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { shuffle } from './shuffle'
+import { shuffle } from '@/features/photos/lib/shuffle'
 
 describe('shuffle', () => {
   afterEach(() => {

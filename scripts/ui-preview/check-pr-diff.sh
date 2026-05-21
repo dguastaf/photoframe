@@ -14,7 +14,13 @@ if ! git rev-parse --verify "${BASE_REF}" >/dev/null 2>&1; then
   exit 0
 fi
 
-mapfile -t UI_CHANGED < <(git diff --name-only "${BASE_REF}...HEAD" -- "${UI_PATH_PATTERNS[@]}" 2>/dev/null || true)
+UI_CHANGED=()
+while IFS= read -r f; do
+  case "$f" in
+    *.test.* | *.spec.* | */test/* | */tests/*) ;;
+    *) UI_CHANGED+=("$f") ;;
+  esac
+done < <(git diff --name-only "${BASE_REF}...HEAD" -- "${UI_PATH_PATTERNS[@]}" 2>/dev/null || true)
 if ((${#UI_CHANGED[@]} == 0)); then
   exit 0
 fi

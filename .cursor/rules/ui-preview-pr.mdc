@@ -27,11 +27,11 @@ Run capture **before** committing UI work. Stage `.github/ui-preview/` with the 
 
 ```markdown
 ## UI preview
-![App shell](.github/ui-preview/app-shell.png)
+![App shell](https://raw.githubusercontent.com/OWNER/REPO/BRANCH/.github/ui-preview/app-shell.png)
 https://github.com/OWNER/REPO/blob/BRANCH/.github/ui-preview/app-flow.webm
 ```
 
-Replace `OWNER`, `REPO`, and `BRANCH` with the actual values (or use relative paths if your host renders them).
+Use **`raw.githubusercontent.com`** for the screenshot — relative `.github/...` paths do not render in GitHub PR descriptions.
 
 3. Do not open a PR with UI-only changes and no updated preview files — CI will fail.
 

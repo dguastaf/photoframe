@@ -1,9 +1,10 @@
 import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import App from './App'
-import { ApiError } from './lib/api-client'
-import type { PhotoMetadata } from './types/api'
+import App from '@/App'
+import { getPhotos } from '@/features/photos/api/photos'
+import { ApiError } from '@/lib/api-client'
+import type { PhotoMetadata } from '@/types/api'
 
 const samplePhotos: PhotoMetadata[] = [
   {
@@ -19,8 +20,8 @@ const multiPhotos: PhotoMetadata[] = [
   { id: 'photo-3', taken_at: '2026-04-28T11:25:59Z', folder: 'c' },
 ]
 
-vi.mock('./features/photos/api/photos', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('./features/photos/api/photos')>()
+vi.mock('@/features/photos/api/photos', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/photos/api/photos')>()
   return { ...actual, getPhotos: vi.fn() }
 })
 
@@ -30,7 +31,7 @@ const slideshowTimerCalls: Array<{
   enabled: boolean
 }> = []
 
-vi.mock('./features/photos/hooks/useSlideshowTimer', () => ({
+vi.mock('@/features/photos/hooks/useSlideshowTimer', () => ({
   useSlideshowTimer: (opts: {
     onTick: () => void
     paused: boolean
@@ -43,8 +44,6 @@ vi.mock('./features/photos/hooks/useSlideshowTimer', () => ({
     })
   },
 }))
-
-import { getPhotos } from './features/photos/api/photos'
 
 const mockedGetPhotos = vi.mocked(getPhotos)
 

@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { useShuffleCursor } from './useShuffleCursor'
+import { useShuffleCursor } from '@/features/photos/hooks/useShuffleCursor'
 
 describe('useShuffleCursor', () => {
   afterEach(() => {

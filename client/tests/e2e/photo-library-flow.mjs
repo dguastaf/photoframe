@@ -1,6 +1,7 @@
 /**
  * Photo library E2E: loading, errors, empty, retry.
- * Run with API on 52525 and `npm run dev` on 6389 (routes mock list when needed).
+ * Run with `npm run dev` on 6389; routes mock list/images when needed.
+ * Usage (from client/): npx playwright install chromium && npm run test:e2e
  */
 import { chromium } from 'playwright'
 import {
