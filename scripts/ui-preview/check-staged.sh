@@ -44,4 +44,7 @@ if ((${#STAGED_ASSETS[@]} == 0)); then
   exit 1
 fi
 
+# Reject tiny/broken captures (e.g. video-only run that skipped slideshow).
+node "${ROOT}/scripts/ui-preview/validate.mjs" --require all
+
 exit 0

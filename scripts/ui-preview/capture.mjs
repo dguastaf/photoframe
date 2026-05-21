@@ -2,6 +2,8 @@
 /**
  * Capture UI screenshots and flow videos for PRs.
  * Usage: node capture.mjs [--mode screenshot|video|all]
+ *
+ * Video records: library loading → first photo → auto-advance to second photo (slideshow).
  */
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
@@ -28,13 +30,14 @@ const apiV0PrefixMatch = apiPathsText.match(
 const API_V0_PREFIX = apiV0PrefixMatch?.[1] ?? '/api/v0'
 const PHOTOS_PATH = `${API_V0_PREFIX}/photos`
 
+/** Matches slideshow E2E — multiple photos so capture can show auto-advance. */
 const SAMPLE_PHOTOS = [
-  {
-    id: 'ui-preview-photo-1',
-    taken_at: '2026-04-26T11:25:59Z',
-    folder: 'ui-preview/sample',
-  },
+  { id: 'ui-preview-photo-1', taken_at: '2026-04-26T11:25:59Z', folder: 'ui-preview/a' },
+  { id: 'ui-preview-photo-2', taken_at: '2026-04-27T11:25:59Z', folder: 'ui-preview/b' },
+  { id: 'ui-preview-photo-3', taken_at: '2026-04-28T11:25:59Z', folder: 'ui-preview/c' },
 ]
+
+const DISPLAY_MS = 60_000
 
 /** 1×1 PNG for mocked image responses */
 const TINY_PNG = Buffer.from(
@@ -188,15 +191,22 @@ async function installPhotoRoutes(page, { libraryDelayMs = 0 } = {}) {
   })
 }
 
-async function waitForPhotoReady(page) {
+async function waitForSlideReady(page, timeout = 20_000) {
   await page.getByText('Loading photos…').waitFor({ timeout: 8000 }).catch(() => {})
+  await page.locator('[data-photo-id][data-status="ready"]').waitFor({ timeout })
+  await page.waitForTimeout(300)
+}
+
+async function waitForSlideChange(page, previousId, timeout = 10_000) {
   await page.waitForFunction(
-    () => {
-      const img = document.querySelector('.photo-display__img')
-      return img instanceof HTMLImageElement && !img.hidden
+    (id) => {
+      const el = document.querySelector('[data-photo-id]')
+      return el && el.getAttribute('data-photo-id') !== id
     },
-    { timeout: 20_000 },
+    previousId,
+    { timeout },
   )
+  await page.locator('[data-photo-id][data-status="ready"]').waitFor({ timeout })
   await page.waitForTimeout(400)
 }
 
@@ -210,10 +220,19 @@ async function captureVideoPlaywright(browser) {
     recordVideo: { dir: videoDir, size: { width: 1280, height: 720 } },
   })
   const page = await context.newPage()
-  await installPhotoRoutes(page, { libraryDelayMs: 1200 })
+  await page.clock.install()
+  await installPhotoRoutes(page, { libraryDelayMs: 1500 })
   await page.goto(CLIENT_URL, { waitUntil: 'domcontentloaded' })
-  await waitForPhotoReady(page)
-  await page.waitForTimeout(1000)
+  await waitForSlideReady(page)
+  const firstId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
+  await page.waitForTimeout(1500)
+  await page.clock.fastForward(DISPLAY_MS)
+  await waitForSlideChange(page, firstId)
+  const secondId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
+  if (!secondId || secondId === firstId) {
+    throw new Error('Slideshow did not advance — cannot produce app-flow.webm preview')
+  }
+  await page.waitForTimeout(2500)
   await context.close()
 
   const entries = await readdir(videoDir)
@@ -246,12 +265,26 @@ async function captureVideoFrames(browser) {
   await mkdir(framesDir, { recursive: true })
 
   const page = await browser.newPage()
-  await installPhotoRoutes(page, { libraryDelayMs: 1200 })
+  await page.clock.install()
+  await installPhotoRoutes(page, { libraryDelayMs: 1500 })
   await page.goto(CLIENT_URL, { waitUntil: 'domcontentloaded' })
-  for (let i = 0; i < 12; i++) {
+  await waitForSlideReady(page)
+  const firstId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
+
+  let frame = 0
+  const snap = async () => {
     await page.screenshot({
-      path: join(framesDir, `frame-${String(i).padStart(3, '0')}.png`),
+      path: join(framesDir, `frame-${String(frame++).padStart(3, '0')}.png`),
     })
+  }
+
+  await snap()
+  await page.waitForTimeout(400)
+  await snap()
+  await page.clock.fastForward(DISPLAY_MS)
+  await waitForSlideChange(page, firstId)
+  for (let i = 0; i < 8; i++) {
+    await snap()
     await page.waitForTimeout(250)
   }
   await page.close()
@@ -305,24 +338,48 @@ async function launchBrowser(chromium) {
   }
 }
 
+async function runValidation() {
+  const validateMode =
+    mode === 'all' ? 'all' : mode === 'screenshot' ? 'screenshot' : 'video'
+  await new Promise((resolve, reject) => {
+    const child = spawn(
+      'node',
+      [join(ROOT, 'scripts/ui-preview/validate.mjs'), '--require', validateMode],
+      { cwd: ROOT, stdio: 'inherit' },
+    )
+    child.on('close', (code) => (code === 0 ? resolve() : reject(new Error('validate failed'))))
+    child.on('error', reject)
+  })
+}
+
+async function devServerAlreadyUp() {
+  try {
+    const res = await fetch(CLIENT_URL, { signal: AbortSignal.timeout(2000) })
+    return res.ok || res.status < 500
+  } catch {
+    return false
+  }
+}
+
 async function main() {
   let dev
   const assets = []
 
   try {
-    dev = await runDevServer()
+    dev = (await devServerAlreadyUp()) ? null : await runDevServer()
+    if (!dev) console.log(`using existing dev server at ${CLIENT_URL}`)
     const browser = await launchBrowser(chromium)
     try {
       if (mode === 'screenshot' || mode === 'all') {
         const page = await browser.newPage()
         await installPhotoRoutes(page)
         await page.goto(CLIENT_URL, { waitUntil: 'domcontentloaded' })
-        await waitForPhotoReady(page)
+        await waitForSlideReady(page)
         const path = await captureScreenshot(page)
         assets.push({
           type: 'screenshot',
           path: '.github/ui-preview/app-shell.png',
-          description: 'Fullscreen photo frame with first library photo displayed',
+          description: 'Fullscreen slideshow frame with first photo ready',
         })
         await page.close()
         console.log(`screenshot: ${path}`)
@@ -333,7 +390,8 @@ async function main() {
         assets.push({
           type: 'video',
           path: '.github/ui-preview/app-flow.webm',
-          description: 'Library loading → first photo displayed',
+          description:
+            'Library loading → first photo → auto-advance to next photo (60s timer)',
         })
         console.log(`video: ${path}`)
       }
@@ -343,6 +401,7 @@ async function main() {
 
     await writeManifest(assets)
     console.log(`manifest: ${join(OUT_DIR, 'manifest.json')}`)
+    await runValidation()
   } finally {
     dev?.kill('SIGTERM')
   }

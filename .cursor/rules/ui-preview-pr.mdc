@@ -12,9 +12,11 @@ When you change UI files (`client/src/**`, `client/index.html`, `client/public/*
 
 | Change type | Command | Output |
 | --- | --- | --- |
-| Layout, typography, colors, copy, static states | `cd client && npm run ui:screenshot` | `app-shell.png` |
-| Clicks, navigation, animations, multi-step flows | `cd client && npm run ui:video` | `app-flow.webm` |
-| Both visual and interaction changes | `cd client && npm run ui:preview` | both files |
+| Any UI change (default) | `cd client && npm run ui:preview` | both files + validation |
+| Layout / copy only | `cd client && npm run ui:screenshot` | `app-shell.png` (also refresh video if behavior changed) |
+| Slideshow / navigation / timers | `cd client && npm run ui:preview` | must show slide change in `app-flow.webm` |
+
+**Do not** commit `ui:video` alone after slideshow/timer changes — it produces a ~15KB useless clip. `ui:preview` runs capture then `validate.mjs` (min size/duration).
 
 Run capture **before** committing UI work. Stage `.github/ui-preview/` with the UI files in the same commit.
 

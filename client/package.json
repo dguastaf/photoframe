@@ -13,7 +13,8 @@
     "test:e2e": "node tests/e2e/photo-library-flow.mjs && node tests/e2e/slideshow-flow.mjs",
     "ui:screenshot": "node ../scripts/ui-preview/capture.mjs --mode screenshot",
     "ui:video": "node ../scripts/ui-preview/capture.mjs --mode video",
-    "ui:preview": "node ../scripts/ui-preview/capture.mjs --mode all"
+    "ui:preview": "node ../scripts/ui-preview/capture.mjs --mode all",
+    "ui:validate": "node ../scripts/ui-preview/validate.mjs --require all"
   },
   "dependencies": {
     "react": "^19.2.6",

@@ -22,9 +22,9 @@ import json
 print(json.dumps({
     "additional_context": (
         "UI file edited. Before committing, refresh PR preview assets under "
-        ".github/ui-preview/: use `npm run ui:screenshot` for static visual tweaks "
-        "or `npm run ui:video` for interactions/flows (from client/). Stage the "
-        "updated png/webm in the same commit as the UI change — pre-commit enforces this."
+        ".github/ui-preview/: run `cd client && npm run ui:preview` (not ui:video alone) "
+        "before commit — validates screenshot + slideshow flow video. Stage "
+        ".github/ui-preview/ in the same commit; pre-commit rejects tiny/broken webm."
     )
 }))
 PY

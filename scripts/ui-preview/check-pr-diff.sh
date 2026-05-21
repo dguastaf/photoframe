@@ -36,8 +36,10 @@ if ((${#ASSET_CHANGED[@]} == 0)); then
   echo "" >&2
   echo "Run capture on this branch and commit the assets:" >&2
   echo "  cd client && npm run ui:screenshot" >&2
-  echo "  cd client && npm run ui:video" >&2
+  echo "  cd client && npm run ui:preview   # preferred: screenshot + video + validate" >&2
   exit 1
 fi
+
+node "${ROOT}/scripts/ui-preview/validate.mjs" --require all
 
 exit 0
