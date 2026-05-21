@@ -6,7 +6,7 @@
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { createRequire } from 'node:module'
-import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -135,6 +135,7 @@ async function mockHealth(route, delayMs = 0) {
 async function captureVideoPlaywright(browser) {
   await mkdir(OUT_DIR, { recursive: true })
   const videoDir = join(OUT_DIR, '.recordings')
+  await rm(videoDir, { recursive: true, force: true })
   await mkdir(videoDir, { recursive: true })
 
   const context = await browser.newContext({
@@ -173,7 +174,6 @@ function runFfmpeg(args) {
 async function captureVideoFrames(browser) {
   await mkdir(OUT_DIR, { recursive: true })
   const framesDir = join(OUT_DIR, '.frames')
-  const { rm } = await import('node:fs/promises')
   await rm(framesDir, { recursive: true, force: true })
   await mkdir(framesDir, { recursive: true })
 
