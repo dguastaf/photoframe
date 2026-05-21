@@ -33,8 +33,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as exc:
-        print(f"ERROR: {exc}", file=sys.stderr, flush=True)
-        raise
+    main()

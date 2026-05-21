@@ -11,9 +11,9 @@ source "${ROOT}/scripts/ui-preview/ui-paths.sh"
 STAGED_UI=()
 while IFS= read -r -d '' f; do
   case "$f" in
-    *.test.* | *.spec.* | */test/* | */tests/*) continue ;;
+    *.test.* | *.spec.* | */test/* | */tests/*) ;;
+    *) STAGED_UI+=("$f") ;;
   esac
-  STAGED_UI+=("$f")
 done < <(git diff --cached --name-only -z -- "${UI_PATH_PATTERNS[@]}" 2>/dev/null || true)
 
 if ((${#STAGED_UI[@]} == 0)); then

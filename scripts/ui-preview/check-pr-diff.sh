@@ -17,9 +17,9 @@ fi
 UI_CHANGED=()
 while IFS= read -r f; do
   case "$f" in
-    *.test.* | *.spec.* | */test/* | */tests/*) continue ;;
+    *.test.* | *.spec.* | */test/* | */tests/*) ;;
+    *) UI_CHANGED+=("$f") ;;
   esac
-  UI_CHANGED+=("$f")
 done < <(git diff --name-only "${BASE_REF}...HEAD" -- "${UI_PATH_PATTERNS[@]}" 2>/dev/null || true)
 if ((${#UI_CHANGED[@]} == 0)); then
   exit 0
