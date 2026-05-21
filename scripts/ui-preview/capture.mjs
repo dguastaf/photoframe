@@ -91,19 +91,27 @@ function runDevServer() {
       stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env, BROWSER: 'none' },
     })
-    let ready = false
+    let settled = false
+    const fail = (err) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timeout)
+      child.kill('SIGTERM')
+      reject(err)
+    }
     const onData = (chunk) => {
       const text = chunk.toString()
-      if (!ready && text.includes('Local:')) {
-        ready = true
+      if (!settled && text.includes('Local:')) {
+        settled = true
+        clearTimeout(timeout)
         resolve(child)
       }
     }
     child.stdout.on('data', onData)
     child.stderr.on('data', onData)
-    child.on('error', reject)
-    setTimeout(() => {
-      if (!ready) reject(new Error('Vite dev server did not start in time'))
+    child.on('error', fail)
+    const timeout = setTimeout(() => {
+      fail(new Error('Vite dev server did not start in time'))
     }, 30_000)
   })
 }
@@ -238,10 +246,11 @@ async function launchBrowser(chromium) {
 }
 
 async function main() {
-  const dev = await runDevServer()
+  let dev
   const assets = []
 
   try {
+    dev = await runDevServer()
     const browser = await launchBrowser(chromium)
     try {
       if (mode === 'screenshot' || mode === 'all') {
@@ -281,7 +290,7 @@ async function main() {
     await writeManifest(assets)
     console.log(`manifest: ${join(OUT_DIR, 'manifest.json')}`)
   } finally {
-    dev.kill('SIGTERM')
+    dev?.kill('SIGTERM')
   }
 }
 
