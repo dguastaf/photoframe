@@ -13,6 +13,8 @@ client/tests/
 
 ## Unit tests (Vitest)
 
+CI runs `npm test` in the `client-test` workflow job on every PR and push to `main`.
+
 ```bash
 cd client
 npm test              # single run
@@ -23,7 +25,9 @@ Imports use the `@/` alias to reach `src/` (configured in `vite.config.ts`).
 
 ## E2E: photo library flow (Playwright)
 
-`photo-library-flow.mjs` exercises loading, happy path, API errors, empty library, and Retry. Requires API on **52525** and `npm run dev` on **6389**.
+CI runs `npm run test:e2e` in the `client-e2e` job (mock API on **52525**, Vite dev on **6389**).
+
+`photo-library-flow.mjs` exercises loading, happy path, API errors, empty library, and Retry. Locally, requires API on **52525** and `npm run dev` on **6389**.
 
 ```bash
 cd client
