@@ -85,22 +85,30 @@ jobs:
           CLIENT_URL: http://localhost:6389
         run: |
           set -euo pipefail
-          python server/scripts/ci_client_e2e_stack.py &
+          cd server
+          python scripts/ci_client_e2e_stack.py > ../stack.log 2>&1 &
           STACK_PID=$!
-          cd client
-          npm run dev &
+          cd ../client
+          npm run dev >> ../vite.log 2>&1 &
           VITE_PID=$!
           cleanup() {
             kill "$STACK_PID" "$VITE_PID" 2>/dev/null || true
             wait "$STACK_PID" "$VITE_PID" 2>/dev/null || true
           }
           trap cleanup EXIT
-          for _ in $(seq 1 60); do
-            curl -sf http://127.0.0.1:52525/health >/dev/null && break
+          for _ in $(seq 1 90); do
+            if curl -sf http://127.0.0.1:52525/health >/dev/null; then
+              break
+            fi
+            if ! kill -0 "$STACK_PID" 2>/dev/null; then
+              echo "error: mock API stack exited early" >&2
+              cat ../stack.log >&2 || true
+              exit 1
+            fi
             sleep 1
           done
           curl -sf http://127.0.0.1:52525/health >/dev/null
-          for _ in $(seq 1 60); do
+          for _ in $(seq 1 90); do
             curl -sf http://127.0.0.1:6389/ >/dev/null && break
             sleep 1
           done
