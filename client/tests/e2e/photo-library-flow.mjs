@@ -6,7 +6,10 @@ import { chromium } from 'playwright'
 import {
   baseUrl,
   isPhotoListRequest,
+  mockPhotoImages,
+  mockPhotoLibrary,
   record,
+  SAMPLE_PHOTOS_ONE,
   setupResults,
   shot,
   summarize,
@@ -42,12 +45,17 @@ const context = await browser.newContext({
   await page.close()
 }
 
-// --- 2. Happy path: library + photo ---
+// --- 2. Happy path: library + photo (mocked API) ---
 {
   const page = await context.newPage()
-  await page.goto(baseUrl, { waitUntil: 'networkidle' })
-  const img = page.locator('.photo-display__img:not([hidden])')
-  const ok = await img.waitFor({ timeout: 20000 }).then(() => true).catch(() => false)
+  await mockPhotoLibrary(page, SAMPLE_PHOTOS_ONE)
+  await mockPhotoImages(page)
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' })
+  const ok = await page
+    .locator('[data-photo-id][data-status="ready"]')
+    .waitFor({ timeout: 15000 })
+    .then(() => true)
+    .catch(() => false)
   await shot(page, 'lib-02-happy.png')
   record(results, 'Happy path shows photo', ok)
   await page.close()
@@ -95,14 +103,19 @@ const context = await browser.newContext({
       })
       return
     }
-    await route.continue()
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(SAMPLE_PHOTOS_ONE),
+    })
   })
+  await mockPhotoImages(page)
   await page.goto(baseUrl, { waitUntil: 'networkidle' })
   await page.getByText('Temporary failure (test)').waitFor({ timeout: 5000 })
   fail = false
   await page.getByRole('button', { name: 'Retry' }).click()
   const recovered = await page
-    .locator('.photo-display__img:not([hidden])')
+    .locator('[data-photo-id][data-status="ready"]')
     .waitFor({ timeout: 20000 })
     .then(() => true)
     .catch(() => false)
@@ -194,7 +207,7 @@ const context = await browser.newContext({
   const loading = await page.getByText('Loading photos…').isVisible()
   await shot(page, 'lib-07-double-retry-loading.png')
   const settled = await Promise.race([
-    page.locator('.photo-display__img:not([hidden])').waitFor({ timeout: 15000 }),
+    page.locator('[data-photo-id][data-status="ready"]').waitFor({ timeout: 15000 }),
     page.getByText('No photos in library').waitFor({ timeout: 15000 }),
     page.locator('.frame-message__error').waitFor({ timeout: 15000 }),
   ])

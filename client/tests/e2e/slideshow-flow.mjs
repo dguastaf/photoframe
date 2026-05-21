@@ -35,26 +35,24 @@ async function currentPhotoId(page) {
 // --- 1. Auto-advance ---
 {
   const page = await context.newPage()
-  await mockPhotoLibrary(page, SAMPLE_PHOTOS_TWO)
+  await mockPhotoLibrary(page, SAMPLE_PHOTOS_THREE)
   await mockPhotoImages(page)
+  // Install fake clock before timers are created in the app.
+  await page.clock.install()
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' })
   await waitForSlideReady(page)
   const firstId = await currentPhotoId(page)
-  await page.clock.install()
   await page.clock.fastForward(DISPLAY_MS)
-  const changed = await page
-    .waitForFunction(
-      (id) => {
-        const el = document.querySelector('[data-photo-id]')
-        return el && el.getAttribute('data-photo-id') !== id
-      },
-      firstId,
-      { timeout: 5000 },
-    )
-    .then(() => true)
-    .catch(() => false)
+  await waitForSlideReady(page)
+  const nextId = await currentPhotoId(page)
+  const changed = nextId !== firstId
   await shot(page, 'slide-01-auto-advance.png')
-  record(results, 'Auto-advance changes photo after display interval', changed)
+  record(
+    results,
+    'Auto-advance changes photo after display interval',
+    changed,
+    changed ? `${firstId} → ${nextId}` : `stuck on ${firstId}`,
+  )
   await page.close()
 }
 

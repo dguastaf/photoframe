@@ -13,6 +13,10 @@ export const TINY_PNG = Buffer.from(
   'base64',
 )
 
+export const SAMPLE_PHOTOS_ONE = [
+  { id: 'e2e-photo-1', taken_at: '2026-04-26T11:25:59Z', folder: 'e2e/a' },
+]
+
 export const SAMPLE_PHOTOS_TWO = [
   { id: 'e2e-photo-1', taken_at: '2026-04-26T11:25:59Z', folder: 'e2e/a' },
   { id: 'e2e-photo-2', taken_at: '2026-04-27T11:25:59Z', folder: 'e2e/b' },

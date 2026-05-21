@@ -1,13 +1,8 @@
 {
-  "generatedAt": "2026-05-21T18:10:52.102Z",
-  "gitCommit": "5725d4034e77ff66cd8a2643fc16efb7c309373d",
-  "uiFilesHash": "23be6c459878f17e",
+  "generatedAt": "2026-05-21T22:11:47.342Z",
+  "gitCommit": "304c616c5ff2e3686134eda4305e094c000e574f",
+  "uiFilesHash": "f3c855a4b00bb0f7",
   "assets": [
-    {
-      "type": "screenshot",
-      "path": ".github/ui-preview/app-shell.png",
-      "description": "Fullscreen photo frame with first library photo displayed"
-    },
     {
       "type": "video",
       "path": ".github/ui-preview/app-flow.webm",
