@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { photoImageUrl } from '../../api/photos'
 import { PhotoDisplay } from './photo-display'
 
@@ -50,5 +50,41 @@ describe('PhotoDisplay', () => {
 
     expect(img).not.toHaveAttribute('hidden')
     expect(screen.queryByRole('status', { name: 'Loading photo' })).not.toBeInTheDocument()
+  })
+
+  it('sets data-photo-id on the display root', () => {
+    const { container } = render(<PhotoDisplay photoId="abc123" />)
+    expect(container.querySelector('.photo-display')).toHaveAttribute(
+      'data-photo-id',
+      'abc123',
+    )
+  })
+
+  it('calls onStatusChange when status changes', () => {
+    const onStatusChange = vi.fn()
+    const { container } = render(
+      <PhotoDisplay photoId="abc123" onStatusChange={onStatusChange} />,
+    )
+
+    expect(onStatusChange).toHaveBeenCalledWith('loading')
+
+    fireEvent.load(getImg(container))
+    expect(onStatusChange).toHaveBeenCalledWith('ready')
+
+    fireEvent.error(getImg(container))
+    expect(onStatusChange).toHaveBeenCalledWith('error')
+  })
+
+  it('reports loading again when photoId changes', async () => {
+    const onStatusChange = vi.fn()
+    const { rerender } = render(
+      <PhotoDisplay photoId="a" onStatusChange={onStatusChange} />,
+    )
+    onStatusChange.mockClear()
+
+    rerender(<PhotoDisplay photoId="b" onStatusChange={onStatusChange} />)
+    await waitFor(() => {
+      expect(onStatusChange).toHaveBeenCalledWith('loading')
+    })
   })
 })

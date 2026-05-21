@@ -12,7 +12,8 @@ dist
 dist-ssr
 *.local
 
-# Playwright bug-bash output (keep e2e/bug-bash.mjs)
+# Playwright E2E screenshots
+tests/e2e/screenshots/
 e2e/screenshots/
 
 # Editor directories and files
