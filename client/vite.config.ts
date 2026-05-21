@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { CLIENT_DEV_PORT, SERVER_ORIGIN } from '../config/ports'
@@ -5,6 +6,10 @@ import { CLIENT_DEV_PORT, SERVER_ORIGIN } from '../config/ports'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  test: {
+    environment: 'happy-dom',
+    setupFiles: ['./src/test/setup.ts'],
+  },
   server: {
     port: CLIENT_DEV_PORT,
     strictPort: true,

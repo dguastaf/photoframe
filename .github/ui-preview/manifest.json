@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-05-20T20:29:16.128Z",
-  "gitCommit": "bbeb04b3b5d96ef20751618cb73794c17b36a5f2",
-  "uiFilesHash": "fc558fa0a1acc997",
+  "generatedAt": "2026-05-21T18:10:52.102Z",
+  "gitCommit": "5725d4034e77ff66cd8a2643fc16efb7c309373d",
+  "uiFilesHash": "23be6c459878f17e",
   "assets": [
     {
       "type": "screenshot",
       "path": ".github/ui-preview/app-shell.png",
-      "description": "Main app shell after API connects"
+      "description": "Fullscreen photo frame with first library photo displayed"
     },
     {
       "type": "video",
       "path": ".github/ui-preview/app-flow.webm",
-      "description": "Health check → connected status flow"
+      "description": "Library loading → first photo displayed"
     }
   ]
 }

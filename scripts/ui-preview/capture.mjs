@@ -21,6 +21,27 @@ const PORTS = JSON.parse(
 )
 const CLIENT_URL = `http://${PORTS.clientDevHost}:${PORTS.clientDevPort}`
 
+const apiPathsText = await readFile(join(ROOT, 'config/api-paths.ts'), 'utf8')
+const apiV0PrefixMatch = apiPathsText.match(
+  /export const API_V0_PREFIX = ['"]([^'"]+)['"]/,
+)
+const API_V0_PREFIX = apiV0PrefixMatch?.[1] ?? '/api/v0'
+const PHOTOS_PATH = `${API_V0_PREFIX}/photos`
+
+const SAMPLE_PHOTOS = [
+  {
+    id: 'ui-preview-photo-1',
+    taken_at: '2026-04-26T11:25:59Z',
+    folder: 'ui-preview/sample',
+  },
+]
+
+/** 1×1 PNG for mocked image responses */
+const TINY_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z4BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
+)
+
 const mode = (() => {
   const idx = process.argv.indexOf('--mode')
   return idx >= 0 ? process.argv[idx + 1] : 'all'
@@ -141,13 +162,42 @@ async function captureScreenshot(page) {
   return path
 }
 
-async function mockHealth(route, delayMs = 0) {
-  if (delayMs > 0) await new Promise((r) => setTimeout(r, delayMs))
-  await route.fulfill({
-    status: 200,
-    contentType: 'application/json',
-    body: JSON.stringify({ ok: true }),
+async function installPhotoRoutes(page, { libraryDelayMs = 0 } = {}) {
+  await page.route(`**${PHOTOS_PATH}**`, async (route) => {
+    const url = route.request().url()
+    if (route.request().method() !== 'GET') {
+      await route.continue()
+      return
+    }
+    if (url.includes('/image')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'image/png',
+        body: TINY_PNG,
+      })
+      return
+    }
+    if (libraryDelayMs > 0) {
+      await new Promise((r) => setTimeout(r, libraryDelayMs))
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(SAMPLE_PHOTOS),
+    })
   })
+}
+
+async function waitForPhotoReady(page) {
+  await page.getByText('Loading photos…').waitFor({ timeout: 8000 }).catch(() => {})
+  await page.waitForFunction(
+    () => {
+      const img = document.querySelector('.photo-display__img')
+      return img instanceof HTMLImageElement && !img.hidden
+    },
+    { timeout: 20_000 },
+  )
+  await page.waitForTimeout(400)
 }
 
 async function captureVideoPlaywright(browser) {
@@ -160,10 +210,10 @@ async function captureVideoPlaywright(browser) {
     recordVideo: { dir: videoDir, size: { width: 1280, height: 720 } },
   })
   const page = await context.newPage()
-  await page.route('**/health', (route) => mockHealth(route, 400))
-  await page.goto(CLIENT_URL, { waitUntil: 'networkidle' })
-  await page.waitForSelector('text=API connected', { timeout: 10_000 })
-  await page.waitForTimeout(800)
+  await installPhotoRoutes(page, { libraryDelayMs: 1200 })
+  await page.goto(CLIENT_URL, { waitUntil: 'domcontentloaded' })
+  await waitForPhotoReady(page)
+  await page.waitForTimeout(1000)
   await context.close()
 
   const entries = await readdir(videoDir)
@@ -196,15 +246,7 @@ async function captureVideoFrames(browser) {
   await mkdir(framesDir, { recursive: true })
 
   const page = await browser.newPage()
-  let connected = false
-  await page.route('**/health', async (route) => {
-    if (!connected) {
-      await mockHealth(route, 600)
-      connected = true
-      return
-    }
-    await mockHealth(route)
-  })
+  await installPhotoRoutes(page, { libraryDelayMs: 1200 })
   await page.goto(CLIENT_URL, { waitUntil: 'domcontentloaded' })
   for (let i = 0; i < 12; i++) {
     await page.screenshot({
@@ -273,14 +315,14 @@ async function main() {
     try {
       if (mode === 'screenshot' || mode === 'all') {
         const page = await browser.newPage()
-        await page.route('**/health', (route) => mockHealth(route))
-        await page.goto(CLIENT_URL, { waitUntil: 'networkidle' })
-        await page.waitForSelector('text=API connected', { timeout: 10_000 })
+        await installPhotoRoutes(page)
+        await page.goto(CLIENT_URL, { waitUntil: 'domcontentloaded' })
+        await waitForPhotoReady(page)
         const path = await captureScreenshot(page)
         assets.push({
           type: 'screenshot',
           path: '.github/ui-preview/app-shell.png',
-          description: 'Main app shell after API connects',
+          description: 'Fullscreen photo frame with first library photo displayed',
         })
         await page.close()
         console.log(`screenshot: ${path}`)
@@ -291,7 +333,7 @@ async function main() {
         assets.push({
           type: 'video',
           path: '.github/ui-preview/app-flow.webm',
-          description: 'Health check → connected status flow',
+          description: 'Library loading → first photo displayed',
         })
         console.log(`video: ${path}`)
       }
