@@ -1,13 +1,8 @@
 {
-  "generatedAt": "2026-05-21T22:26:49.068Z",
-  "gitCommit": "f117e4faadd4a48786c9da05d9a7be2eb7bed166",
+  "generatedAt": "2026-05-21T22:31:58.742Z",
+  "gitCommit": "aabf17600c9ca32a29e137e723fbcad447140e24",
   "uiFilesHash": "6fd512901dad900b",
   "assets": [
-    {
-      "type": "screenshot",
-      "path": ".github/ui-preview/app-shell.png",
-      "description": "Fullscreen slideshow frame with first photo ready"
-    },
     {
       "type": "video",
       "path": ".github/ui-preview/app-flow.webm",

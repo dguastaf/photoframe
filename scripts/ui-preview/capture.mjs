@@ -39,10 +39,16 @@ const SAMPLE_PHOTOS = [
 
 const DISPLAY_MS = 60_000
 
-/** 1×1 PNG for mocked image responses */
-const TINY_PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z4BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
-  'base64',
+const FIXTURES_DIR = join(__dirname, 'fixtures')
+
+/** Full-size gradients so screenshots/video frames are visible on the black shell. */
+const MOCK_IMAGE_BODIES = Object.fromEntries(
+  await Promise.all(
+    SAMPLE_PHOTOS.map(async (photo, i) => {
+      const buf = await readFile(join(FIXTURES_DIR, `mock-photo-${i + 1}.png`))
+      return [photo.id, buf]
+    }),
+  ),
 )
 
 const mode = (() => {
@@ -173,10 +179,15 @@ async function installPhotoRoutes(page, { libraryDelayMs = 0 } = {}) {
       return
     }
     if (url.includes('/image')) {
+      const idMatch = url.match(/\/photos\/([^/?]+)\/image/)
+      const photoId = idMatch?.[1]
+      const body =
+        (photoId && MOCK_IMAGE_BODIES[photoId]) ||
+        MOCK_IMAGE_BODIES[SAMPLE_PHOTOS[0].id]
       await route.fulfill({
         status: 200,
         contentType: 'image/png',
-        body: TINY_PNG,
+        body,
       })
       return
     }

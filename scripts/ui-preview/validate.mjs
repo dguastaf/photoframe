@@ -3,7 +3,7 @@
  * Validates ui-preview assets are present and large enough to be useful in PRs.
  * Usage: node validate.mjs [--require screenshot|video|all]
  */
-import { access, stat } from 'node:fs/promises'
+import { access, open, stat } from 'node:fs/promises'
 import { spawn } from 'node:child_process'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -14,8 +14,10 @@ const OUT_DIR = join(ROOT, '.github/ui-preview')
 
 /** VP9 WebM is small; duration (ffprobe) is the primary gate for slideshow flows. */
 const MIN_WEBM_BYTES = 18_000
-/** Dark fullscreen frame with 1×1 mock image compresses heavily. */
-const MIN_PNG_BYTES = 3_500
+/** Fullscreen frame with 1280×720 mock gradients (empty/black shells are ~4KB). */
+const MIN_PNG_BYTES = 15_000
+const MIN_PNG_WIDTH = 1280
+const MIN_PNG_HEIGHT = 720
 /** When ffprobe is available, require at least this many seconds of video. */
 const MIN_WEBM_SECONDS = 4
 
@@ -27,6 +29,18 @@ const mode = (() => {
 async function fileSize(path) {
   const s = await stat(path)
   return s.size
+}
+
+async function pngDimensions(path) {
+  const fh = await open(path, 'r')
+  try {
+    const buf = Buffer.alloc(24)
+    await fh.read(buf, 0, 24, 0)
+    if (buf.toString('ascii', 1, 4) !== 'PNG') return null
+    return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) }
+  } finally {
+    await fh.close()
+  }
 }
 
 async function fileExists(path) {
@@ -98,7 +112,19 @@ async function main() {
         'app-shell.png',
         join(OUT_DIR, 'app-shell.png'),
         MIN_PNG_BYTES,
-        null,
+        async (path) => {
+          const extra = []
+          const dims = await pngDimensions(path)
+          if (
+            dims &&
+            (dims.width < MIN_PNG_WIDTH || dims.height < MIN_PNG_HEIGHT)
+          ) {
+            extra.push(
+              `app-shell.png dimensions ${dims.width}×${dims.height} (need >= ${MIN_PNG_WIDTH}×${MIN_PNG_HEIGHT}). Re-run capture with visible mock photos.`,
+            )
+          }
+          return extra
+        },
       )),
     )
   }

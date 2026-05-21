@@ -33,6 +33,7 @@ Vite is started automatically (or reused if already on port 6389). API routes ar
 - Running **`ui:video` only** after slideshow work → tiny WebM (~15KB) with no slide change; useless in PRs.
 - **`ui:screenshot` only** → video stays stale.
 - Dev server port conflict → capture fails mid-run; commit truncated WebM.
+- **1×1 mock photo bytes** → `app-shell.png` looks empty (~4KB black frame). Capture uses `scripts/ui-preview/fixtures/mock-photo-*.png` (1280×720 gradients) instead.
 
 `ui:preview` records library load, first photo, then **fast-forwards the 60s timer** to show auto-advance. Validation fails if `app-flow.webm` &lt; 40KB or &lt; 3s (when `ffprobe` is available).
 
