@@ -1,0 +1,36 @@
+---
+description: Require screenshots or videos on PRs when UI files change
+globs: client/**/*
+alwaysApply: false
+---
+
+# UI preview assets for pull requests
+
+When you change UI files (`client/src/**`, `client/index.html`, `client/public/**`), every commit must include refreshed assets under `.github/ui-preview/`. Pre-commit blocks commits that skip this.
+
+## Screenshot vs video
+
+| Change type | Command | Output |
+| --- | --- | --- |
+| Layout, typography, colors, copy, static states | `cd client && npm run ui:screenshot` | `app-shell.png` |
+| Clicks, navigation, animations, multi-step flows | `cd client && npm run ui:video` | `app-flow.webm` |
+| Both visual and interaction changes | `cd client && npm run ui:preview` | both files |
+
+Run capture **before** committing UI work. Stage `.github/ui-preview/` with the UI files in the same commit.
+
+## Opening / updating a PR
+
+1. Ensure latest commits that touch UI also updated preview assets.
+2. In the PR description, embed the assets so reviewers see them immediately:
+
+```markdown
+## UI preview
+![App shell](.github/ui-preview/app-shell.png)
+https://github.com/OWNER/REPO/blob/BRANCH/.github/ui-preview/app-flow.webm
+```
+
+Replace `OWNER`, `REPO`, and `BRANCH` with the actual values (or use relative paths if your host renders them).
+
+3. Do not open a PR with UI-only changes and no updated preview files — CI will fail.
+
+First-time setup on a machine: `npx playwright install chromium` from `client/`.

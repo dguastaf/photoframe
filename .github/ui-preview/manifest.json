@@ -1,0 +1,17 @@
+{
+  "generatedAt": "2026-05-20T20:29:16.128Z",
+  "gitCommit": "bbeb04b3b5d96ef20751618cb73794c17b36a5f2",
+  "uiFilesHash": "fc558fa0a1acc997",
+  "assets": [
+    {
+      "type": "screenshot",
+      "path": ".github/ui-preview/app-shell.png",
+      "description": "Main app shell after API connects"
+    },
+    {
+      "type": "video",
+      "path": ".github/ui-preview/app-flow.webm",
+      "description": "Health check → connected status flow"
+    }
+  ]
+}
