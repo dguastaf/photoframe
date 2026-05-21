@@ -31,11 +31,10 @@ async function listUiFiles(dir, acc = []) {
   for (const entry of entries) {
     const full = join(dir, entry.name)
     if (entry.isDirectory()) {
-      if (entry.name === 'node_modules' || entry.name === 'dist') continue
-      await listUiFiles(full, acc)
-      continue
-    }
-    if (/\.(tsx|ts|css|html|svg)$/.test(entry.name)) {
+      if (entry.name !== 'node_modules' && entry.name !== 'dist') {
+        await listUiFiles(full, acc)
+      }
+    } else if (/\.(tsx|ts|css|html|svg)$/.test(entry.name)) {
       acc.push(full)
     }
   }
