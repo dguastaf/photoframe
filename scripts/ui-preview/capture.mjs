@@ -255,13 +255,7 @@ async function main() {
     try {
       if (mode === 'screenshot' || mode === 'all') {
         const page = await browser.newPage()
-        await page.route('**/health', async (route) => {
-          await route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify({ ok: true }),
-          })
-        })
+        await page.route('**/health', (route) => mockHealth(route))
         await page.goto(CLIENT_URL, { waitUntil: 'networkidle' })
         await page.waitForSelector('text=API connected', { timeout: 10_000 })
         const path = await captureScreenshot(page)
