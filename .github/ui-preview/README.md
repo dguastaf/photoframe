@@ -25,6 +25,7 @@ git add .github/ui-preview/
 | `npm run ui:screenshot` | Static frame only |
 | `npm run ui:video` | Flow video (loading → photo → slide change) |
 | `npm run ui:validate` | Check existing assets without re-capturing |
+| `npm run ui:embed` | Print PR description markdown (correct raw screenshot URL) |
 
 Vite is started automatically (or reused if already on port 6389). API routes are mocked; the server does not need to run.
 
@@ -41,10 +42,8 @@ Vite is started automatically (or reused if already on port 6389). API routes ar
 
 Commit these files on your branch. Embed in the PR description:
 
-```markdown
-## UI preview
-![App shell](https://raw.githubusercontent.com/OWNER/REPO/BRANCH/.github/ui-preview/app-shell.png)
-https://github.com/OWNER/REPO/blob/BRANCH/.github/ui-preview/app-flow.webm
+```bash
+cd client && npm run ui:embed
 ```
 
-Use `raw.githubusercontent.com` for the PNG — relative paths show as broken images in PR descriptions.
+Paste the printed block into the PR. **Do not** hand-write `![...](.github/ui-preview/app-shell.png)` — GitHub does not render that in PR bodies. CI runs `lint-docs-embed.sh` to block relative image links in repo docs.

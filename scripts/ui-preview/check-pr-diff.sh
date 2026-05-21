@@ -48,4 +48,10 @@ fi
 
 node "${ROOT}/scripts/ui-preview/validate.mjs" --require all
 
+"${ROOT}/scripts/ui-preview/lint-docs-embed.sh"
+
+echo ""
+echo "PR description embed (paste into PR — screenshot must use raw.githubusercontent.com):"
+node "${ROOT}/scripts/ui-preview/pr-embed.mjs" || true
+
 exit 0

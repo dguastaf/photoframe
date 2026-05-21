@@ -23,16 +23,14 @@ Run capture **before** committing UI work. Stage `.github/ui-preview/` with the 
 ## Opening / updating a PR
 
 1. Ensure latest commits that touch UI also updated preview assets.
-2. In the PR description, embed the assets so reviewers see them immediately:
+2. **Never** paste `![...](.github/ui-preview/app-shell.png)` — GitHub shows a broken image. After capture, run:
 
-```markdown
-## UI preview
-![App shell](https://raw.githubusercontent.com/OWNER/REPO/BRANCH/.github/ui-preview/app-shell.png)
-https://github.com/OWNER/REPO/blob/BRANCH/.github/ui-preview/app-flow.webm
+```bash
+cd client && npm run ui:embed
 ```
 
-Use **`raw.githubusercontent.com`** for the screenshot — relative `.github/...` paths do not render in GitHub PR descriptions.
+Copy the printed block into the PR description (screenshot uses `raw.githubusercontent.com`). `ui:preview` prints the same block when capture finishes.
 
-3. Do not open a PR with UI-only changes and no updated preview files — CI will fail.
+3. Do not open a PR with UI-only changes and no updated preview files — CI will fail. CI also fails if docs reintroduce relative `.github/ui-preview/` image links (`lint-docs-embed.sh`).
 
 First-time setup on a machine: `npx playwright install chromium` from `client/`.

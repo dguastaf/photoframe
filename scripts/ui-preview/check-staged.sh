@@ -52,4 +52,12 @@ fi
 # Reject tiny/broken captures (e.g. video-only run that skipped slideshow).
 node "${ROOT}/scripts/ui-preview/validate.mjs" --require all
 
+"${ROOT}/scripts/ui-preview/lint-docs-embed.sh"
+
+if ((${#STAGED_ASSETS[@]} > 0)); then
+  echo "" >&2
+  echo "PR description embed (paste into PR — do not use relative .github/ image paths):" >&2
+  node "${ROOT}/scripts/ui-preview/pr-embed.mjs" >&2 || true
+fi
+
 exit 0

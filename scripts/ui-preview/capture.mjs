@@ -413,6 +413,10 @@ async function main() {
     await writeManifest(assets)
     console.log(`manifest: ${join(OUT_DIR, 'manifest.json')}`)
     await runValidation()
+    if (assets.length > 0) {
+      const { printPrEmbedInstructions } = await import('./pr-embed.mjs')
+      printPrEmbedInstructions()
+    }
   } finally {
     dev?.kill('SIGTERM')
   }
