@@ -1,33 +1,69 @@
-import { useEffect, useState } from 'react'
-import { SERVER_PORT } from '../../config/ports'
-import { getHealth } from './features/health/health'
+import { useCallback, useEffect, useState } from 'react'
+import { getPhotos } from './features/photos/api/photos'
+import { FrameMessage } from './features/photos/components/photo-frame/frame-message'
+import { PhotoFrame } from './features/photos/components/photo-frame/photo-frame'
+import { PhotoDisplay } from './features/photos/components/photo-display/photo-display'
 import { ApiError } from './lib/api-client'
-import './App.css'
+import type { PhotoMetadata } from './types/api'
 
-// TODO: extract health-status UI and fetch logic into a dedicated component
 function App() {
-  const [status, setStatus] = useState('Checking API…')
+  const [photos, setPhotos] = useState<PhotoMetadata[] | null>(null)
+  const [libraryError, setLibraryError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [refreshKey, setRefreshKey] = useState(0)
 
-  useEffect(() => {
-    getHealth()
-      .then((body) => {
-        setStatus(body.ok ? 'API connected' : 'API unhealthy')
-      })
-      .catch((err: unknown) => {
-        const unreachable = `API unreachable — start the server on port ${SERVER_PORT}`
-        if (err instanceof ApiError && !err.isNetworkFailure) {
-          setStatus(err.detail)
-        } else {
-          setStatus(unreachable)
-        }
-      })
+  const hasPhotos = (photos?.length ?? 0) > 0
+  const showFrameMessage = loading || !!libraryError || !hasPhotos
+
+  const loadPhotos = useCallback(() => {
+    setPhotos(null)
+    setLibraryError(null)
+    setLoading(true)
+    setRefreshKey((k) => k + 1)
   }, [])
 
+  useEffect(() => {
+    const ac = new AbortController()
+
+    getPhotos({ signal: ac.signal })
+      .then((list) => {
+        if (ac.signal.aborted) return
+        setPhotos(list)
+        setLibraryError(null)
+      })
+      .catch((err: unknown) => {
+        if (ac.signal.aborted) return
+        
+        setPhotos(null)
+        
+        const message =
+          err instanceof ApiError ? err.detail : 'Failed to load photo library'
+        setLibraryError(message)
+      })
+      .finally(() => {
+        if (ac.signal.aborted) return
+        setLoading(false)
+      })
+
+    return () => ac.abort()
+  }, [refreshKey])
+
+  if (showFrameMessage) {
+    return (
+      <FrameMessage
+        loading={loading}
+        error={libraryError}
+        hasPhotos={hasPhotos}
+        onRetry={loadPhotos}
+      />
+    )
+  }
+
+  const photo = photos![0]
   return (
-    <main className="app">
-      <h1>Photoframe</h1>
-      <p className="status">{status}</p>
-    </main>
+    <PhotoFrame>
+      <PhotoDisplay key={photo.id} photoId={photo.id} />
+    </PhotoFrame>
   )
 }
 
