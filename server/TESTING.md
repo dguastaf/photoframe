@@ -1,5 +1,7 @@
 # WhPhotoframe testing plan
 
+CI runs pytest in the **`server-test`** workflow job on every PR and push to `main`.
+
 Two kinds of tests. Integration tests always go through the **Photoframe REST API** on a **running server** — never call Photoprism directly from pytest.
 
 ```mermaid
