@@ -92,6 +92,7 @@ function runDevServer() {
     })
     let settled = false
     let timeout
+    let output = ''
     const fail = (err) => {
       if (settled) return
       settled = true
@@ -101,6 +102,7 @@ function runDevServer() {
     }
     const onData = (chunk) => {
       const text = chunk.toString()
+      if (!settled) output += text
       if (!settled && text.includes('Local:')) {
         settled = true
         clearTimeout(timeout)
@@ -110,6 +112,21 @@ function runDevServer() {
     child.stdout.on('data', onData)
     child.stderr.on('data', onData)
     child.on('error', fail)
+    child.on('close', (code, signal) => {
+      if (settled) return
+      const detail = output.trim().slice(-800)
+      const reason =
+        code != null && code !== 0
+          ? `exited with code ${code}`
+          : signal
+            ? `terminated by signal ${signal}`
+            : 'exited before ready'
+      fail(
+        new Error(
+          `Vite dev server ${reason}${detail ? `\n${detail}` : ''}`,
+        ),
+      )
+    })
     timeout = setTimeout(() => {
       fail(new Error('Vite dev server did not start in time'))
     }, 30_000)
