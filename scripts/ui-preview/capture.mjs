@@ -22,8 +22,11 @@ const PORTS = JSON.parse(
 const CLIENT_URL = `http://${PORTS.clientDevHost}:${PORTS.clientDevPort}`
 
 const apiPathsText = await readFile(join(ROOT, 'config/api-paths.ts'), 'utf8')
-const photosPathMatch = apiPathsText.match(/PHOTOS_PATH = `([^`]+)`/)
-const PHOTOS_PATH = photosPathMatch?.[1] ?? '/api/v0/photos'
+const apiV0PrefixMatch = apiPathsText.match(
+  /export const API_V0_PREFIX = ['"]([^'"]+)['"]/,
+)
+const API_V0_PREFIX = apiV0PrefixMatch?.[1] ?? '/api/v0'
+const PHOTOS_PATH = `${API_V0_PREFIX}/photos`
 
 const SAMPLE_PHOTOS = [
   {
