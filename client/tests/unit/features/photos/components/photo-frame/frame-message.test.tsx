@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { FrameMessage } from './frame-message'
+import { FrameMessage } from '@/features/photos/components/photo-frame/frame-message'
 
 describe('FrameMessage', () => {
   it('shows loading spinner and copy while loading', () => {

@@ -1,6 +1,7 @@
 /**
- * Manual bug-bash harness: run with API on 52525 and `npm run dev` on 6389.
- * Usage (from client/): npm install --no-save playwright && node e2e/bug-bash.mjs
+ * Playwright e2e: photo library load, display, errors, empty state, and Retry.
+ * Requires API on 52525 and `npm run dev` on 6389.
+ * Usage (from client/): npx playwright install chromium && npm run test:e2e
  */
 import { chromium } from 'playwright'
 import fs from 'node:fs'

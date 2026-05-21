@@ -22,6 +22,6 @@ Before creating a pull request (`gh pr create`, "open a PR", or similar):
 
 The subagent performs a **full pre-PR review**: architecture, **tests**, and **security** (not lint—CI handles that). It infers scaffolding vs production-ready from the repo and calibrates pass/concern/fail accordingly.
 
-Before delegating, run `pytest` under `server/` when the diff touches tested code so the subagent can interpret failures.
+Before delegating, run `pytest` under `server/` when the diff touches tested code, and `npm test` under `client/` when the diff touches client code or tests, so the subagent can interpret failures.
 
 When the branch changes UI files, confirm `.github/ui-preview/` has fresh `app-shell.png` and/or `app-flow.webm` and mention them in the PR description before opening the PR.

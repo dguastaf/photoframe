@@ -51,10 +51,18 @@ Score **every row** as `pass`, `concern`, or `fail` under **Architecture** in th
 
 **Inner-workings (do not fail when scaffolding):** unimplemented adapter methods, inline route placeholders, missing tests for unwired surfaces, unused config keys—use `concern` + follow-up when they threaten boundaries.
 
+## Client test layout (required)
+
+- **Production:** `client/src/` only — no `*.test.*`, `*.spec.*`, or `client/src/test/`.
+- **Tests:** `client/tests/` — Vitest unit tests under `tests/unit/`, Playwright harness under `tests/e2e/`, shared setup in `tests/setup.ts`.
+- Imports from production code use the `@/` alias (see `client/vite.config.ts`).
+
+If the diff adds or moves tests into `client/src/`, that is a **required fix** (relocate to `client/tests/`). See `client/TESTING.md`.
+
 ## Review steps
 
 1. Read the **full branch diff** (server, tests, CI, Docker, client, docs as touched).
-2. Run `pytest` under `server/` when the change affects tested code.
+2. Run `pytest` under `server/` when the change affects tested code; run `npm test` under `client/` when client behavior or tests change.
 3. Infer maturity per area, then score the table above.
 4. Apply user-level **tests** and **security** checklists with the same calibration.
 

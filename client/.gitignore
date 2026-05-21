@@ -12,8 +12,8 @@ dist
 dist-ssr
 *.local
 
-# Playwright bug-bash output (keep e2e/bug-bash.mjs)
-e2e/screenshots/
+# Playwright e2e output (keep tests/e2e/photo-library-flow.mjs)
+tests/e2e/screenshots/
 
 # Editor directories and files
 .vscode/*
