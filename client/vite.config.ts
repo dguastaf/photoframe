@@ -28,4 +28,12 @@ export default defineConfig({
       '/health': SERVER_ORIGIN,
     },
   },
+  preview: {
+    port: CLIENT_DEV_PORT,
+    strictPort: true,
+    proxy: {
+      '/api': SERVER_ORIGIN,
+      '/health': SERVER_ORIGIN,
+    },
+  },
 })
