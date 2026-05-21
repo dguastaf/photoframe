@@ -25,7 +25,7 @@ Imports use the `@/` alias to reach `src/` (configured in `vite.config.ts`).
 
 ## E2E: photo library flow (Playwright)
 
-CI runs `npm run test:e2e` in the `client-e2e` job (mock API on **52525**, Vite dev on **6389**).
+CI runs `npm run test:e2e` in the `client-e2e` job (mock API on **52525**, Vite preview on **6389**).
 
 `photo-library-flow.mjs` exercises loading, happy path, API errors, empty library, and Retry. Locally, requires API on **52525** and `npm run dev` on **6389**.
 
