@@ -22,8 +22,8 @@ Two flows under `tests/e2e/`:
 **Prerequisites**
 
 - Vite dev server on **6389**: `npm run dev` (from `client/`)
-- `photo-library-flow` scenarios 2 and 4–7 also need the API on **52525** (or rely on mocked routes where noted)
-- `slideshow-flow` mocks all API routes — **dev server only**
+- Both flows mock `GET /api/v0/photos` and image routes via Playwright — **API on 52525 is not required**
+- Scenario 1 in `photo-library-flow` uses a delayed real proxy response (still works without Photoprism if the list route is mocked elsewhere)
 
 ```bash
 cd client

@@ -11,17 +11,17 @@ function App() {
   const { status, photos, error, retry } = usePhotoLibrary()
   const photoIds = useMemo(() => photos?.map((p) => p.id) ?? [], [photos])
   const { currentId, goNext } = useShuffleCursor(photoIds)
-  const [imageLoading, setImageLoading] = useState(true)
+  const [slideshowPaused, setSlideshowPaused] = useState(true)
 
   const handlePhotoStatusChange = useCallback((s: PhotoDisplayStatus) => {
-    setImageLoading(s === 'loading')
+    setSlideshowPaused(s !== 'ready')
   }, [])
 
   const showSlideshow = status === 'ready' && photoIds.length > 0
 
   useSlideshowTimer({
     onTick: goNext,
-    paused: imageLoading,
+    paused: slideshowPaused,
     enabled: showSlideshow,
     resetKey: currentId,
   })
