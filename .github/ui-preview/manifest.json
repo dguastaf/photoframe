@@ -1,17 +1,12 @@
 {
-  "generatedAt": "2026-05-21T22:44:38.457Z",
-  "gitCommit": "e26f5b4b76a2838e9ec0fa9712ca240e54d03578",
-  "uiFilesHash": "3eae15a4bd709a92",
+  "generatedAt": "2026-05-22T22:47:59.056Z",
+  "gitCommit": "cdf3b9cc30f4eb119667fecd6d9c36644c43296a",
+  "uiFilesHash": "ceea3d2f4955289b",
   "assets": [
     {
       "type": "screenshot",
       "path": ".github/ui-preview/app-shell.png",
       "description": "Fullscreen slideshow frame with first photo ready"
-    },
-    {
-      "type": "video",
-      "path": ".github/ui-preview/app-flow.webm",
-      "description": "Library loading → first photo → auto-advance to next photo (60s timer)"
     }
   ]
 }

@@ -15,17 +15,17 @@ export function usePhotosQuery() {
     }
   }, [])
 
-  const { status, data, error, retry } = useAsyncResource(run)
+  const { status, data, error, retry, refresh } = useAsyncResource(run)
 
   useEffect(() => {
     if (status !== 'success') return
 
     const id = window.setTimeout(() => {
-      retry()
+      refresh()
     }, LIBRARY_REFRESH_MS)
 
     return () => window.clearTimeout(id)
-  }, [status, data, retry])
+  }, [status, data, refresh])
 
   return { status, data, error, retry }
 }
