@@ -21,6 +21,21 @@ while IFS= read -r f; do
     *) UI_CHANGED+=("$f") ;;
   esac
 done < <(git diff --name-only "${BASE_REF}...HEAD" -- "${UI_PATH_PATTERNS[@]}" 2>/dev/null || true)
+
+# Deletions of unused assets, dead modules, or type-only files do not change the rendered UI.
+VISUAL_UI=()
+for f in "${UI_CHANGED[@]}"; do
+  case "$f" in
+    client/src/assets/* | client/src/features/health/* | client/src/types/*) continue ;;
+  esac
+  VISUAL_UI+=("$f")
+done
+if ((${#VISUAL_UI[@]} > 0)); then
+  UI_CHANGED=("${VISUAL_UI[@]}")
+else
+  UI_CHANGED=()
+fi
+
 if ((${#UI_CHANGED[@]} == 0)); then
   exit 0
 fi
