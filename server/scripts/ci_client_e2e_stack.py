@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import signal
 import sys
 from pathlib import Path
@@ -11,6 +12,10 @@ from pathlib import Path
 SERVER_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SERVER_ROOT))
 sys.path.insert(0, str(SERVER_ROOT / "tests"))
+
+# Required before importing app.config (module-level Settings()).
+os.environ.setdefault("PHOTOPRISM_BASE_URL", "http://127.0.0.1:9")
+os.environ.setdefault("PHOTOPRISM_TOKEN", "ci-e2e-token")
 
 from app.ports import SERVER_ORIGIN, SERVER_PORT
 from support.photoframe_stack import PhotoframeTestStack
