@@ -5,7 +5,6 @@
 !server/
 !client/
 !config/
-!docker/
 
 # Server dev artifacts (aligned with server/.dockerignore)
 server/__pycache__/

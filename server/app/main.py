@@ -1,8 +1,11 @@
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.api import api_router
 from app.api import health
@@ -47,3 +50,24 @@ if settings.cors_origins:
 
 app.include_router(health.router)
 app.include_router(api_router)
+
+
+def _mount_static_ui(application: FastAPI) -> None:
+    """Serve the built React app in Docker (PHOTOFRAME_STATIC_DIR).
+
+    Mount after API routers: Starlette matches routes in registration order, so
+    /health and /api/* are handled first; this catch-all only serves UI assets.
+    """
+    static_root = os.environ.get("PHOTOFRAME_STATIC_DIR")
+    if not static_root:
+        return
+    static_path = Path(static_root)
+    if static_path.is_dir():
+        application.mount(
+            "/",
+            StaticFiles(directory=static_path, html=True),
+            name="ui",
+        )
+
+
+_mount_static_ui(app)

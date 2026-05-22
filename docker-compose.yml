@@ -1,5 +1,5 @@
 services:
-  app:
+  server:
     build: .
     pull_policy: build
     env_file: .env

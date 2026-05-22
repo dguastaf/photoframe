@@ -7,30 +7,23 @@ RUN cd client && npm ci
 COPY client/ ./client/
 RUN cd client && npm run build
 
-# Runtime: API + nginx UI on one port
+# Runtime: API + built UI on one port (Immich-style single service)
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
-
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends nginx \
-    && rm -rf /var/lib/apt/lists/* /etc/nginx/sites-enabled/default
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PHOTOFRAME_STATIC_DIR=/app/web
 
 WORKDIR /app
 COPY server/pyproject.toml ./
 COPY server/app/ ./app/
 COPY config/ports.json /config/ports.json
 RUN pip install .
-
-COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=client-build /app/client/dist /usr/share/nginx/html
-COPY docker/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+COPY --from=client-build /app/client/dist /app/web
 
 WORKDIR /srv
 EXPOSE 6389
 
-ENTRYPOINT ["/entrypoint.sh"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "6389", "--workers", "1"]
