@@ -5,6 +5,11 @@ import { ApiError } from '@/lib/api-client'
 import type { PhotoMetadata } from '@/types/api'
 import { usePhotosQuery } from '@/features/photos/hooks/usePhotosQuery'
 
+vi.mock('@/features/photos/constants', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/photos/constants')>()
+  return { ...actual, LIBRARY_REFRESH_MS: 1_000 }
+})
+
 vi.mock('@/features/photos/api/photos', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/photos/api/photos')>()
   return { ...actual, getPhotos: vi.fn() }
@@ -22,6 +27,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.clearAllMocks()
+  vi.useRealTimers()
 })
 
 describe('usePhotosQuery', () => {
@@ -74,6 +80,75 @@ describe('usePhotosQuery', () => {
     renderHook(() => usePhotosQuery())
     await waitFor(() => expect(mockedGetPhotos).toHaveBeenCalled())
     expect(mockedGetPhotos.mock.calls[0]?.[0]?.signal).toBeInstanceOf(AbortSignal)
+  })
+
+  it('refetches the library after the refresh interval', async () => {
+    vi.useFakeTimers()
+    const refreshed: PhotoMetadata[] = [
+      { id: 'photo-2', taken_at: '2026-04-27T11:25:59Z', folder: 'new' },
+    ]
+    let resolveRefresh!: (value: PhotoMetadata[]) => void
+    const refreshPending = new Promise<PhotoMetadata[]>((resolve) => {
+      resolveRefresh = resolve
+    })
+    mockedGetPhotos
+      .mockResolvedValueOnce(samplePhotos)
+      .mockImplementationOnce(() => refreshPending)
+
+    const { result } = renderHook(() => usePhotosQuery())
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(result.current.status).toBe('success')
+    expect(mockedGetPhotos).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000)
+      await Promise.resolve()
+    })
+    expect(result.current.status).toBe('loading')
+    expect(result.current.data).toBeNull()
+
+    await act(async () => {
+      resolveRefresh(refreshed)
+      await Promise.resolve()
+    })
+    expect(result.current.status).toBe('success')
+    expect(result.current.data).toEqual(refreshed)
+    expect(mockedGetPhotos).toHaveBeenCalledTimes(2)
+  })
+
+  it('reschedules refresh after a manual retry', async () => {
+    vi.useFakeTimers()
+    mockedGetPhotos.mockResolvedValue(samplePhotos)
+
+    const { result } = renderHook(() => usePhotosQuery())
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(result.current.status).toBe('success')
+
+    act(() => {
+      result.current.retry()
+    })
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(result.current.status).toBe('success')
+    expect(mockedGetPhotos).toHaveBeenCalledTimes(2)
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(999)
+    })
+    expect(mockedGetPhotos).toHaveBeenCalledTimes(2)
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1)
+      await Promise.resolve()
+    })
+    expect(mockedGetPhotos).toHaveBeenCalledTimes(3)
   })
 
   it('aborts in-flight fetch on unmount', async () => {

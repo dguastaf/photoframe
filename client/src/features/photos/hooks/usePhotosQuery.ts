@@ -1,5 +1,6 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { getPhotos } from '../api/photos'
+import { LIBRARY_REFRESH_MS } from '../constants'
 import { ApiError } from '../../../lib/api-client'
 import { useAsyncResource } from '../../../hooks/useAsyncResource'
 
@@ -14,5 +15,17 @@ export function usePhotosQuery() {
     }
   }, [])
 
-  return useAsyncResource(run)
+  const { status, data, error, retry } = useAsyncResource(run)
+
+  useEffect(() => {
+    if (status !== 'success') return
+
+    const id = window.setTimeout(() => {
+      retry()
+    }, LIBRARY_REFRESH_MS)
+
+    return () => window.clearTimeout(id)
+  }, [status, data, retry])
+
+  return { status, data, error, retry }
 }

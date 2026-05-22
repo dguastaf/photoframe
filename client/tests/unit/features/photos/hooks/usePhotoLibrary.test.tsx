@@ -51,15 +51,17 @@ describe('usePhotoLibrary', () => {
     expect(['a', 'b', 'c']).toContain(result.current.currentPhotoId)
   })
 
-  it('goNext reshuffles and resets at end of cycle', () => {
+  it('goNext wraps to the first slide at end of cycle', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0)
     const { result } = renderHook(() =>
       usePhotoLibrary([meta('a'), meta('b')]),
     )
+    const order = result.current.shuffledIds
+    const first = result.current.currentPhotoId
     act(() => result.current.goNext())
     act(() => result.current.goNext())
-    expect(result.current.shuffledIds).toHaveLength(2)
-    expect(result.current.currentPhotoId).toBeDefined()
+    expect(result.current.shuffledIds).toBe(order)
+    expect(result.current.currentPhotoId).toBe(first)
   })
 
   it('goPrev wraps from start to last in shuffle', () => {

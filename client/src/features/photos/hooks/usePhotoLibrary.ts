@@ -15,6 +15,7 @@ const EMPTY_PLAYBACK: PlaybackState = { shuffledIds: [], cursor: 0 }
 
 /**
  * Server-ordered catalog plus shuffled playback order for the slideshow.
+ * Shuffles when the catalog loads or changes (e.g. after a library refetch).
  * Pass `photos` from {@link usePhotosQuery} (`null` while loading or on error).
  */
 export function usePhotoLibrary(photos: PhotoMetadata[] | null) {
@@ -45,9 +46,9 @@ export function usePhotoLibrary(photos: PhotoMetadata[] | null) {
       if (nextIndex < prev.shuffledIds.length) {
         return { ...prev, cursor: nextIndex }
       }
-      return { shuffledIds: shuffle(catalogIds), cursor: 0 }
+      return { ...prev, cursor: 0 }
     })
-  }, [catalogIds])
+  }, [])
 
   const goPrev = useCallback(() => {
     setPlayback((prev) => {
