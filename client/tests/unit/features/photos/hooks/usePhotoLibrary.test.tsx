@@ -1,91 +1,79 @@
-import { act, renderHook, waitFor } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { getPhotos } from '@/features/photos/api/photos'
-import { ApiError } from '@/lib/api-client'
-import type { PhotoMetadata } from '@/types/api'
+import { act, renderHook } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { usePhotoLibrary } from '@/features/photos/hooks/usePhotoLibrary'
+import type { PhotoMetadata } from '@/types/api'
 
-vi.mock('@/features/photos/api/photos', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/photos/api/photos')>()
-  return { ...actual, getPhotos: vi.fn() }
-})
-
-const mockedGetPhotos = vi.mocked(getPhotos)
-
-const samplePhotos: PhotoMetadata[] = [
-  { id: 'photo-1', taken_at: '2026-04-26T11:25:59Z', folder: 'sample' },
-]
-
-beforeEach(() => {
-  mockedGetPhotos.mockReset()
-})
-
-afterEach(() => {
-  vi.clearAllMocks()
-})
+function meta(id: string): PhotoMetadata {
+  return { id, taken_at: '2026-04-26T11:25:59Z', folder: 'sample' }
+}
 
 describe('usePhotoLibrary', () => {
-  it('starts in loading state', () => {
-    mockedGetPhotos.mockReturnValue(new Promise(() => {}))
-    const { result } = renderHook(() => usePhotoLibrary())
-    expect(result.current.status).toBe('loading')
-    expect(result.current.photos).toBeNull()
-    expect(result.current.error).toBeNull()
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
-  it('becomes ready with photos on success', async () => {
-    mockedGetPhotos.mockResolvedValue(samplePhotos)
-    const { result } = renderHook(() => usePhotoLibrary())
-    await waitFor(() => expect(result.current.status).toBe('ready'))
-    expect(result.current.photos).toEqual(samplePhotos)
-    expect(result.current.error).toBeNull()
+  it('returns undefined currentPhotoId for empty catalog', () => {
+    const { result } = renderHook(() => usePhotoLibrary([]))
+    expect(result.current.currentPhotoId).toBeUndefined()
+    act(() => result.current.goNext())
+    expect(result.current.currentPhotoId).toBeUndefined()
   })
 
-  it('becomes error with message on failure', async () => {
-    mockedGetPhotos.mockRejectedValue(
-      new ApiError(503, 'Photo library unavailable', '/api/v0/photos'),
+  it('returns undefined currentPhotoId when photos is null', () => {
+    const { result } = renderHook(() => usePhotoLibrary(null))
+    expect(result.current.currentPhotoId).toBeUndefined()
+    expect(result.current.photos).toEqual([])
+  })
+
+  it('goNext advances within the current shuffle', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { result } = renderHook(() =>
+      usePhotoLibrary([meta('a'), meta('b'), meta('c')]),
     )
-    const { result } = renderHook(() => usePhotoLibrary())
-    await waitFor(() => expect(result.current.status).toBe('error'))
-    expect(result.current.photos).toBeNull()
-    expect(result.current.error).toBe('Photo library unavailable')
+    const first = result.current.currentPhotoId
+    act(() => result.current.goNext())
+    expect(result.current.currentPhotoId).not.toBe(first)
+    expect(['a', 'b', 'c']).toContain(result.current.currentPhotoId)
   })
 
-  it('retry refetches the library', async () => {
-    mockedGetPhotos
-      .mockRejectedValueOnce(new ApiError(503, 'Temporary failure', '/api/v0/photos'))
-      .mockResolvedValueOnce(samplePhotos)
-
-    const { result } = renderHook(() => usePhotoLibrary())
-    await waitFor(() => expect(result.current.status).toBe('error'))
-
-    act(() => {
-      result.current.retry()
-    })
-    expect(result.current.status).toBe('loading')
-
-    await waitFor(() => expect(result.current.status).toBe('ready'))
-    expect(result.current.photos).toEqual(samplePhotos)
-    expect(mockedGetPhotos).toHaveBeenCalledTimes(2)
+  it('goNext reshuffles and resets at end of cycle', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { result } = renderHook(() =>
+      usePhotoLibrary([meta('a'), meta('b')]),
+    )
+    act(() => result.current.goNext())
+    act(() => result.current.goNext())
+    expect(result.current.shuffledIds).toHaveLength(2)
+    expect(result.current.currentPhotoId).toBeDefined()
   })
 
-  it('passes AbortSignal to getPhotos', async () => {
-    mockedGetPhotos.mockResolvedValue(samplePhotos)
-    renderHook(() => usePhotoLibrary())
-    await waitFor(() => expect(mockedGetPhotos).toHaveBeenCalled())
-    expect(mockedGetPhotos.mock.calls[0]?.[0]?.signal).toBeInstanceOf(AbortSignal)
+  it('goPrev wraps from start to last in shuffle', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { result } = renderHook(() =>
+      usePhotoLibrary([meta('a'), meta('b'), meta('c')]),
+    )
+    const atStart = result.current.currentPhotoId
+    act(() => result.current.goPrev())
+    expect(result.current.currentPhotoId).not.toBe(atStart)
+    expect(result.current.shuffledIds).toContain(result.current.currentPhotoId)
   })
 
-  it('aborts in-flight fetch on unmount', async () => {
-    const signals: AbortSignal[] = []
-    mockedGetPhotos.mockImplementation((init?: RequestInit) => {
-      if (init?.signal) signals.push(init.signal)
-      return new Promise(() => {})
-    })
+  it('re-initializes shuffle when catalog changes', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { result, rerender } = renderHook(
+      ({ photos }: { photos: PhotoMetadata[] }) => usePhotoLibrary(photos),
+      { initialProps: { photos: [meta('a'), meta('b')] } },
+    )
+    act(() => result.current.goNext())
+    rerender({ photos: [meta('x'), meta('y'), meta('z')] })
+    expect(result.current.shuffledIds).toHaveLength(3)
+    expect(['x', 'y', 'z']).toContain(result.current.currentPhotoId)
+  })
 
-    const { unmount } = renderHook(() => usePhotoLibrary())
-    await waitFor(() => expect(mockedGetPhotos).toHaveBeenCalledTimes(1))
-    unmount()
-    expect(signals[0]?.aborted).toBe(true)
+  it('exposes server-ordered photos separately from shuffledIds', () => {
+    const catalog = [meta('a'), meta('b')]
+    const { result } = renderHook(() => usePhotoLibrary(catalog))
+    expect(result.current.photos).toEqual(catalog)
+    expect(result.current.shuffledIds).toHaveLength(2)
   })
 })

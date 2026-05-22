@@ -1,44 +1,62 @@
-import { useCallback, useEffect, useState } from 'react'
-import { getPhotos } from '../api/photos'
-import { ApiError } from '../../../lib/api-client'
+import { useCallback, useLayoutEffect, useMemo, useState } from 'react'
+import { shuffle } from '../lib/shuffle'
 import type { PhotoMetadata } from '../../../types/api'
 
-export type LibraryStatus = 'loading' | 'ready' | 'error'
+function photoIdsFingerprint(ids: string[]): string {
+  return ids.join('\0')
+}
 
-export function usePhotoLibrary() {
-  const [status, setStatus] = useState<LibraryStatus>('loading')
-  const [photos, setPhotos] = useState<PhotoMetadata[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [refreshKey, setRefreshKey] = useState(0)
+/**
+ * Server-ordered catalog plus shuffled playback order for the slideshow.
+ * Pass `photos` from {@link usePhotosQuery} (`null` while loading or on error).
+ */
+export function usePhotoLibrary(photos: PhotoMetadata[] | null) {
+  const catalogIds = useMemo(
+    () => (photos ?? []).map((p) => p.id),
+    [photos],
+  )
+  const idsKey = photoIdsFingerprint(catalogIds)
 
-  const retry = useCallback(() => {
-    setPhotos(null)
-    setError(null)
-    setStatus('loading')
-    setRefreshKey((k) => k + 1)
-  }, [])
+  const [shuffledIds, setShuffledIds] = useState<string[]>([])
+  const [cursor, setCursor] = useState(0)
 
-  useEffect(() => {
-    const ac = new AbortController()
+  useLayoutEffect(() => {
+    if (catalogIds.length === 0) {
+      setShuffledIds([])
+      setCursor(0)
+      return
+    }
+    setShuffledIds(shuffle(catalogIds))
+    setCursor(0)
+  }, [idsKey])
 
-    getPhotos({ signal: ac.signal })
-      .then((list) => {
-        if (ac.signal.aborted) return
-        setPhotos(list)
-        setError(null)
-        setStatus('ready')
-      })
-      .catch((err: unknown) => {
-        if (ac.signal.aborted) return
-        setPhotos(null)
-        const message =
-          err instanceof ApiError ? err.detail : 'Failed to load photo library'
-        setError(message)
-        setStatus('error')
-      })
+  const currentPhotoId =
+    shuffledIds.length > 0 ? shuffledIds[cursor] : undefined
 
-    return () => ac.abort()
-  }, [refreshKey])
+  const goNext = useCallback(() => {
+    if (shuffledIds.length === 0) return
+    const nextIndex = cursor + 1
+    if (nextIndex < shuffledIds.length) {
+      setCursor(nextIndex)
+    } else {
+      setShuffledIds(shuffle(catalogIds))
+      setCursor(0)
+    }
+  }, [cursor, shuffledIds.length, catalogIds])
 
-  return { status, photos, error, retry }
+  const goPrev = useCallback(() => {
+    if (shuffledIds.length === 0) return
+    setCursor((prev) => (prev === 0 ? shuffledIds.length - 1 : prev - 1))
+  }, [shuffledIds.length])
+
+  return useMemo(
+    () => ({
+      photos: photos ?? [],
+      shuffledIds,
+      currentPhotoId,
+      goNext,
+      goPrev,
+    }),
+    [photos, shuffledIds, currentPhotoId, goNext, goPrev],
+  )
 }
