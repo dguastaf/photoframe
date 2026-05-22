@@ -107,8 +107,8 @@ describe('usePhotosQuery', () => {
       await vi.advanceTimersByTimeAsync(1_000)
       await Promise.resolve()
     })
-    expect(result.current.status).toBe('loading')
-    expect(result.current.data).toBeNull()
+    expect(result.current.status).toBe('success')
+    expect(result.current.data).toEqual(samplePhotos)
 
     await act(async () => {
       resolveRefresh(refreshed)
