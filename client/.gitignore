@@ -12,8 +12,9 @@ dist
 dist-ssr
 *.local
 
-# Playwright e2e output (keep tests/e2e/photo-library-flow.mjs)
+# Playwright E2E screenshots
 tests/e2e/screenshots/
+e2e/screenshots/
 
 # Editor directories and files
 .vscode/*

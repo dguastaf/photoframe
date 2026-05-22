@@ -1,68 +1,48 @@
-import { useCallback, useEffect, useState } from 'react'
-import { getPhotos } from './features/photos/api/photos'
+import { useCallback, useState } from 'react'
+import type { PhotoDisplayStatus } from './features/photos/components/photo-display/photo-display'
 import { FrameMessage } from './features/photos/components/photo-frame/frame-message'
 import { PhotoFrame } from './features/photos/components/photo-frame/photo-frame'
 import { PhotoDisplay } from './features/photos/components/photo-display/photo-display'
-import { ApiError } from './lib/api-client'
-import type { PhotoMetadata } from './types/api'
+import { usePhotoLibrary } from './features/photos/hooks/usePhotoLibrary'
+import { usePhotosQuery } from './features/photos/hooks/usePhotosQuery'
+import { useSlideshowTimer } from './features/photos/hooks/useSlideshowTimer'
 
 function App() {
-  const [photos, setPhotos] = useState<PhotoMetadata[] | null>(null)
-  const [libraryError, setLibraryError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [refreshKey, setRefreshKey] = useState(0)
+  const { status, data: photos, error, retry } = usePhotosQuery()
+  const { currentPhotoId, goNext } = usePhotoLibrary(photos)
+  const [slideshowPaused, setSlideshowPaused] = useState(true)
 
-  const hasPhotos = (photos?.length ?? 0) > 0
-  const showFrameMessage = loading || !!libraryError || !hasPhotos
-
-  const loadPhotos = useCallback(() => {
-    setPhotos(null)
-    setLibraryError(null)
-    setLoading(true)
-    setRefreshKey((k) => k + 1)
+  const handlePhotoStatusChange = useCallback((s: PhotoDisplayStatus) => {
+    setSlideshowPaused(s !== 'ready')
   }, [])
 
-  useEffect(() => {
-    const ac = new AbortController()
+  const showSlideshow = status === 'success' && currentPhotoId != null
 
-    getPhotos({ signal: ac.signal })
-      .then((list) => {
-        if (ac.signal.aborted) return
-        setPhotos(list)
-        setLibraryError(null)
-      })
-      .catch((err: unknown) => {
-        if (ac.signal.aborted) return
-        
-        setPhotos(null)
-        
-        const message =
-          err instanceof ApiError ? err.detail : 'Failed to load photo library'
-        setLibraryError(message)
-      })
-      .finally(() => {
-        if (ac.signal.aborted) return
-        setLoading(false)
-      })
+  useSlideshowTimer({
+    onTick: goNext,
+    paused: slideshowPaused,
+    enabled: showSlideshow,
+    resetKey: currentPhotoId,
+  })
 
-    return () => ac.abort()
-  }, [refreshKey])
-
-  if (showFrameMessage) {
+  if (!showSlideshow) {
     return (
       <FrameMessage
-        loading={loading}
-        error={libraryError}
-        hasPhotos={hasPhotos}
-        onRetry={loadPhotos}
+        loading={status === 'loading'}
+        error={error}
+        hasPhotos={(photos?.length ?? 0) > 0}
+        onRetry={retry}
       />
     )
   }
 
-  const photo = photos![0]
   return (
     <PhotoFrame>
-      <PhotoDisplay key={photo.id} photoId={photo.id} />
+      <PhotoDisplay
+        key={currentPhotoId}
+        photoId={currentPhotoId}
+        onStatusChange={handlePhotoStatusChange}
+      />
     </PhotoFrame>
   )
 }

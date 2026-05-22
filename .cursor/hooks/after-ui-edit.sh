@@ -21,10 +21,11 @@ python3 - <<'PY'
 import json
 print(json.dumps({
     "additional_context": (
-        "UI file edited. Before opening the PR, refresh preview assets under "
-        ".github/ui-preview/: use `npm run ui:screenshot` for static visual tweaks "
-        "or `npm run ui:video` for interactions/flows (from client/). Commit the "
-        "updated png/webm on the branch — CI enforces this on pull requests."
+        "UI file edited. Before opening the PR: `cd client && npm run ui:preview` (not "
+        "ui:video alone), commit assets under `.github/ui-preview/` on the branch. "
+        "Then `npm run ui:embed` and paste that block into the PR description. "
+        "Never use ![...](.github/ui-preview/app-shell.png) — CI enforces preview "
+        "on pull requests; individual commits do not need the assets."
     )
 }))
 PY

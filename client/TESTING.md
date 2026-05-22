@@ -7,8 +7,10 @@ client/tests/
 ├── setup.ts              # Vitest + Testing Library global setup
 ├── unit/                 # Vitest component/unit tests (*.test.tsx)
 └── e2e/
+    ├── helpers.mjs
     ├── photo-library-flow.mjs   # Playwright: library load, errors, empty, retry
-    └── screenshots/             # gitignored output from photo-library-flow
+    ├── slideshow-flow.mjs       # Playwright: auto-advance, pause while loading
+    └── screenshots/             # gitignored output from e2e flows
 ```
 
 ## Unit tests (Vitest)
@@ -23,11 +25,16 @@ npm run test:watch    # watch mode
 
 Imports use the `@/` alias to reach `src/` (configured in `vite.config.ts`).
 
-## E2E: photo library flow (Playwright)
+## E2E (Playwright)
 
-CI runs `npm run test:e2e` in the `client-e2e` job (mock API on **52525**, Vite preview on **6389**).
+CI runs `npm run test:e2e` in the `client-e2e` job (mock API on **52525**, Vite dev server on **6389**).
 
-`photo-library-flow.mjs` exercises loading, happy path, API errors, empty library, and Retry. Locally, requires API on **52525** and `npm run dev` on **6389**.
+| Script | Coverage |
+|--------|----------|
+| `photo-library-flow.mjs` | Loading, happy path, API errors, empty library, retry |
+| `slideshow-flow.mjs` | Auto-advance (60s), pause while loading, multi-photo cycle, empty |
+
+Both flows mock `GET /api/v0/photos` and image routes via Playwright helpers — **Photoprism is not required** for most scenarios. Scenario 1 in `photo-library-flow` uses a delayed proxy response when the list route is not mocked.
 
 ```bash
 cd client
@@ -36,4 +43,4 @@ npx playwright install chromium   # first time only
 npm run test:e2e
 ```
 
-Screenshots are written to `tests/e2e/screenshots/`.
+Screenshots are written to `tests/e2e/screenshots/` (gitignored).

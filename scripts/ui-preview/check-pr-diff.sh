@@ -54,8 +54,16 @@ if ((${#ASSET_CHANGED[@]} == 0)); then
   echo "" >&2
   echo "Before opening the PR, run capture on this branch and commit the assets (any commit on the branch is fine):" >&2
   echo "  cd client && npm run ui:screenshot" >&2
-  echo "  cd client && npm run ui:video" >&2
+  echo "  cd client && npm run ui:preview   # preferred: screenshot + video + validate" >&2
   exit 1
 fi
+
+node "${ROOT}/scripts/ui-preview/validate.mjs" --require all
+
+"${ROOT}/scripts/ui-preview/lint-docs-embed.sh"
+
+echo ""
+echo "PR description embed (paste into PR — screenshot must use raw.githubusercontent.com):"
+node "${ROOT}/scripts/ui-preview/pr-embed.mjs" || true
 
 exit 0

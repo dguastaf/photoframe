@@ -10,10 +10,12 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "node tests/e2e/photo-library-flow.mjs",
+    "test:e2e": "node tests/e2e/photo-library-flow.mjs && node tests/e2e/slideshow-flow.mjs",
     "ui:screenshot": "node ../scripts/ui-preview/capture.mjs --mode screenshot",
     "ui:video": "node ../scripts/ui-preview/capture.mjs --mode video",
-    "ui:preview": "node ../scripts/ui-preview/capture.mjs --mode all"
+    "ui:preview": "node ../scripts/ui-preview/capture.mjs --mode all",
+    "ui:validate": "node ../scripts/ui-preview/validate.mjs --require all",
+    "ui:embed": "node ../scripts/ui-preview/pr-embed.mjs"
   },
   "dependencies": {
     "react": "^19.2.6",

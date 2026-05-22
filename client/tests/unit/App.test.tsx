@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '@/App'
@@ -14,15 +14,42 @@ const samplePhotos: PhotoMetadata[] = [
   },
 ]
 
+const multiPhotos: PhotoMetadata[] = [
+  { id: 'photo-1', taken_at: '2026-04-26T11:25:59Z', folder: 'a' },
+  { id: 'photo-2', taken_at: '2026-04-27T11:25:59Z', folder: 'b' },
+  { id: 'photo-3', taken_at: '2026-04-28T11:25:59Z', folder: 'c' },
+]
+
 vi.mock('@/features/photos/api/photos', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/photos/api/photos')>()
   return { ...actual, getPhotos: vi.fn() }
 })
 
+const slideshowTimerCalls: Array<{
+  onTick: () => void
+  paused: boolean
+  enabled: boolean
+}> = []
+
+vi.mock('@/features/photos/hooks/useSlideshowTimer', () => ({
+  useSlideshowTimer: (opts: {
+    onTick: () => void
+    paused: boolean
+    enabled?: boolean
+  }) => {
+    slideshowTimerCalls.push({
+      onTick: opts.onTick,
+      paused: opts.paused,
+      enabled: opts.enabled ?? true,
+    })
+  },
+}))
+
 const mockedGetPhotos = vi.mocked(getPhotos)
 
 beforeEach(() => {
   mockedGetPhotos.mockReset()
+  slideshowTimerCalls.length = 0
 })
 
 afterEach(() => {
@@ -124,5 +151,34 @@ describe('App library flow', () => {
 
     await waitFor(() => expect(mockedGetPhotos).toHaveBeenCalled())
     expect(mockedGetPhotos.mock.calls[0]?.[0]?.signal).toBeInstanceOf(AbortSignal)
+  })
+
+  it('wires timer onTick to shuffle cursor goNext', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    mockedGetPhotos.mockResolvedValue(multiPhotos)
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-photo-id]')).toBeInTheDocument()
+    })
+
+    const firstId = document
+      .querySelector('[data-photo-id]')
+      ?.getAttribute('data-photo-id')
+    expect(slideshowTimerCalls.at(-1)?.enabled).toBe(true)
+
+    act(() => {
+      slideshowTimerCalls.at(-1)!.onTick()
+    })
+
+    await waitFor(() => {
+      const nextId = document
+        .querySelector('[data-photo-id]')
+        ?.getAttribute('data-photo-id')
+      expect(nextId).not.toBe(firstId)
+    })
+
+    vi.restoreAllMocks()
   })
 })

@@ -12,25 +12,25 @@ When you change UI files (`client/src/**`, `client/index.html`, `client/public/*
 
 | Change type | Command | Output |
 | --- | --- | --- |
-| Layout, typography, colors, copy, static states | `cd client && npm run ui:screenshot` | `app-shell.png` |
-| Clicks, navigation, animations, multi-step flows | `cd client && npm run ui:video` | `app-flow.webm` |
-| Both visual and interaction changes | `cd client && npm run ui:preview` | both files |
+| Any UI change (default) | `cd client && npm run ui:preview` | both files + validation |
+| Layout / copy only | `cd client && npm run ui:screenshot` | `app-shell.png` (also refresh video if behavior changed) |
+| Slideshow / navigation / timers | `cd client && npm run ui:preview` | must show slide change in `app-flow.webm` |
+
+**Do not** commit `ui:video` alone after slideshow/timer changes — it produces a ~15KB useless clip. `ui:preview` runs capture then `validate.mjs` (min size/duration).
 
 Run capture **before opening the PR** (any commit on the branch may include the assets).
 
 ## Opening / updating a PR
 
 1. Ensure the branch (vs base) includes updated preview assets whenever UI source changed.
-2. In the PR description, embed the assets so reviewers see them immediately:
+2. **Never** paste `![...](.github/ui-preview/app-shell.png)` — GitHub shows a broken image. After capture, run:
 
-```markdown
-## UI preview
-![App shell](.github/ui-preview/app-shell.png)
-https://github.com/OWNER/REPO/blob/BRANCH/.github/ui-preview/app-flow.webm
+```bash
+cd client && npm run ui:embed
 ```
 
-Replace `OWNER`, `REPO`, and `BRANCH` with the actual values (or use relative paths if your host renders them).
+Copy the printed block into the PR description (screenshot uses `raw.githubusercontent.com`). `ui:preview` prints the same block when capture finishes.
 
-3. Do not open a PR with UI-only changes and no updated preview files — CI will fail.
+3. Do not open a PR with UI-only changes and no updated preview files — CI will fail. CI also fails if docs reintroduce relative `.github/ui-preview/` image links (`lint-docs-embed.sh`).
 
 First-time setup on a machine: `npx playwright install chromium` from `client/`.
