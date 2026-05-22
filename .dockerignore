@@ -1,9 +1,11 @@
-# Repo-root build context (docker-compose: context: .) — only server + config are needed.
+# Repo-root build context (docker-compose: context: .)
 # server/.dockerignore is not applied when context is the repository root.
 
 *
 !server/
+!client/
 !config/
+!docker/
 
 # Server dev artifacts (aligned with server/.dockerignore)
 server/__pycache__/
@@ -18,8 +20,14 @@ server/venv/
 server/tests/
 server/.env
 
-# Repo tooling and frontend (redundant with * but explicit for readers)
-client/
+# Client dev artifacts
+client/node_modules/
+client/tests/
+client/.gitignore
+client/TESTING.md
+client/eslint.config.js
+
+# Repo tooling (redundant with * but explicit for readers)
 .git/
 .github/
 .cursor/
