@@ -16,7 +16,7 @@ Mainly for learning purposes, this app was built using an agent-first developmen
 ### Agent-first Software Development
 #### Task plan
 1. Agents review a task and create a development plan.
-2. A "staff software engineer" agent, which I created, reviews the plan for scalability, maintainability, and best practices, with a focus on ensuring the design is adaptable to other backends beyond Photoprism.
+2. A self-created ["staff software engineer" agent](.cursor/agents/staff-engineer.md), reviews the plan for scalability, maintainability, and best practices, focusing on ensuring the design is adaptable to other backends beyond Photoprism.
 3. I review the plan, provide feedback, and add additional specifics as needed.
 
 #### Coding
