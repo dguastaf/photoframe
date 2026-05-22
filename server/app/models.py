@@ -9,7 +9,3 @@ class PhotoMetadata(BaseModel):
     id: str
     taken_at: datetime
     folder: str
-
-
-class HealthResponse(BaseModel):
-    ok: bool

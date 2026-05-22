@@ -8,8 +8,8 @@ def create_photo_library_adapter(settings: Settings) -> PhotoLibraryAdapter:
     match settings.photo_source:
         case PhotoSource.PHOTOPRISM:
             return PhotoprismAdapter(
-                base_url=settings.photoprism_base_url or "",
-                token=settings.photoprism_token or "",
+                base_url=settings.photoprism_base_url,
+                token=settings.photoprism_token,
             )
         case _ as unknown:
             raise ValueError(f"Unsupported PHOTO_SOURCE: {unknown!r}")

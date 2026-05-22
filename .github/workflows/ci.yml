@@ -129,7 +129,7 @@ jobs:
             cat ../stack.log >&2 || true
             exit 1
           fi
-          curl -sf http://localhost:52525/health >/dev/null
+          curl -sf http://localhost:52525/api/v0/photos >/dev/null
           for _ in $(seq 1 60); do
             if curl -sf http://127.0.0.1:6389/ >/dev/null; then
               break

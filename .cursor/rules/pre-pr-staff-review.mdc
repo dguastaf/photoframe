@@ -20,7 +20,7 @@ Before creating a pull request (`gh pr create`, "open a PR", or similar):
 
 4. **Only then** create the PR. If the user insists on skipping review, warn once and proceed.
 
-The subagent performs a **full pre-PR review**: architecture, **tests**, and **security** (not lint—CI handles that). It infers scaffolding vs production-ready from the repo and calibrates pass/concern/fail accordingly.
+The subagent performs a **full pre-PR review**: architecture, **tests**, and **security** (not lint—CI handles that). Photoframe is production-ready—only **feature-complete** changes may pass; incomplete work is a **required fix** or **fail**, not a calibrated exception.
 
 Before delegating, run `pytest` under `server/` when the diff touches tested code, and `npm test` under `client/` when the diff touches client code or tests, so the subagent can interpret failures.
 

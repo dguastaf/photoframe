@@ -11,12 +11,6 @@ from support.api_client import PhotoframeApiClient
 from support.photoprism import metadata_json_from_export_record
 
 
-def test_health(photoframe_api: PhotoframeApiClient):
-    response = photoframe_api.get("/health")
-    assert response.status_code == 200
-    assert response.json() == {"ok": True}
-
-
 def test_list_photos_returns_non_empty(photoframe_api: PhotoframeApiClient):
     assert photoframe_api.list_photos()
 

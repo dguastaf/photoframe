@@ -1,5 +1,9 @@
 import json
+import os
 from pathlib import Path
+
+os.environ.setdefault("PHOTOPRISM_BASE_URL", "http://127.0.0.1:9")
+os.environ.setdefault("PHOTOPRISM_TOKEN", "pytest-token")
 
 import pytest
 

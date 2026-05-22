@@ -22,11 +22,8 @@ class Settings(BaseSettings):
 
     photo_source: PhotoSource = PhotoSource.PHOTOPRISM
 
-    # TODO(phase-2): make these required (no default) once PhotoprismAdapter
-    # actually consumes them. They are intentionally optional during scaffolding
-    # so the container can boot and serve dummy data without a populated .env.
-    photoprism_base_url: str | None = Field(default=None)
-    photoprism_token: str | None = Field(default=None)
+    photoprism_base_url: str
+    photoprism_token: str
 
     # Unset → allow CLIENT_DEV_ORIGIN from config/ports.json. Empty → disable CORS.
     cors_origins: list[str] | None = Field(default=None, validation_alias="CORS_ORIGINS")

@@ -24,12 +24,12 @@ def _find_free_port() -> int:
         return sock.getsockname()[1]
 
 
-def _wait_for_health(base_url: str, timeout_s: float = 30.0) -> None:
+def _wait_for_server(base_url: str, timeout_s: float = 30.0) -> None:
     deadline = time.monotonic() + timeout_s
     last_error: Exception | None = None
     while time.monotonic() < deadline:
         try:
-            httpx.get(f"{base_url}/health", timeout=1.0).raise_for_status()
+            httpx.get(f"{base_url}/api/v0/photos", timeout=1.0).raise_for_status()
             return
         except Exception as exc:
             last_error = exc
@@ -72,7 +72,7 @@ class PhotoframeTestStack:
             stderr=subprocess.DEVNULL,
         )
         try:
-            _wait_for_health(photoframe_url)
+            _wait_for_server(photoframe_url)
         except Exception:
             process.terminate()
             mock.stop()

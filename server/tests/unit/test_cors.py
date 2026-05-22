@@ -36,6 +36,6 @@ def test_cors_preflight_allows_configured_origin():
 def test_cors_get_includes_allow_origin_header():
     client = TestClient(app)
     origin = CLIENT_DEV_ORIGIN
-    response = client.get("/health", headers={"Origin": origin})
-    assert response.status_code == 200
+    response = client.get("/api/v0/photos/x/image", headers={"Origin": origin})
+    assert response.status_code == 400
     assert response.headers["access-control-allow-origin"] == origin

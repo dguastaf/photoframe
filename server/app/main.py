@@ -8,7 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.api import api_router
-from app.api import health
 from app.config import settings
 from app.logging_setup import configure_logging, get_logger
 from app.photo_source import create_photo_library_adapter
@@ -21,11 +20,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     photo_library = create_photo_library_adapter(settings)
     app.state.photo_library = photo_library
     app.state.photo_source = settings.photo_source.value
-    logger.info(
-        "server.startup",
-        phase="scaffolding",
-        photo_source=settings.photo_source.value,
-    )
+    logger.info("server.startup", photo_source=settings.photo_source.value)
     try:
         yield
     finally:
@@ -48,7 +43,6 @@ if settings.cors_origins:
         allow_headers=["*"],
     )
 
-app.include_router(health.router)
 app.include_router(api_router)
 
 
@@ -56,7 +50,7 @@ def _mount_static_ui(application: FastAPI) -> None:
     """Serve the built React app in Docker (PHOTOFRAME_STATIC_DIR).
 
     Mount after API routers: Starlette matches routes in registration order, so
-    /health and /api/* are handled first; this catch-all only serves UI assets.
+    /api/* are handled first; this catch-all only serves UI assets.
     """
     static_root = os.environ.get("PHOTOFRAME_STATIC_DIR")
     if not static_root:
