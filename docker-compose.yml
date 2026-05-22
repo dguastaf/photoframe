@@ -1,9 +1,8 @@
 services:
   server:
-    build:
-      context: .
-      dockerfile: server/Dockerfile
+    build: .
+    pull_policy: build
     env_file: .env
     ports:
-      - "52525:52525"
+      - "6389:6389"
     restart: unless-stopped

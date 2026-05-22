@@ -23,6 +23,7 @@ photoframe/
 ├── config/      # Shared ports.json (fixed dev ports)
 ├── server/      # FastAPI server (Python)
 ├── client/      # React + Vite dev UI
+├── Dockerfile   # Production image (API + built UI)
 └── docker-compose.yml
 ```
 
@@ -31,30 +32,43 @@ photoframe/
 Prerequisites: Docker + Docker Compose.
 
 ```bash
-cp .env.example .env
-docker compose up
+cp .env.example .env   # set PHOTOPRISM_* (see Configuration)
+docker compose up -d
 ```
 
-Compose creates the image on first run. After you change `server/Dockerfile` or files under `server/app/` (which are **copied** into the image), rebuild before starting: `docker compose build` then `docker compose up` (or run the server locally with `uvicorn` during development).
+Open **http://localhost:6389** — the **server** service (like Immich’s `immich-server`) runs uvicorn on one port: API routes plus the built React UI. Port **52525** is dev-only (local uvicorn / Vite proxy), not published by Compose.
 
-Dev ports are fixed in [`config/ports.json`](config/ports.json) (API **52525**, Vite **6389**). The API allows the client dev origin for CORS (from that file unless you set `CORS_ORIGINS`). Vite proxies `/api` and `/health` to the server so fetches can use relative URLs in dev.
-
-### Verify with curl / Postman
+**Updates** (no separate `docker compose build`):
 
 ```bash
-# Health
-curl http://localhost:52525/health
+docker compose down
+git pull
+docker compose up -d
+```
 
-# List photos (from Photoprism when PHOTO_SOURCE=photoprism and credentials are set)
-curl http://localhost:52525/api/v0/photos | jq
+Compose rebuilds images when Dockerfiles or build context change (`pull_policy: build`).
 
-# Image bytes (streams from Photoprism /dl via the adapter)
-PHOTO_ID=$(curl -s http://localhost:52525/api/v0/photos | jq -r '.[0].id')
-curl -o /tmp/photo.jpg "http://localhost:52525/api/v0/photos/${PHOTO_ID}/image"
+Dev ports are fixed in [`config/ports.json`](config/ports.json) (API **52525**, client **6389**). For local Vite dev, the API allows the client dev origin for CORS (from that file unless you set `CORS_ORIGINS`). Vite proxies `/api` and `/health` to the server so fetches can use relative URLs in dev.
+
+### Verify with curl
+
+Through the UI port (Docker stack):
+
+```bash
+curl http://localhost:6389/health
+curl http://localhost:6389/api/v0/photos | jq
+PHOTO_ID=$(curl -s http://localhost:6389/api/v0/photos | jq -r '.[0].id')
+curl -o /tmp/photo.jpg "http://localhost:6389/api/v0/photos/${PHOTO_ID}/image"
 file /tmp/photo.jpg
 ```
 
-All three should respond with HTTP 200.
+Direct API (local uvicorn on **52525** only — not exposed by `docker compose`):
+
+```bash
+curl http://localhost:52525/health
+```
+
+All compose checks should return HTTP 200 when Photoprism is configured.
 
 ## Configuration
 
@@ -65,7 +79,9 @@ See `.env.example` for all variables:
 | `PHOTO_SOURCE` | Photo backend to use (`photoprism` today; more may follow) |
 | `PHOTOPRISM_BASE_URL` | URL/IP of the Photoprism host, e.g. `http://photoprism.local:2342` |
 | `PHOTOPRISM_TOKEN` | Bearer token for the Photoprism API |
-| `CORS_ORIGINS` | Optional override; when unset, defaults to the client dev origin in `config/ports.json`. Set empty if UI and API share one host. |
+| `CORS_ORIGINS` | Optional override; when unset, defaults to the client dev origin in `config/ports.json`. Not needed for Docker compose (UI and API share port **6389** on `server`). |
+
+**Photoprism from Docker:** `PHOTOPRISM_BASE_URL` must be reachable from the **server** container. If Photoprism runs on the Docker host, use the host LAN IP (not `http://localhost:...`).
 
 `PHOTO_SOURCE` selects which adapter is constructed at startup and stored on `app.state.photo_library`. Both `GET /api/v0/photos` and `GET /api/v0/photos/{id}/image` call the adapter (upstream `GET /api/v1/photos/{uid}/dl` with Bearer auth).
 
