@@ -66,6 +66,7 @@ describe('PhotoDisplay', () => {
       <PhotoDisplay photoId="abc123" onStatusChange={onStatusChange} />,
     )
 
+    expect(onStatusChange).toHaveBeenCalledTimes(1)
     expect(onStatusChange).toHaveBeenCalledWith('loading')
 
     fireEvent.load(getImg(container))

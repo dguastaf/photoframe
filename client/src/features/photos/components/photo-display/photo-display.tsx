@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { LoadingSpinner } from '../../../../components/ui/loading-spinner/loading-spinner'
 import { photoImageUrl } from '../../api/photos'
 import './photo-display.css'
@@ -16,18 +16,15 @@ export function PhotoDisplay({ photoId, onStatusChange }: PhotoDisplayProps) {
   const [status, setStatus] = useState<PhotoDisplayStatus>('loading')
   const [retryCount, setRetryCount] = useState(0)
   const imgRef = useRef<HTMLImageElement>(null)
-  const onStatusChangeRef = useRef(onStatusChange)
-  onStatusChangeRef.current = onStatusChange
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setStatus('loading')
     setRetryCount(0)
-    onStatusChangeRef.current?.('loading')
   }, [photoId])
 
   useEffect(() => {
     onStatusChange?.(status)
-  }, [status, onStatusChange])
+  }, [status, onStatusChange, photoId])
 
   const src =
     retryCount === 0

@@ -25,6 +25,21 @@ describe('usePhotoLibrary', () => {
     expect(result.current.photos).toEqual([])
   })
 
+  it('goNext composes when called twice before re-render', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { result } = renderHook(() =>
+      usePhotoLibrary([meta('a'), meta('b'), meta('c')]),
+    )
+    const first = result.current.currentPhotoId
+    act(() => {
+      result.current.goNext()
+      result.current.goNext()
+    })
+    const third = result.current.shuffledIds[2]
+    expect(result.current.currentPhotoId).toBe(third)
+    expect(result.current.currentPhotoId).not.toBe(first)
+  })
+
   it('goNext advances within the current shuffle', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0)
     const { result } = renderHook(() =>

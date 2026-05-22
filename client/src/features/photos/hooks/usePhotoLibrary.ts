@@ -35,14 +35,15 @@ export function usePhotoLibrary(photos: PhotoMetadata[] | null) {
 
   const goNext = useCallback(() => {
     if (shuffledIds.length === 0) return
-    const nextIndex = cursor + 1
-    if (nextIndex < shuffledIds.length) {
-      setCursor(nextIndex)
-    } else {
+    setCursor((prev) => {
+      const nextIndex = prev + 1
+      if (nextIndex < shuffledIds.length) {
+        return nextIndex
+      }
       setShuffledIds(shuffle(catalogIds))
-      setCursor(0)
-    }
-  }, [cursor, shuffledIds.length, catalogIds])
+      return 0
+    })
+  }, [shuffledIds.length, catalogIds])
 
   const goPrev = useCallback(() => {
     if (shuffledIds.length === 0) return
