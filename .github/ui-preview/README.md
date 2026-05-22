@@ -1,6 +1,6 @@
-# UI preview assets for pull requests
+# UI preview assets (optional)
 
-Pull requests that change UI source must include at least one updated file here (screenshot or video). CI enforces presence **and** minimum quality (size/duration) when the PR is opened; individual commits do not need to touch these assets.
+Optional screenshots and videos for pull requests or docs. Nothing in CI requires these files.
 
 | Asset | When to refresh |
 | --- | --- |
@@ -8,8 +8,6 @@ Pull requests that change UI source must include at least one updated file here 
 | `app-flow.webm` | Interactions, navigation, **slideshow auto-advance**, animations |
 
 ## Capture (local)
-
-**Always prefer the full capture** — partial runs produce broken PR videos:
 
 ```bash
 cd client
@@ -21,7 +19,7 @@ git add .github/ui-preview/
 
 | Command | What it does |
 | --- | --- |
-| `npm run ui:preview` | **Recommended.** Both assets + validates size/duration |
+| `npm run ui:preview` | Both assets + validates size/duration |
 | `npm run ui:screenshot` | Static frame only |
 | `npm run ui:video` | Flow video (loading → photo → slide change) |
 | `npm run ui:validate` | Check existing assets without re-capturing |
@@ -31,7 +29,7 @@ Vite is started automatically (or reused if already on port 6389). API routes ar
 
 ### Why previews break
 
-- Running **`ui:video` only** after slideshow work → tiny WebM (~15KB) with no slide change; useless in PRs.
+- Running **`ui:video` only** after slideshow work → tiny WebM (~15KB) with no slide change.
 - **`ui:screenshot` only** → video stays stale.
 - Dev server port conflict → capture fails mid-run; commit truncated WebM.
 - **1×1 mock photo bytes** → `app-shell.png` looks empty (~4KB black frame). Capture uses `scripts/ui-preview/fixtures/mock-photo-*.png` (1280×720 gradients) instead.
@@ -40,10 +38,10 @@ Vite is started automatically (or reused if already on port 6389). API routes ar
 
 ## PR attachment
 
-Commit these files on your branch. Embed in the PR description:
+To embed in a PR description:
 
 ```bash
 cd client && npm run ui:embed
 ```
 
-Paste the printed block into the PR. **Do not** hand-write `![...](.github/ui-preview/app-shell.png)` — GitHub does not render that in PR bodies. CI runs `lint-docs-embed.sh` to block relative image links in repo docs.
+Paste the printed block into the PR. **Do not** hand-write `![...](.github/ui-preview/app-shell.png)` — GitHub does not render that in PR bodies. Use `raw.githubusercontent.com` URLs from the embed script output.

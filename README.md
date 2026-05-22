@@ -127,19 +127,3 @@ uvicorn app.main:app --host 127.0.0.1 --port 52525 --reload
 For a single service on **6389** (built UI + API, no Vite), use `docker compose up` from the repo root instead — do not run that alongside `npm run dev` (both use port **6389**).
 
 Client unit tests: `cd client && npm test`. See [client/TESTING.md](client/TESTING.md) for layout (`tests/unit/`, `tests/e2e/`).
-
-#### UI preview assets (required for UI pull requests)
-
-Pull requests that change UI source must include updated screenshots or videos under [`.github/ui-preview/`](.github/ui-preview/README.md). Refresh on the branch before opening the PR. One-time capture setup:
-
-```bash
-cd client && npm install && npx playwright install chromium
-```
-
-| Change | Command |
-| --- | --- |
-| Any UI change (recommended) | `npm run ui:preview` (screenshot + video + validation) |
-| Static layout / styling only | `npm run ui:screenshot` |
-| Interactions / slideshow / flows | `npm run ui:preview` (avoid `ui:video` alone — can produce unusably short clips) |
-
-Embed in the PR description with `npm run ui:embed` (uses `raw.githubusercontent.com` for the screenshot — relative `.github/ui-preview/` paths break in PR bodies). CI fails PRs that change UI without updated preview files.
