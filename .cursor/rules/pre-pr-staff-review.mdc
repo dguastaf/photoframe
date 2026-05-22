@@ -24,4 +24,4 @@ The subagent performs a **full pre-PR review**: architecture, **tests**, and **s
 
 Before delegating, run `pytest` under `server/` when the diff touches tested code, and `npm test` under `client/` when the diff touches client code or tests, so the subagent can interpret failures.
 
-When the branch changes UI files, confirm `.github/ui-preview/` has fresh `app-shell.png` and/or `app-flow.webm` and mention them in the PR description before opening the PR.
+When the branch changes UI files (vs base), confirm `.github/ui-preview/` has fresh `app-shell.png` and/or `app-flow.webm` on the branch and mention them in the PR description before opening the PR.

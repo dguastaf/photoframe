@@ -111,12 +111,11 @@ Open http://localhost:6389 — the page checks `/health` via the Vite proxy. Sta
 
 Client unit tests: `cd client && npm test`. See [client/TESTING.md](client/TESTING.md) for layout (`tests/unit/`, `tests/e2e/`).
 
-#### UI preview assets (required for UI commits / PRs)
+#### UI preview assets (required for UI pull requests)
 
-Any commit that changes UI source must update screenshots or videos under [`.github/ui-preview/`](.github/ui-preview/README.md). One-time repo setup:
+Pull requests that change UI source must include updated screenshots or videos under [`.github/ui-preview/`](.github/ui-preview/README.md). You can refresh assets in any commit on the branch before opening the PR. One-time capture setup:
 
 ```bash
-./scripts/setup-git-hooks.sh
 cd client && npm install && npx playwright install chromium
 ```
 
@@ -125,7 +124,7 @@ cd client && npm install && npx playwright install chromium
 | Static layout / styling | `npm run ui:screenshot` |
 | Interactions / flows | `npm run ui:video` |
 
-Stage `.github/ui-preview/` in the same commit as the UI change. CI fails PRs that change UI without updated preview files.
+CI fails PRs that change UI without updated preview files.
 
 ## What's next
 
