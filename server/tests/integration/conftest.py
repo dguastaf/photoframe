@@ -38,7 +38,7 @@ def photoframe_api(
     with httpx.Client(base_url=photoframe_server_url, timeout=120.0) as http:
         if photoframe_is_live:
             try:
-                http.get("/health").raise_for_status()
+                http.get("/api/v0/photos").raise_for_status()
             except httpx.HTTPError as exc:
                 pytest.skip(f"Photoframe server not reachable at {photoframe_server_url}: {exc}")
         yield PhotoframeApiClient(http, is_live=photoframe_is_live)

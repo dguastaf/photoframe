@@ -60,7 +60,7 @@ docker compose up -d
 
 ### Advanced
 
-Dev ports are fixed in [`config/ports.json`](config/ports.json) (API **52525**, client **6389**). For local Vite dev, the API allows the client dev origin for CORS (from that file unless you set `CORS_ORIGINS`). Vite proxies `/api` and `/health` to the server so fetches can use relative URLs in dev.
+Dev ports are fixed in [`config/ports.json`](config/ports.json) (API **52525**, client **6389**). For local Vite dev, the API allows the client dev origin for CORS (from that file unless you set `CORS_ORIGINS`). Vite proxies `/api` to the server so fetches can use relative URLs in dev.
 
 ### .env Configuration
 
@@ -116,7 +116,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:6389 — the page checks `/health` via the Vite proxy. Start the API on **52525** first (Vite proxies `/api` and `/health` to that port; see `config/ports.json`):
+Open http://localhost:6389. Start the API on **52525** first (Vite proxies `/api` to that port; see `config/ports.json`):
 
 ```bash
 cd server

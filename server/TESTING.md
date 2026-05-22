@@ -85,7 +85,7 @@ pytest tests/unit/
 
 ## 2. Integration tests (`tests/integration/`)
 
-**Purpose:** End-to-end HTTP to Photoframe (`/health`, `/api/v0/photos`, …). Tests never open TCP to Photoprism.
+**Purpose:** End-to-end HTTP to Photoframe (`/api/v0/photos`, …). Tests never open TCP to Photoprism.
 
 ### 2a. Mock downstream (default, CI)
 

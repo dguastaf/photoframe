@@ -25,7 +25,6 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': SERVER_ORIGIN,
-      '/health': SERVER_ORIGIN,
     },
   },
   preview: {
@@ -33,7 +32,6 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': SERVER_ORIGIN,
-      '/health': SERVER_ORIGIN,
     },
   },
 })
