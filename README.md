@@ -2,43 +2,55 @@
 
 A simple digital photo frame slideshow application backed by Photoprism.
 
-## Context & Methodology
-This app was built using an agent-first development workflow using Cursor, mainly for learning purposes. I'm trying to mimic a collaborative professional development environment.
-
-[Product Spec](https://www.notion.so/Photoframe-PRD-c54cdc4f52e94cfabe20d7b940dcd854?source=copy_link): Written in Notion as a PM might, iterated on using a Plan agent in Cursor. Added functional requirements.
+[Product Spec](https://www.notion.so/Photoframe-PRD-c54cdc4f52e94cfabe20d7b940dcd854)
 
 
-## Status
+## Agent-First Development Methodology
+Mainly for learning purposes, this app was built using an agent-first development workflow. Agents were used in almost every part of the software development process. As much as possible, workflow mirrors a collaborative, professional development environment.
 
-**Phase 1 (in progress).** The server lists photos and streams image bytes from Photoprism when configured. The React client is a Vite scaffold (slideshow UI still to build).
+### Product Spec & Project Plan
+- I created a detailed list of product requirements. Agents added details and organized the document. Agents stress-tested the requirements to find missing details.
+- I added functional and technical requirements in a similar manner: I created the list, agents added detail and validation.
+- Agents then created tickets/tasks in Notion.
 
-Treat this API **as unstable** until real backend integration lands—response shapes may change slightly while we shake out Photoprism behavior.
+### Agent-first Software Development
+#### Task plan
+1. Agents review a task and create a development plan.
+2. A "staff software engineer" agent, which I created, reviews the plan for scalability, maintainability, and best practices, with a focus on ensuring the design is adaptable to other backends beyond Photoprism.
+3. I review the plan, provide feedback, and add additional specifics as needed.
 
-Contract routes are versioned at **`/api/v0/`** (`/health` is unversioned). The Photoprism adapter calls Photoprism's own `/api/v1/...` upstream paths.
+#### Coding
+1. Agent codes the plan.
+2. Agent writes feature code & tests.
+3. Agent runs automated tests and linting. 
 
-## Layout
+#### Code review & CI
+1. I code review it
+2. The staff engineer agent also code reviews it
+3. PR is created and Cursor's bugbot runs.
+4. CI pipeline runs automated tests
+5. Code is merged once all pass!
 
-```
-photoframe/
-├── config/      # Shared ports.json (fixed dev ports)
-├── server/      # FastAPI server (Python)
-├── client/      # React + Vite dev UI
-├── Dockerfile   # Production image (API + built UI)
-└── docker-compose.yml
-```
+## Usage
 
-## Quickstart
+### Quickstart
 
 Prerequisites: Docker + Docker Compose.
 
-```bash
-cp .env.example .env   # set PHOTOPRISM_* (see Configuration)
-docker compose up -d
-```
+1. Install and configure Photoprism. Obtain an "Access Token" from your Photoprism instance. See the [Photoprism API Access documentation](https://docs.photoprism.app/api/#authentication) for instructions.
+2. `git clone https://github.com/dguastaf/photoframe.git`
+3. Create `.env` from the template and set your Photoprism URL and token (from step 1):
 
-Open **http://localhost:6389** — the **server** service (like Immich’s `immich-server`) runs uvicorn on one port: API routes plus the built React UI. Port **52525** is dev-only (local uvicorn / Vite proxy), not published by Compose.
+   ```bash
+   cp .env.example .env
+   ```
 
-**Updates** (no separate `docker compose build`):
+   See [.env Configuration](#env-configuration) for all variables.
+
+4. Run `docker compose up -d`
+5. Open **http://localhost:6389** in browser
+
+### Updates
 
 ```bash
 docker compose down
@@ -46,31 +58,11 @@ git pull
 docker compose up -d
 ```
 
-Compose rebuilds images when Dockerfiles or build context change (`pull_policy: build`).
+### Advanced
 
 Dev ports are fixed in [`config/ports.json`](config/ports.json) (API **52525**, client **6389**). For local Vite dev, the API allows the client dev origin for CORS (from that file unless you set `CORS_ORIGINS`). Vite proxies `/api` and `/health` to the server so fetches can use relative URLs in dev.
 
-### Verify with curl
-
-Through the UI port (Docker stack):
-
-```bash
-curl http://localhost:6389/health
-curl http://localhost:6389/api/v0/photos | jq
-PHOTO_ID=$(curl -s http://localhost:6389/api/v0/photos | jq -r '.[0].id')
-curl -o /tmp/photo.jpg "http://localhost:6389/api/v0/photos/${PHOTO_ID}/image"
-file /tmp/photo.jpg
-```
-
-Direct API (local uvicorn on **52525** only — not exposed by `docker compose`):
-
-```bash
-curl http://localhost:52525/health
-```
-
-All compose checks should return HTTP 200 when Photoprism is configured.
-
-## Configuration
+### .env Configuration
 
 See `.env.example` for all variables:
 
@@ -84,6 +76,7 @@ See `.env.example` for all variables:
 **Photoprism from Docker:** `PHOTOPRISM_BASE_URL` must be reachable from the **server** container. If Photoprism runs on the Docker host, use the host LAN IP (not `http://localhost:...`).
 
 `PHOTO_SOURCE` selects which adapter is constructed at startup and stored on `app.state.photo_library`. Both `GET /api/v0/photos` and `GET /api/v0/photos/{id}/image` call the adapter (upstream `GET /api/v1/photos/{uid}/dl` with Bearer auth).
+
 
 ## Development
 
@@ -123,13 +116,21 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:6389 — the page checks `/health` via the Vite proxy. Start the API first (`docker compose up` or uvicorn on **52525**).
+Open http://localhost:6389 — the page checks `/health` via the Vite proxy. Start the API on **52525** first (Vite proxies `/api` and `/health` to that port; see `config/ports.json`):
+
+```bash
+cd server
+source .venv/bin/activate
+uvicorn app.main:app --host 127.0.0.1 --port 52525 --reload
+```
+
+For a single service on **6389** (built UI + API, no Vite), use `docker compose up` from the repo root instead — do not run that alongside `npm run dev` (both use port **6389**).
 
 Client unit tests: `cd client && npm test`. See [client/TESTING.md](client/TESTING.md) for layout (`tests/unit/`, `tests/e2e/`).
 
 #### UI preview assets (required for UI pull requests)
 
-Pull requests that change UI source must include updated screenshots or videos under [`.github/ui-preview/`](.github/ui-preview/README.md). You can refresh assets in any commit on the branch before opening the PR. One-time capture setup:
+Pull requests that change UI source must include updated screenshots or videos under [`.github/ui-preview/`](.github/ui-preview/README.md). Refresh on the branch before opening the PR. One-time capture setup:
 
 ```bash
 cd client && npm install && npx playwright install chromium
@@ -137,12 +138,8 @@ cd client && npm install && npx playwright install chromium
 
 | Change | Command |
 | --- | --- |
-| Static layout / styling | `npm run ui:screenshot` |
-| Interactions / flows | `npm run ui:video` |
+| Any UI change (recommended) | `npm run ui:preview` (screenshot + video + validation) |
+| Static layout / styling only | `npm run ui:screenshot` |
+| Interactions / slideshow / flows | `npm run ui:preview` (avoid `ui:video` alone — can produce unusably short clips) |
 
-CI fails PRs that change UI without updated preview files.
-
-## What's next
-
-- Slideshow UI in `client/`.
-- See `.cursor/plans/photoframe_greenfield_build_*.plan.md` for the full plan.
+Embed in the PR description with `npm run ui:embed` (uses `raw.githubusercontent.com` for the screenshot — relative `.github/ui-preview/` paths break in PR bodies). CI fails PRs that change UI without updated preview files.
