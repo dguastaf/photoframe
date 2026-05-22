@@ -59,7 +59,7 @@ export function assertNoRelativePreviewImages(markdown, label = 'text') {
   }
 }
 
-export function printPrEmbedInstructions(branch) {
+export function printPrEmbedInstructions(branch = currentBranch()) {
   const { owner, repo } = parseGitHubRepo()
   const block = buildPrEmbed({ owner, repo, branch })
   console.log('--- Paste into PR description (UI preview) ---\n')
