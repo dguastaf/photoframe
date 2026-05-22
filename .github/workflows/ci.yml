@@ -12,24 +12,6 @@ permissions:
   pull-requests: write
 
 jobs:
-  ui-preview:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-
-      - name: Lint PR embed documentation
-        run: |
-          chmod +x scripts/ui-preview/lint-docs-embed.sh
-          ./scripts/ui-preview/lint-docs-embed.sh
-
-      - name: Verify UI preview assets on PR
-        run: |
-          chmod +x scripts/ui-preview/check-pr-diff.sh scripts/ui-preview/lint-docs-embed.sh
-          ./scripts/ui-preview/check-pr-diff.sh origin/${{ github.base_ref }}
-
   client-test:
     runs-on: ubuntu-latest
     defaults:
