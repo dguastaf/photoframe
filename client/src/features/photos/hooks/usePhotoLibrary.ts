@@ -6,6 +6,13 @@ function photoIdsFingerprint(ids: string[]): string {
   return ids.join('\0')
 }
 
+type PlaybackState = {
+  shuffledIds: string[]
+  cursor: number
+}
+
+const EMPTY_PLAYBACK: PlaybackState = { shuffledIds: [], cursor: 0 }
+
 /**
  * Server-ordered catalog plus shuffled playback order for the slideshow.
  * Pass `photos` from {@link usePhotosQuery} (`null` while loading or on error).
@@ -17,38 +24,41 @@ export function usePhotoLibrary(photos: PhotoMetadata[] | null) {
   )
   const idsKey = photoIdsFingerprint(catalogIds)
 
-  const [shuffledIds, setShuffledIds] = useState<string[]>([])
-  const [cursor, setCursor] = useState(0)
+  const [playback, setPlayback] = useState<PlaybackState>(EMPTY_PLAYBACK)
 
   useLayoutEffect(() => {
     if (catalogIds.length === 0) {
-      setShuffledIds([])
-      setCursor(0)
+      setPlayback(EMPTY_PLAYBACK)
       return
     }
-    setShuffledIds(shuffle(catalogIds))
-    setCursor(0)
+    setPlayback({ shuffledIds: shuffle(catalogIds), cursor: 0 })
   }, [idsKey])
 
+  const { shuffledIds, cursor } = playback
   const currentPhotoId =
     shuffledIds.length > 0 ? shuffledIds[cursor] : undefined
 
   const goNext = useCallback(() => {
-    if (shuffledIds.length === 0) return
-    setCursor((prev) => {
-      const nextIndex = prev + 1
-      if (nextIndex < shuffledIds.length) {
-        return nextIndex
+    setPlayback((prev) => {
+      if (prev.shuffledIds.length === 0) return prev
+      const nextIndex = prev.cursor + 1
+      if (nextIndex < prev.shuffledIds.length) {
+        return { ...prev, cursor: nextIndex }
       }
-      setShuffledIds(shuffle(catalogIds))
-      return 0
+      return { shuffledIds: shuffle(catalogIds), cursor: 0 }
     })
-  }, [shuffledIds.length, catalogIds])
+  }, [catalogIds])
 
   const goPrev = useCallback(() => {
-    if (shuffledIds.length === 0) return
-    setCursor((prev) => (prev === 0 ? shuffledIds.length - 1 : prev - 1))
-  }, [shuffledIds.length])
+    setPlayback((prev) => {
+      if (prev.shuffledIds.length === 0) return prev
+      return {
+        ...prev,
+        cursor:
+          prev.cursor === 0 ? prev.shuffledIds.length - 1 : prev.cursor - 1,
+      }
+    })
+  }, [])
 
   return useMemo(
     () => ({
