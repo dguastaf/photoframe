@@ -34,13 +34,25 @@ for f in "${PREVIEW_CHANGED[@]}"; do
   esac
 done
 
+has_preview_asset() {
+  local f
+  for f in "${UI_PREVIEW_DIR}/app-shell.png" "${UI_PREVIEW_DIR}/app-flow.webm"; do
+    [[ -f "$f" && -s "$f" ]] && return 0
+  done
+  return 1
+}
+
 if ((${#ASSET_CHANGED[@]} == 0)); then
-  echo "error: PR changes UI files but does not update ${UI_PREVIEW_DIR}/ screenshots or videos." >&2
+  if has_preview_asset; then
+    echo "error: PR changes UI files but does not update ${UI_PREVIEW_DIR}/ screenshots or videos." >&2
+  else
+    echo "error: PR changes UI files but ${UI_PREVIEW_DIR}/ has no screenshot or video." >&2
+  fi
   echo "" >&2
   echo "UI files changed:" >&2
   printf '  - %s\n' "${UI_CHANGED[@]}" >&2
   echo "" >&2
-  echo "Run capture on this branch and commit the assets:" >&2
+  echo "Before opening the PR, run capture on this branch and commit the assets (any commit on the branch is fine):" >&2
   echo "  cd client && npm run ui:screenshot" >&2
   echo "  cd client && npm run ui:preview   # preferred: screenshot + video + validate" >&2
   exit 1

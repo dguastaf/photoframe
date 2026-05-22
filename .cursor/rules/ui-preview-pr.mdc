@@ -6,7 +6,7 @@ alwaysApply: false
 
 # UI preview assets for pull requests
 
-When you change UI files (`client/src/**`, `client/index.html`, `client/public/**`), every commit must include refreshed assets under `.github/ui-preview/`. Pre-commit blocks commits that skip this.
+When you change UI files (`client/src/**`, `client/index.html`, `client/public/**`), the pull request must include refreshed assets under `.github/ui-preview/`. CI blocks PRs that change UI without an updated screenshot or video; individual commits do not need to include assets.
 
 ## Screenshot vs video
 
@@ -18,11 +18,11 @@ When you change UI files (`client/src/**`, `client/index.html`, `client/public/*
 
 **Do not** commit `ui:video` alone after slideshow/timer changes — it produces a ~15KB useless clip. `ui:preview` runs capture then `validate.mjs` (min size/duration).
 
-Run capture **before** committing UI work. Stage `.github/ui-preview/` with the UI files in the same commit.
+Run capture **before opening the PR** (any commit on the branch may include the assets).
 
 ## Opening / updating a PR
 
-1. Ensure latest commits that touch UI also updated preview assets.
+1. Ensure the branch (vs base) includes updated preview assets whenever UI source changed.
 2. **Never** paste `![...](.github/ui-preview/app-shell.png)` — GitHub shows a broken image. After capture, run:
 
 ```bash

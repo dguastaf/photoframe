@@ -1,6 +1,6 @@
 # UI preview assets for pull requests
 
-Every commit that changes UI source files must update preview assets here. Pre-commit and CI enforce presence **and** minimum quality (size/duration).
+Pull requests that change UI source must include at least one updated file here (screenshot or video). CI enforces presence **and** minimum quality (size/duration) when the PR is opened; individual commits do not need to touch these assets.
 
 | Asset | When to refresh |
 | --- | --- |
