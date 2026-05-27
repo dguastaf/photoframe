@@ -14,22 +14,8 @@ Mainly for learning purposes, this app was built using an agent-first developmen
 - Agents then created tickets/tasks in Notion.
 
 ### Agent-first Software Development
-#### Task plan
-1. Agents review a task and create a development plan.
-2. A self-created ["staff software engineer" agent](.cursor/agents/staff-engineer.md), reviews the plan for scalability, maintainability, and best practices, focusing on ensuring the design is adaptable to other backends beyond Photoprism.
-3. I review the plan, provide feedback, and add additional specifics as needed.
 
-#### Coding
-1. Agent codes the plan.
-2. Agent writes feature code & tests.
-3. Agent runs automated tests and linting. 
-
-#### Code review & CI
-1. I code review it
-2. The staff engineer agent also code reviews it
-3. PR is created and Cursor's bugbot runs.
-4. CI pipeline runs automated tests
-5. Code is merged once all pass!
+Source of truth for process and workflow: [`AI-SDLC.md`](AI-SDLC.md).
 
 ## Usage
 

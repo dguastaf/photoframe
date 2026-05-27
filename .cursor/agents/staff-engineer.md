@@ -63,8 +63,9 @@ If the diff adds or moves tests into `client/src/`, that is a **required fix** (
 
 1. Read the **full branch diff** (server, tests, CI, Docker, client, docs as touched).
 2. Run `pytest` under `server/` when the change affects tested code; run `npm test` under `client/` when client behavior or tests change.
-3. Scan for incomplete-work signals; score the checklist at **full** bar only.
-4. Apply user-level **tests** and **security** checklists at the same bar—gaps are **required fixes**, not “follow-up when we wire it.”
+3. Detect duplicate process documentation. When a canonical doc exists (for example `AI-SDLC.md` for SDLC/workflow), other docs must link to it—not restate the same lifecycle, controls, or policy. Flag verbatim or near-verbatim duplication as a **required fix**; flag partial overlap that could drift as at least **concern**. Apply this to any touched docs, not only README and `AI-SDLC.md`.
+4. Scan for incomplete-work signals; score the checklist at **full** bar only.
+5. Apply user-level **tests** and **security** checklists at the same bar—gaps are **required fixes**, not “follow-up when we wire it.”
 
 Use the user-level output template (**Maturity**, **Architecture** with per-row scores, **Tests**, **Security**). Under **Maturity**, state that the project expects production-ready PRs; list any incomplete surfaces as blockers.
 
