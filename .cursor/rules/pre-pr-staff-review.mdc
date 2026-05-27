@@ -11,9 +11,8 @@ Before creating a pull request (`gh pr create`, "open a PR", or similar):
 
 These are enforced automatically; do not open the PR until they pass:
 
-1. **Product PRs:** `planning` and `implementation` recorded in `scripts/sdlc/reviews/<branch-slug>.json` (`record_phase.py … pass`), or a valid owner `exception` in that file (see `scripts/sdlc/README.md`).
-2. **Process-only PRs** (SDLC/docs/CI wiring only; no app or test tree changes): no review file and no exception — gates are skipped via diff detection.
-3. **Product PRs:** PR description includes a substantive **Test plan** (CI validates this).
+1. **Always:** `planning` and `implementation` recorded in `scripts/sdlc/reviews/<branch-slug>.json` (`record_phase.py … pass`), or a valid owner `exception` in that file (see `scripts/sdlc/README.md`). Applies to docs and SDLC-only PRs too.
+2. **When production code changed:** PR description includes a substantive **Test plan** (CI validates this). Docs/SDLC-only diffs skip test plan validation.
 
 Verify locally:
 

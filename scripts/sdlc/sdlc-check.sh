@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Local helper: optional touched-area tests + PR gate validation (planning + implementation).
-# CI runs full test suite on PR; hook/CI gate does not require walkthrough or pre_pr records.
+# Staff phases always required (or exception); test plan gate only if production code changed.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"

@@ -1,22 +1,18 @@
 #!/usr/bin/env python3
-"""Classify PR diffs: product/behavior changes vs process-only (SDLC, docs, CI wiring)."""
+"""Classify PR diffs for SDLC gates (production code vs everything else)."""
 
 from __future__ import annotations
 
 import subprocess
 from pathlib import Path
 
-# Paths that imply app behavior or automated product tests should run / test plan required.
-PRODUCT_PREFIXES = (
+# Production/runtime code and config — changes here require a substantive PR test plan.
+PRODUCTION_PREFIXES = (
     "server/app/",
     "client/src/",
-    "server/tests/",
-    "client/tests/",
-    "server/scripts/",
-    "scripts/ui-preview/",
 )
 
-PRODUCT_EXACT = frozenset(
+PRODUCTION_EXACT = frozenset(
     {
         "server/pyproject.toml",
         "client/package.json",
@@ -28,19 +24,19 @@ PRODUCT_EXACT = frozenset(
 )
 
 
-def requires_product_verification(path: str) -> bool:
-    """True when a changed file can affect runtime behavior or product test suites."""
+def is_production_code_path(path: str) -> bool:
+    """True when a changed file is production app code or runtime-facing config."""
     normalized = path.replace("\\", "/").lstrip("./")
-    if normalized in PRODUCT_EXACT:
+    if normalized in PRODUCTION_EXACT:
         return True
-    return any(normalized.startswith(prefix) for prefix in PRODUCT_PREFIXES)
+    return any(normalized.startswith(prefix) for prefix in PRODUCTION_PREFIXES)
 
 
-def requires_product_verification_for_changes(paths: list[str]) -> bool:
-    """True if any changed file needs a substantive PR test plan or staff-engineer on product work."""
+def production_code_changed(paths: list[str]) -> bool:
+    """True if the diff touches any production code path (test plan required)."""
     if not paths:
         return False
-    return any(requires_product_verification(p) for p in paths)
+    return any(is_production_code_path(p) for p in paths)
 
 
 def git_changed_files(base_ref: str, *, cwd: Path | None = None) -> list[str]:

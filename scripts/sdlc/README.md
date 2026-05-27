@@ -24,24 +24,23 @@ scripts/sdlc/reviews/<branch-slug>.json
 
 | Check | Enforced by |
 | ----- | ----------- |
-| `planning` + `implementation` phases recorded (`outcome: pass`) | Cursor `gh pr create` hook, CI `sdlc-policy` (skipped for process-only diffs) |
-| PR **Test plan** section (non-empty, non-placeholder) | CI `sdlc-policy` (skipped when diff has no product/test paths) |
+| `planning` + `implementation` phases recorded (`outcome: pass`) | Always — Cursor hook + CI `sdlc-policy` (owner `exception` may skip) |
+| PR **Test plan** section (non-empty, non-placeholder) | CI `sdlc-policy` when **production code** changed (`server/app/`, `client/src/`, runtime config) |
 | `walkthrough` / `pre_pr` phase records | Not enforced by hook or CI (optional audit trail) |
 | PR **Exceptions** section body fields | Not enforced (optional for now) |
 
 Workflow rules (`.cursor/rules/`) may still require walkthrough or a pre-PR `staff-engineer` run before you open a PR; that is separate from the gate above.
 
-### Process-only diffs (no staff-engineer gate)
+### Split criteria (same diff, different gates)
 
-When **no** changed files touch product or test trees (e.g. only `scripts/sdlc/`, `.cursor/`, `AI-SDLC.md`, PR template, workflow wiring), CI and the hook **do not** require:
+| Gate | When required |
+| ---- | ------------- |
+| **Staff-engineer** (`planning` + `implementation` in review JSON) | **Every PR** — including docs, SDLC, and README-only changes |
+| **PR test plan** (substantive **Test plan** section) | Only when **production code** changed |
 
-- A `scripts/sdlc/reviews/<branch>.json` file at all
-- `planning` / `implementation` staff-engineer reviews (nothing to skip — they do not apply)
-- A substantive PR **Test plan**
+Production code paths: `server/app/`, `client/src/`, and runtime config (`server/pyproject.toml`, `client/package.json`, `.env.example`, Docker files). Changes only under `server/tests/`, `client/tests/`, `scripts/sdlc/`, `.cursor/`, docs, or CI wiring do **not** require a substantive test plan (CI still runs the normal test jobs).
 
-Do **not** record an `exception` for this case. Exceptions are only for **product** PRs where the owner approves skipping required staff-engineer phases.
-
-Detection uses `git diff <base>...HEAD` via `changed_paths.py`. Changes under `server/app/`, `client/src/`, `server/tests/`, `client/tests/`, dependencies, Docker, or UI preview scripts still require full gates.
+Detection uses `git diff <base>...HEAD` via `changed_paths.py`.
 
 ## Schema (minimum for PR gate)
 
@@ -113,11 +112,11 @@ python3 scripts/sdlc/validate_review.py --for-pr-create
 python3 scripts/sdlc/validate_review.py --ci --branch <head-ref> --pr-body-file /path/to/body.md
 ```
 
-## Approved exception (product PRs only)
+## Approved exception (staff-engineer only)
 
-Use this when the PR **changes product or test paths** but the owner approves skipping required `planning` / `implementation` staff-engineer records. Set `exception` in the review JSON (reason, scope, approver, expires). You may also note it in the PR **Exceptions** section; that section is not validated by CI today.
+Use when the owner approves skipping required `planning` / `implementation` staff-engineer records. Set `exception` in the review JSON (reason, scope, approver, expires). You may also note it in the PR **Exceptions** section; that section is not validated by CI today.
 
-Process-only PRs do not need a review file or an exception.
+Exceptions do **not** waive the test plan when production code changed.
 
 ```json
 "exception": {

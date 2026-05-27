@@ -8,10 +8,10 @@
 
 ## SDLC
 
-<!-- Product PRs: planning + implementation in scripts/sdlc/reviews/<branch-slug>.json (or owner exception). Process-only PRs: neither required — see scripts/sdlc/README.md. -->
+<!-- Always: planning + implementation in scripts/sdlc/reviews/<branch-slug>.json (or owner exception). Test plan required only when production code changed — see scripts/sdlc/README.md. -->
 
 - [ ] `python3 scripts/sdlc/validate_review.py --for-pr-create` passes (hook runs on `gh pr create`)
 
 ## Exceptions
 
-<!-- Product PRs only: when owner approves skipping required staff-engineer phases (reason, scope, approver, expiration in review JSON). -->
+<!-- When owner approves skipping required staff-engineer phases (reason, scope, approver, expiration in review JSON). -->

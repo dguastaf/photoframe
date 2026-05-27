@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Validate scripts/sdlc/reviews/<branch>.json and PR test plan for PR gates.
 
-Enforces planning + implementation phase records (or valid owner exception) on
-product PRs. Process-only diffs require no review file and no exception.
+Staff-engineer phases (planning + implementation) are always required unless the
+owner documents an exception. PR test plan validation runs only when production
+code changed (server/app/, client/src/, or listed runtime config paths).
 """
 
 from __future__ import annotations
@@ -15,7 +16,7 @@ from pathlib import Path
 
 from changed_paths import (
     git_changed_files,
-    requires_product_verification_for_changes,
+    production_code_changed,
     resolve_base_ref,
 )
 from review_path import REVIEWS_DIR, branch_slug, review_path
@@ -61,13 +62,8 @@ def load_review(path: Path) -> dict | None:
     return data
 
 
-def validate_review(
-    data: dict | None, *, process_only: bool
-) -> list[str]:
+def validate_review(data: dict | None) -> list[str]:
     errors: list[str] = []
-    if process_only and data is None:
-        return errors
-
     if data is None:
         errors.append("missing review file (run staff-engineer phases and record_phase.py)")
         return errors
@@ -83,8 +79,7 @@ def validate_review(
         errors.append("phases must be an object")
         return errors
 
-    skip_phases = process_only or _exception_ok(exc)
-    required = () if skip_phases else REQUIRED_PHASES
+    required = () if _exception_ok(exc) else REQUIRED_PHASES
     for name in required:
         phase = phases.get(name)
         if not _phase_ok(phase):
@@ -160,7 +155,7 @@ def main() -> None:
     repo_root = Path(__file__).resolve().parents[2]
     base_ref = resolve_base_ref(args.base_ref, cwd=repo_root)
     changed = git_changed_files(base_ref, cwd=repo_root)
-    process_only = not requires_product_verification_for_changes(changed)
+    prod_changed = production_code_changed(changed)
 
     errors: list[str] = []
     data: dict | None = None
@@ -171,12 +166,12 @@ def main() -> None:
             else review_path()
         )
         data = load_review(path)
-        errors.extend(validate_review(data, process_only=process_only))
+        errors.extend(validate_review(data))
 
     if args.ci and args.pr_body_file:
-        if process_only:
+        if not prod_changed:
             print(
-                "sdlc: process-only diff — skipping PR test plan validation",
+                "sdlc: no production code changed — skipping PR test plan validation",
                 file=sys.stderr,
             )
         else:
@@ -188,10 +183,10 @@ def main() -> None:
             print(f"error: {err}", file=sys.stderr)
         raise SystemExit(1)
 
-    if process_only:
-        print("sdlc review validation passed (process-only diff)")
-    else:
-        print("sdlc review validation passed")
+    notes = []
+    if not prod_changed:
+        notes.append("test plan not required (no production code changed)")
+    print("sdlc review validation passed" + (f" ({'; '.join(notes)})" if notes else ""))
 
 
 if __name__ == "__main__":
