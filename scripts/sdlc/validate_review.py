@@ -19,7 +19,7 @@ from changed_paths import (
     production_code_changed,
     resolve_base_ref,
 )
-from review_path import REVIEWS_DIR, branch_slug, review_path
+from review_path import review_path
 
 REQUIRED_PHASES = ("planning", "implementation")
 EXCEPTION_KEYS = ("reason", "scope", "approver", "expires")
@@ -118,10 +118,6 @@ def validate_pr_body(body: str) -> list[str]:
     return errors
 
 
-def find_review_for_branch(branch: str) -> Path:
-    return REVIEWS_DIR / f"{branch_slug(branch)}.json"
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -160,11 +156,7 @@ def main() -> None:
     errors: list[str] = []
     data: dict | None = None
     if args.for_pr_create or args.ci:
-        path = (
-            find_review_for_branch(args.branch)
-            if args.branch
-            else review_path()
-        )
+        path = review_path(args.branch)
         data = load_review(path)
         errors.extend(validate_review(data))
 
