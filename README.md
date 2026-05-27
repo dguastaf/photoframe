@@ -13,7 +13,7 @@ Mainly for learning purposes, this app was built using an agent-first developmen
 - I added functional and technical requirements in a similar manner: I created the list, agents added detail and validation.
 - Agents then created tickets/tasks in Notion.
 
-### Agent-first Software Development
+### Agent-first Software Development Lifecycle
 
 Source of truth for process and workflow: [`AI-SDLC.md`](AI-SDLC.md).
 
