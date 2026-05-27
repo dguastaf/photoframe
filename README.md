@@ -15,26 +15,7 @@ Mainly for learning purposes, this app was built using an agent-first developmen
 
 ### Agent-first Software Development
 
-#### Intake & planning
-1. Define scope and acceptance criteria (ticket, issue, or Notion task).
-2. Agent drafts an implementation plan (client, server, tests, CI, docs as needed).
-3. The ["staff software engineer" agent](.cursor/agents/staff-engineer.md) reviews the plan for architecture, test strategy, and tradeoffs.
-4. I review and approve the plan before coding starts.
-
-#### Implementation
-1. Work on a branch from `main`.
-2. Agent implements feature code, tests, and doc updates for the approved scope.
-3. Agent runs automated tests and linting (see [`client/TESTING.md`](client/TESTING.md) for client commands).
-4. The staff engineer agent reviews the full branch diff; required findings are addressed before moving on.
-
-#### Product walkthrough
-1. I exercise the feature locally end-to-end.
-2. Agent validates core flows (for UI changes, often via Playwright e2e in `client/tests/e2e/`).
-3. We confirm basic functionality or file follow-ups before opening a PR.
-
-#### Pull request & CI
-1. Agent opens a PR with a summary, test plan, and evidence.
-2. I review and merge after CI passes (including Cursor Bugbot where applicable).
+Source of truth for process and workflow: [`AI-SDLC.md`](AI-SDLC.md).
 
 ## Usage
 
