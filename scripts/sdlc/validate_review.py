@@ -148,10 +148,12 @@ def main() -> None:
     if not args.for_pr_create and not args.ci:
         parser.error("specify --for-pr-create and/or --ci")
 
-    repo_root = Path(__file__).resolve().parents[2]
-    base_ref = resolve_base_ref(args.base_ref, cwd=repo_root)
-    changed = git_changed_files(base_ref, cwd=repo_root)
-    prod_changed = production_code_changed(changed)
+    prod_changed: bool | None = None
+    if args.ci and args.pr_body_file:
+        repo_root = Path(__file__).resolve().parents[2]
+        base_ref = resolve_base_ref(args.base_ref, cwd=repo_root)
+        changed = git_changed_files(base_ref, cwd=repo_root)
+        prod_changed = production_code_changed(changed)
 
     errors: list[str] = []
     data: dict | None = None
@@ -176,7 +178,7 @@ def main() -> None:
         raise SystemExit(1)
 
     notes = []
-    if not prod_changed:
+    if prod_changed is False:
         notes.append("test plan not required (no production code changed)")
     print(
         "sdlc review validation passed" + (f" ({'; '.join(notes)})" if notes else ""),
