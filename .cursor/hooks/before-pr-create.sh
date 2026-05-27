@@ -16,7 +16,7 @@ if [[ ! "$command" =~ gh[[:space:]]+pr[[:space:]]+create ]]; then
   exit 0
 fi
 
-if (cd "$ROOT" && python3 scripts/sdlc/validate_review.py --for-pr-create); then
+if (cd "$ROOT" && python3 scripts/sdlc/validate_review.py --for-pr-create) >&2; then
   echo '{"permission":"allow"}'
   exit 0
 fi

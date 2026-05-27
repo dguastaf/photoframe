@@ -178,7 +178,10 @@ def main() -> None:
     notes = []
     if not prod_changed:
         notes.append("test plan not required (no production code changed)")
-    print("sdlc review validation passed" + (f" ({'; '.join(notes)})" if notes else ""))
+    print(
+        "sdlc review validation passed" + (f" ({'; '.join(notes)})" if notes else ""),
+        file=sys.stderr,
+    )
 
 
 if __name__ == "__main__":
