@@ -24,9 +24,17 @@ PRODUCTION_EXACT = frozenset(
 )
 
 
+def normalize_repo_path(path: str) -> str:
+    """Normalize a git path for prefix/exact matching (POSIX slashes, no leading ./)."""
+    normalized = path.replace("\\", "/")
+    while normalized.startswith("./"):
+        normalized = normalized[2:]
+    return normalized
+
+
 def is_production_code_path(path: str) -> bool:
     """True when a changed file is production app code or runtime-facing config."""
-    normalized = path.replace("\\", "/").lstrip("./")
+    normalized = normalize_repo_path(path)
     if normalized in PRODUCTION_EXACT:
         return True
     return any(normalized.startswith(prefix) for prefix in PRODUCTION_PREFIXES)
