@@ -31,12 +31,15 @@ scripts/sdlc/reviews/<branch-slug>.json
 
 Workflow rules (`.cursor/rules/`) may still require walkthrough or a pre-PR `staff-engineer` run before you open a PR; that is separate from the gate above.
 
-### Process-only diffs (auto-skip product gates)
+### Process-only diffs (no staff-engineer gate)
 
 When **no** changed files touch product or test trees (e.g. only `scripts/sdlc/`, `.cursor/`, `AI-SDLC.md`, PR template, workflow wiring), CI and the hook **do not** require:
 
-- `planning` / `implementation` review records (review JSON optional)
-- A substantive PR **Test plan** (section may still be present)
+- A `scripts/sdlc/reviews/<branch>.json` file at all
+- `planning` / `implementation` staff-engineer reviews (nothing to skip — they do not apply)
+- A substantive PR **Test plan**
+
+Do **not** record an `exception` for this case. Exceptions are only for **product** PRs where the owner approves skipping required staff-engineer phases.
 
 Detection uses `git diff <base>...HEAD` via `changed_paths.py`. Changes under `server/app/`, `client/src/`, `server/tests/`, `client/tests/`, dependencies, Docker, or UI preview scripts still require full gates.
 
@@ -110,9 +113,11 @@ python3 scripts/sdlc/validate_review.py --for-pr-create
 python3 scripts/sdlc/validate_review.py --ci --branch <head-ref> --pr-body-file /path/to/body.md
 ```
 
-## Approved exception
+## Approved exception (product PRs only)
 
-When the repository owner approves skipping planning/implementation records, set `exception` in the JSON (reason, scope, approver, expires). You may also note it in the PR **Exceptions** section; that section is not validated by CI today.
+Use this when the PR **changes product or test paths** but the owner approves skipping required `planning` / `implementation` staff-engineer records. Set `exception` in the review JSON (reason, scope, approver, expires). You may also note it in the PR **Exceptions** section; that section is not validated by CI today.
+
+Process-only PRs do not need a review file or an exception.
 
 ```json
 "exception": {

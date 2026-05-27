@@ -8,11 +8,10 @@
 
 ## SDLC
 
-<!-- PR gate: planning + implementation in scripts/sdlc/reviews/<branch-slug>.json on this branch (or exception in that file). -->
+<!-- Product PRs: planning + implementation in scripts/sdlc/reviews/<branch-slug>.json (or owner exception). Process-only PRs: neither required — see scripts/sdlc/README.md. -->
 
-- [ ] `planning` and `implementation` recorded (`python3 scripts/sdlc/record_phase.py`)
-- [ ] `python3 scripts/sdlc/validate_review.py --for-pr-create` passes locally (optional; hook runs on `gh pr create`)
+- [ ] `python3 scripts/sdlc/validate_review.py --for-pr-create` passes (hook runs on `gh pr create`)
 
 ## Exceptions
 
-<!-- Optional. Use when `exception` is set in the branch review JSON (reason, scope, approver, expiration). -->
+<!-- Product PRs only: when owner approves skipping required staff-engineer phases (reason, scope, approver, expiration in review JSON). -->

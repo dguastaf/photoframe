@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Validate scripts/sdlc/reviews/<branch>.json and PR test plan for PR gates.
 
-Enforces planning + implementation phase records (or valid exception), except for
-process-only diffs (SDLC automation, docs, PR template) with no product/test impact.
+Enforces planning + implementation phase records (or valid owner exception) on
+product PRs. Process-only diffs require no review file and no exception.
 """
 
 from __future__ import annotations
