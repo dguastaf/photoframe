@@ -12,6 +12,21 @@ permissions:
   pull-requests: write
 
 jobs:
+  sdlc-policy:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate SDLC policy (planning + implementation + test plan)
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          printf '%s' "$PR_BODY" > /tmp/pr-body.md
+          python3 scripts/sdlc/validate_review.py --ci \
+            --branch "${{ github.head_ref }}" \
+            --pr-body-file /tmp/pr-body.md
+
   client-test:
     runs-on: ubuntu-latest
     defaults:

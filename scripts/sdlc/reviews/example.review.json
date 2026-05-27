@@ -1,0 +1,14 @@
+{
+  "branch": "example/feature-branch",
+  "phases": {
+    "planning": {
+      "at": "2026-05-27T12:00:00Z",
+      "outcome": "pass"
+    },
+    "implementation": {
+      "at": "2026-05-27T13:00:00Z",
+      "outcome": "pass"
+    }
+  },
+  "exception": null
+}

@@ -1,0 +1,18 @@
+name: SDLC drift
+
+on:
+  schedule:
+    - cron: "0 15 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check enforcement files match AI-SDLC map
+        run: python3 scripts/sdlc/drift_check.py

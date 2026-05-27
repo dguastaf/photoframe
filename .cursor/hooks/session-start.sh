@@ -30,7 +30,9 @@ print(
             "additional_context": (
                 f"Python dev environment is ready at {venv}. "
                 f"pytest and pip are on PATH for this session. "
-                f"Run tests from {server} with: cd server && pytest"
+                f"Run tests from {server} with: cd server && pytest. "
+                f"SDLC: AI-SDLC.md. Before gh pr create, record planning + implementation in "
+                f"scripts/sdlc/reviews/ (record_phase.py). See scripts/sdlc/README.md."
             ),
         }
     )

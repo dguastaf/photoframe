@@ -12,6 +12,14 @@
         "command": ".cursor/hooks/session-start.sh",
         "timeout": 300
       }
+    ],
+    "beforeShellExecution": [
+      {
+        "command": ".cursor/hooks/before-pr-create.sh",
+        "matcher": "gh pr create",
+        "failClosed": true,
+        "timeout": 30
+      }
     ]
   }
 }
