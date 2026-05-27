@@ -29,8 +29,8 @@ Out of scope for now:
 | Step                               | Artifacts produced                                                                                                                 | Exit criteria                                                                                                                       | Human role                                                            | Agent role                                                                                                                                         |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1) Intake                          | A testable problem statement with clear acceptance criteria and shared context.                                                    | Scope and acceptance criteria are testable.                                                                                         | Define user story and work scope.                                     | Structure intake details and flag ambiguity.                                                                                                       |
-| 2) Planning                        | One approved implementation plan that includes testing strategy, validation approach                                               | Plan covers feature code + tests, and `staff-engineer` planning feedback is addressed.                                              | Approve plan direction and tradeoffs.                                 | Draft the plan and iterate with `staff-engineer` before implementation.                                                                            |
-| 3) Implementation                  | Behavior-complete code with aligned tests/docs, passing validation evidence (tests + required linting)                             | Tests and required lint/validation checks pass; `staff-engineer` findings are resolved or explicitly documented before walkthrough. | Clarify domain decisions and approve scope changes.                   | Implement scoped work, run validation, and iterate with `staff-engineer`.                                                                          |
+| 2) Planning                        | One approved implementation plan that includes testing strategy, validation approach                                               | Plan covers feature code + tests, and `staff-engineer` planning feedback is addressed.                                              | Approve plan direction and tradeoffs.                                 | Draft the plan. `staff-engineer` reviews and approves final plan                                                                                   |
+| 3) Implementation                  | Behavior-complete code with aligned tests/docs, passing validation evidence (tests + required linting)                             | Tests and required lint/validation checks pass; `staff-engineer` findings are resolved or explicitly documented before walkthrough. | Clarify domain decisions and approve scope changes.                   | Implement scoped work, run validation. `staff-engineer` reviews and approves final set of changes                                                  |
 | 4) Product walkthrough             | Shared exploratory validation notes from human + AI confirming core flows, expected behavior, and obvious UX/functionality issues. | Human and AI confirm basic functionality works end-to-end, or follow-up issues are filed.                                           | Play with the feature end-to-end and decide if quality is acceptable. | Actively use the feature end-to-end as a simulated user, verify expected behavior across core flows, and log issues with clear reproduction steps. |
 | 5) Pull request                    | A decision-ready PR package: summary, test evidence, and any documented exceptions or deferred recommendations.                    | Required CI checks pass; human approves and merges.                                                                                 | Review narrative and merge.                                           | Prepare PR package, address review feedback, and maintain audit trail.                                                                             |
 | 6) Post-merge learning (as needed) | Brief notes on regressions, friction, or process gaps—only when something worth capturing surfaces.                                | Material issues have follow-ups; SDLC updates happen in separate PRs when warranted.                                                | Decide if follow-up is needed and prioritize.                         | Capture observations and suggest process fixes when asked.                                                                                         |
@@ -57,13 +57,15 @@ Out of scope for now:
 These controls map to enforceable checks and review gates:
 
 1. Every change starts on a branch (no direct edits on `main`).
-2. Every PR includes a test plan.
+2. All product changes require a PR test plan (enforcement: [`scripts/sdlc/README.md`](scripts/sdlc/README.md)).
 3. Required local checks run before PR creation.
 4. Required CI checks pass before merge.
 5. `staff-engineer` subagent review runs during planning and implementation (not only at PR time).
 6. Behavior-changing changes include test updates or explicit rationale.
 7. Process-changing changes update this document or linked policy docs in a standalone PR (no bundled product changes).
 8. Exceptions must include reason, scope, approver, and expiration.
+
+PRs that only change process, docs, or SDLC automation (no production code) do not require a substantive test plan; see `scripts/sdlc/README.md`.
 
 ## Agent operating contract
 
@@ -86,8 +88,7 @@ Use three layers:
   - Confirm required docs/tests move with behavior changes
 2. **Gate** (CI required checks)
   - Tests, lint, and policy checks enforced on PR
-  - Verify PR includes required metadata (test plan, exceptions)
-  - Verify `staff-engineer` review occurred in planning/implementation (or an exception is documented)
+  - Verify PR test plan when product code changed; verify `staff-engineer` review in planning/implementation (or documented exception)
 3. **Detect** (audit and drift review)
   - Scheduled checks for policy drift (docs vs actual automation)
   - Spot checks of merged PRs for process adherence
@@ -112,4 +113,5 @@ Use this loop to evolve the process:
 
 - 2026-05-27: Initial first-pass version on branch `chore/sdlc-single-source-of-truth`
 - 2026-05-27: Lifecycle table refined (staff-engineer in planning/implementation, product walkthrough, merged PR step, lightweight post-merge)
+- 2026-05-27: Control 2 — test plan required for product changes; process-only PRs exempt (see `scripts/sdlc/README.md`)
 

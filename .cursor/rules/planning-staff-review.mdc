@@ -1,0 +1,37 @@
+---
+description: >-
+  Required staff-engineer planning review on the final plan draft before
+  implementation begins. Run once per plan.
+alwaysApply: true
+---
+
+# Planning staff engineer review
+
+Run this review **once on the final plan draft**, immediately before implementation starts.
+
+## When to run
+
+1. **Before implementation begins** — after the plan is approved and finalized, run `staff-engineer` on the **final plan draft**.
+2. **Plan → Agent (build)** — when switching from planning to implementation, run the planning review before the first feature-code change.
+
+## When not to run
+
+- While still iterating on intermediate plan drafts in **Plan** mode.
+- Intake-only or clarifying scope without an approved plan to build.
+- Repeatedly during planning iterations for the same plan.
+- Only rerun if the final plan meaningfully changes after a recorded `planning` pass.
+
+## Steps (when triggered)
+
+1. Use the **final approved plan draft** (scope, acceptance criteria, test strategy, validation approach).
+2. **Delegate to the `staff-engineer` subagent** with `review_phase: planning` and the plan text (not the full diff yet).
+3. **Act on the review** — required fixes must be addressed before coding; recommendations should be incorporated or documented.
+4. **Record the outcome** (required before PR; run after a passing review):
+
+   ```bash
+   python3 scripts/sdlc/record_phase.py planning pass
+   ```
+
+   Use `fail` with a summary if the review did not pass: `record_phase.py planning fail "…"`. Commit `scripts/sdlc/reviews/<branch-slug>.json` on the branch.
+
+Photoframe is **production-ready only** — no scaffolding, stubs, or “land structure now” plans. The authoritative reviewer definition is `.cursor/agents/staff-engineer.md` (not the global Cursor agent).

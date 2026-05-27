@@ -1,25 +1,45 @@
 ---
-description: Run staff-engineer subagent review before creating any pull request
+description: Pre-PR workflow—walkthrough and optional staff-engineer pre_pr; hook gates planning+implementation only
 alwaysApply: true
 ---
 
-# Pre-PR staff engineer review
+# Pre-PR workflow
 
 Before creating a pull request (`gh pr create`, "open a PR", or similar):
 
-1. **Gather the full branch diff** against the default base branch (usually `main`):
-   - `git diff main...HEAD` (or the repo's actual default branch)
-   - Include commit messages / plan text if relevant
+## PR gate (hook + CI)
 
-2. **Delegate to the `staff-engineer` subagent** with that full scope. Do not open the PR until the review completes.
+These are enforced automatically; do not open the PR until they pass:
 
-3. **Act on the review**:
-   - **Required changes** — fix before creating the PR
-   - **Recommendations** — fix or explicitly note in the PR description why deferred
-   - **Acceptable tradeoffs** — may proceed; mention in the PR if non-obvious
+1. **Always:** `planning` and `implementation` recorded in `scripts/sdlc/reviews/<branch-slug>.json` (`record_phase.py … pass`), or a valid owner `exception` in that file (see `scripts/sdlc/README.md`). Applies to docs and SDLC-only PRs too.
+2. **When production code changed:** PR description includes a substantive **Test plan** (CI validates this). Docs/SDLC-only diffs skip test plan validation.
 
-4. **Only then** create the PR. If the user insists on skipping review, warn once and proceed.
+Verify locally:
 
-The subagent performs a **full pre-PR review**: architecture, **tests**, and **security** (not lint—CI handles that). Photoframe is production-ready—only **feature-complete** changes may pass; incomplete work is a **required fix** or **fail**, not a calibrated exception.
+```bash
+python3 scripts/sdlc/validate_review.py --for-pr-create
+```
 
-Before delegating, run `pytest` under `server/` when the diff touches tested code, and `npm test` under `client/` when the diff touches client code or tests, so the subagent can interpret failures.
+The hook runs the same validation when you use `gh pr create`. **Tests run in CI on the PR**; running `pytest` / `npm test` locally before PR is still recommended.
+
+## Workflow (not hook-gated)
+
+Complete before PR when applicable per `AI-SDLC.md`:
+
+1. **Product walkthrough** — exercise changed flows; optional audit record:
+
+   ```bash
+   python3 scripts/sdlc/record_phase.py walkthrough pass
+   ```
+
+2. **Pre-PR `staff-engineer`** (optional audit; not required by hook/CI today) — full branch diff, `review_phase: pre_pr`:
+
+   ```bash
+   python3 scripts/sdlc/record_phase.py pre_pr pass
+   ```
+
+3. Gather diff context for the PR body: `git diff main...HEAD`, commit messages, plan text.
+
+Owner-approved exceptions: set `exception` in the review JSON (see `scripts/sdlc/README.md`). PR **Exceptions** section is optional.
+
+The subagent definition is `.cursor/agents/staff-engineer.md`.

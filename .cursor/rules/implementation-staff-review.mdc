@@ -1,0 +1,23 @@
+---
+description: Run staff-engineer implementation review before product walkthrough
+alwaysApply: true
+---
+
+# Implementation staff engineer review
+
+After behavior-complete code and tests are in place, review the **final set of changes** before product walkthrough (step 4 in `AI-SDLC.md`):
+
+1. Run validation:
+   - `cd server && pytest` when server code or tests changed
+   - `cd client && npm test` when client code or tests changed
+2. **Delegate to the `staff-engineer` subagent** with `review_phase: implementation` and the full branch diff vs `main` (this is the final implementation review for the current change set).
+3. Resolve all **required fixes** before walkthrough (production paths must still be feature-complete).
+4. **Record the outcome** (required):
+
+   ```bash
+   python3 scripts/sdlc/record_phase.py implementation pass
+   ```
+
+   Commit `scripts/sdlc/reviews/<branch-slug>.json` on the branch.
+
+Do not proceed to walkthrough or PR while implementation review is failing.

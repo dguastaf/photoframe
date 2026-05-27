@@ -12,6 +12,27 @@ permissions:
   pull-requests: write
 
 jobs:
+  sdlc-policy:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Validate SDLC policy (planning + implementation + test plan)
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch origin "$BASE_REF" --depth=1
+          printf '%s' "$PR_BODY" > /tmp/pr-body.md
+          python3 scripts/sdlc/validate_review.py --ci \
+            --branch "$HEAD_REF" \
+            --base-ref "origin/$BASE_REF" \
+            --pr-body-file /tmp/pr-body.md
+
   client-test:
     runs-on: ubuntu-latest
     defaults:
