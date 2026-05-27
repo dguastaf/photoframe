@@ -1,0 +1,10 @@
+{
+  "branch": "sdlc-pr-gate",
+  "phases": {},
+  "exception": {
+    "reason": "Process-only PR introducing SDLC gates (rules, hooks, CI, scripts). No application behavior changes.",
+    "scope": "Skip staff-engineer planning and implementation phase records for this branch.",
+    "approver": "dguastaf",
+    "expires": "2026-06-30"
+  }
+}
