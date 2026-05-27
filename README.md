@@ -14,22 +14,27 @@ Mainly for learning purposes, this app was built using an agent-first developmen
 - Agents then created tickets/tasks in Notion.
 
 ### Agent-first Software Development
-#### Task plan
-1. Agents review a task and create a development plan.
-2. A self-created ["staff software engineer" agent](.cursor/agents/staff-engineer.md), reviews the plan for scalability, maintainability, and best practices, focusing on ensuring the design is adaptable to other backends beyond Photoprism.
-3. I review the plan, provide feedback, and add additional specifics as needed.
 
-#### Coding
-1. Agent codes the plan.
-2. Agent writes feature code & tests.
-3. Agent runs automated tests and linting. 
+#### Intake & planning
+1. Define scope and acceptance criteria (ticket, issue, or Notion task).
+2. Agent drafts an implementation plan (client, server, tests, CI, docs as needed).
+3. The ["staff software engineer" agent](.cursor/agents/staff-engineer.md) reviews the plan for architecture, test strategy, and tradeoffs.
+4. I review and approve the plan before coding starts.
 
-#### Code review & CI
-1. I code review it
-2. The staff engineer agent also code reviews it
-3. PR is created and Cursor's bugbot runs.
-4. CI pipeline runs automated tests
-5. Code is merged once all pass!
+#### Implementation
+1. Work on a branch from `main`.
+2. Agent implements feature code, tests, and doc updates for the approved scope.
+3. Agent runs automated tests and linting (see [`client/TESTING.md`](client/TESTING.md) for client commands).
+4. The staff engineer agent reviews the full branch diff; required findings are addressed before moving on.
+
+#### Product walkthrough
+1. I exercise the feature locally end-to-end.
+2. Agent validates core flows (for UI changes, often via Playwright e2e in `client/tests/e2e/`).
+3. We confirm basic functionality or file follow-ups before opening a PR.
+
+#### Pull request & CI
+1. Agent opens a PR with a summary, test plan, and evidence.
+2. I review and merge after CI passes (including Cursor Bugbot where applicable).
 
 ## Usage
 
