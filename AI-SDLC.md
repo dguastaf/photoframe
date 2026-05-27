@@ -57,13 +57,15 @@ Out of scope for now:
 These controls map to enforceable checks and review gates:
 
 1. Every change starts on a branch (no direct edits on `main`).
-2. Every PR includes a test plan.
+2. All product changes require a PR test plan (enforcement: [`scripts/sdlc/README.md`](scripts/sdlc/README.md)).
 3. Required local checks run before PR creation.
 4. Required CI checks pass before merge.
 5. `staff-engineer` subagent review runs during planning and implementation (not only at PR time).
 6. Behavior-changing changes include test updates or explicit rationale.
 7. Process-changing changes update this document or linked policy docs in a standalone PR (no bundled product changes).
 8. Exceptions must include reason, scope, approver, and expiration.
+
+PRs that only change process, docs, or SDLC automation (no production code) do not require a substantive test plan; see `scripts/sdlc/README.md`.
 
 ## Agent operating contract
 
@@ -86,8 +88,7 @@ Use three layers:
   - Confirm required docs/tests move with behavior changes
 2. **Gate** (CI required checks)
   - Tests, lint, and policy checks enforced on PR
-  - Verify PR includes required metadata (test plan, exceptions)
-  - Verify `staff-engineer` review occurred in planning/implementation (or an exception is documented)
+  - Verify PR test plan when product code changed; verify `staff-engineer` review in planning/implementation (or documented exception)
 3. **Detect** (audit and drift review)
   - Scheduled checks for policy drift (docs vs actual automation)
   - Spot checks of merged PRs for process adherence
@@ -112,4 +113,5 @@ Use this loop to evolve the process:
 
 - 2026-05-27: Initial first-pass version on branch `chore/sdlc-single-source-of-truth`
 - 2026-05-27: Lifecycle table refined (staff-engineer in planning/implementation, product walkthrough, merged PR step, lightweight post-merge)
+- 2026-05-27: Control 2 — test plan required for product changes; process-only PRs exempt (see `scripts/sdlc/README.md`)
 
