@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Validate scripts/sdlc/reviews/<branch>.json and PR test plan for PR gates.
 
-Enforces planning + implementation phase records (or valid exception).
-Does not enforce walkthrough, pre_pr, or PR Exceptions section content.
+Enforces planning + implementation phase records (or valid exception), except for
+process-only diffs (SDLC automation, docs, PR template) with no product/test impact.
 """
 
 from __future__ import annotations
@@ -13,6 +13,11 @@ import re
 import sys
 from pathlib import Path
 
+from changed_paths import (
+    git_changed_files,
+    requires_product_verification_for_changes,
+    resolve_base_ref,
+)
 from review_path import REVIEWS_DIR, branch_slug, review_path
 
 REQUIRED_PHASES = ("planning", "implementation")
@@ -56,8 +61,13 @@ def load_review(path: Path) -> dict | None:
     return data
 
 
-def validate_review(data: dict | None, *, for_pr: bool) -> list[str]:
+def validate_review(
+    data: dict | None, *, process_only: bool
+) -> list[str]:
     errors: list[str] = []
+    if process_only and data is None:
+        return errors
+
     if data is None:
         errors.append("missing review file (run staff-engineer phases and record_phase.py)")
         return errors
@@ -73,7 +83,8 @@ def validate_review(data: dict | None, *, for_pr: bool) -> list[str]:
         errors.append("phases must be an object")
         return errors
 
-    required = () if _exception_ok(exc) else REQUIRED_PHASES
+    skip_phases = process_only or _exception_ok(exc)
+    required = () if skip_phases else REQUIRED_PHASES
     for name in required:
         phase = phases.get(name)
         if not _phase_ok(phase):
@@ -137,10 +148,19 @@ def main() -> None:
         type=Path,
         help="PR description markdown file for test-plan validation",
     )
+    parser.add_argument(
+        "--base-ref",
+        help="Git base ref for change detection (default: origin/main or main)",
+    )
     args = parser.parse_args()
 
     if not args.for_pr_create and not args.ci:
         parser.error("specify --for-pr-create and/or --ci")
+
+    repo_root = Path(__file__).resolve().parents[2]
+    base_ref = resolve_base_ref(args.base_ref, cwd=repo_root)
+    changed = git_changed_files(base_ref, cwd=repo_root)
+    process_only = not requires_product_verification_for_changes(changed)
 
     errors: list[str] = []
     data: dict | None = None
@@ -151,18 +171,27 @@ def main() -> None:
             else review_path()
         )
         data = load_review(path)
-        errors.extend(validate_review(data, for_pr=args.for_pr_create or args.ci))
+        errors.extend(validate_review(data, process_only=process_only))
 
     if args.ci and args.pr_body_file:
-        body = args.pr_body_file.read_text(encoding="utf-8")
-        errors.extend(validate_pr_body(body))
+        if process_only:
+            print(
+                "sdlc: process-only diff — skipping PR test plan validation",
+                file=sys.stderr,
+            )
+        else:
+            body = args.pr_body_file.read_text(encoding="utf-8")
+            errors.extend(validate_pr_body(body))
 
     if errors:
         for err in errors:
             print(f"error: {err}", file=sys.stderr)
         raise SystemExit(1)
 
-    print("sdlc review validation passed")
+    if process_only:
+        print("sdlc review validation passed (process-only diff)")
+    else:
+        print("sdlc review validation passed")
 
 
 if __name__ == "__main__":

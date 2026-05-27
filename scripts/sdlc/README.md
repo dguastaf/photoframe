@@ -24,12 +24,21 @@ scripts/sdlc/reviews/<branch-slug>.json
 
 | Check | Enforced by |
 | ----- | ----------- |
-| `planning` + `implementation` phases recorded (`outcome: pass`) | Cursor `gh pr create` hook, CI `sdlc-policy` |
-| PR **Test plan** section (non-empty, non-placeholder) | CI `sdlc-policy` |
+| `planning` + `implementation` phases recorded (`outcome: pass`) | Cursor `gh pr create` hook, CI `sdlc-policy` (skipped for process-only diffs) |
+| PR **Test plan** section (non-empty, non-placeholder) | CI `sdlc-policy` (skipped when diff has no product/test paths) |
 | `walkthrough` / `pre_pr` phase records | Not enforced by hook or CI (optional audit trail) |
 | PR **Exceptions** section body fields | Not enforced (optional for now) |
 
 Workflow rules (`.cursor/rules/`) may still require walkthrough or a pre-PR `staff-engineer` run before you open a PR; that is separate from the gate above.
+
+### Process-only diffs (auto-skip product gates)
+
+When **no** changed files touch product or test trees (e.g. only `scripts/sdlc/`, `.cursor/`, `AI-SDLC.md`, PR template, workflow wiring), CI and the hook **do not** require:
+
+- `planning` / `implementation` review records (review JSON optional)
+- A substantive PR **Test plan** (section may still be present)
+
+Detection uses `git diff <base>...HEAD` via `changed_paths.py`. Changes under `server/app/`, `client/src/`, `server/tests/`, `client/tests/`, dependencies, Docker, or UI preview scripts still require full gates.
 
 ## Schema (minimum for PR gate)
 

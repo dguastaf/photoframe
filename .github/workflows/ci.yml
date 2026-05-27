@@ -17,14 +17,18 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Validate SDLC policy (planning + implementation + test plan)
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
           printf '%s' "$PR_BODY" > /tmp/pr-body.md
           python3 scripts/sdlc/validate_review.py --ci \
             --branch "${{ github.head_ref }}" \
+            --base-ref "origin/${{ github.base_ref }}" \
             --pr-body-file /tmp/pr-body.md
 
   client-test:

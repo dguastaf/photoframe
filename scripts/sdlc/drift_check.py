@@ -17,6 +17,7 @@ REQUIRED_PATHS = [
     ".cursor/rules/pre-pr-staff-review.mdc",
     ".cursor/hooks/before-pr-create.sh",
     ".cursor/hooks.json",
+    "scripts/sdlc/changed_paths.py",
     "scripts/sdlc/record_phase.py",
     "scripts/sdlc/validate_review.py",
     "scripts/sdlc/sdlc-check.sh",
