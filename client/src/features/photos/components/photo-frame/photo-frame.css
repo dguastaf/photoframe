@@ -5,4 +5,5 @@
   position: relative;
   background: #000;
   margin: 0;
+  touch-action: pan-y;
 }

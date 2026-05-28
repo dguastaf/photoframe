@@ -1,4 +1,11 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react'
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '@/App'
@@ -177,6 +184,77 @@ describe('App library flow', () => {
         .querySelector('[data-photo-id]')
         ?.getAttribute('data-photo-id')
       expect(nextId).not.toBe(firstId)
+    })
+
+    vi.restoreAllMocks()
+  })
+
+  it('swipe left advances to next photo when slideshow is visible', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    mockedGetPhotos.mockResolvedValue(multiPhotos)
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-photo-id]')).toBeInTheDocument()
+    })
+
+    const frame = screen.getByRole('main')
+    const firstId = frame.querySelector('[data-photo-id]')?.getAttribute('data-photo-id')
+
+    fireEvent.pointerDown(frame, {
+      clientX: 400,
+      clientY: 200,
+      pointerId: 1,
+      button: 0,
+      buttons: 1,
+    })
+    fireEvent.pointerUp(frame, {
+      clientX: 300,
+      clientY: 200,
+      pointerId: 1,
+      button: 0,
+    })
+
+    await waitFor(() => {
+      const nextId = frame
+        .querySelector('[data-photo-id]')
+        ?.getAttribute('data-photo-id')
+      expect(nextId).not.toBe(firstId)
+    })
+
+    vi.restoreAllMocks()
+  })
+
+  it('arrow keys navigate when slideshow is visible', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    mockedGetPhotos.mockResolvedValue(multiPhotos)
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-photo-id]')).toBeInTheDocument()
+    })
+
+    const frame = screen.getByRole('main')
+    const firstId = frame.querySelector('[data-photo-id]')?.getAttribute('data-photo-id')
+
+    fireEvent.keyDown(window, { key: 'ArrowRight' })
+
+    await waitFor(() => {
+      const nextId = frame
+        .querySelector('[data-photo-id]')
+        ?.getAttribute('data-photo-id')
+      expect(nextId).not.toBe(firstId)
+    })
+
+    fireEvent.keyDown(window, { key: 'ArrowLeft' })
+
+    await waitFor(() => {
+      const restoredId = frame
+        .querySelector('[data-photo-id]')
+        ?.getAttribute('data-photo-id')
+      expect(restoredId).toBe(firstId)
     })
 
     vi.restoreAllMocks()
