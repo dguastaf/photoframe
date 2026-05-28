@@ -14,17 +14,17 @@ Optional screenshots and videos for pull requests or docs. Nothing in CI require
 cd client
 npm install
 npx playwright install chromium   # first time only
-npm run ui:preview                # screenshot + video + gif + validation
+npm run ui:preview                # video + gif + validation
 git add .github/ui-preview/
 ```
 
 | Command | What it does |
 | --- | --- |
-| `npm run ui:preview` | Screenshot, WebM, GIF, validate, print PR embed block |
+| `npm run ui:preview` | WebM, GIF, validate, print PR embed block |
 | `npm run ui:screenshot` | Static frame only |
 | `npm run ui:video` | WebM + GIF for PRs |
 | `npm run ui:validate` | Check existing assets without re-capturing |
-| `npm run ui:embed` | Print PR description markdown (raw screenshot + GIF URLs) |
+| `npm run ui:embed` | Print PR description markdown (raw GIF URL) |
 
 Vite is started automatically (or reused if already on port 6389). API routes are mocked; the server does not need to run.
 

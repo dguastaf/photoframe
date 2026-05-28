@@ -20,7 +20,7 @@ export const FORBIDDEN_PR_IMAGE_RE =
 
 /** Repo links to video files do not render as inline players in PR descriptions. */
 export const FORBIDDEN_PR_VIDEO_LINK_RE =
-  /https:\/\/(?:raw\.githubusercontent\.com|github\.com)\/[^/]+\/[^/]+\/(?:blob|raw)\/[^)\s]*\/\.github\/ui-preview\/app-flow\.(?:webm|mp4)/
+  /https:\/\/(?:raw\.githubusercontent\.com\/[^/]+\/[^/]+\/[^)\s]+|github\.com\/[^/]+\/[^/]+\/(?:blob|raw)\/[^)\s]+)\/\.github\/ui-preview\/app-flow\.(?:webm|mp4)/
 
 export function parseGitHubRepo(cwd = ROOT) {
   let url
