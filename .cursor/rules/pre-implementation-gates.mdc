@@ -1,0 +1,26 @@
+---
+description: >-
+  Feature branch and planning staff-engineer review are required before product
+  or test file edits. Enforced by the preToolUse hook.
+alwaysApply: true
+---
+
+# Pre-implementation gates (automated)
+
+Cursor **blocks** agent `Write` / `StrReplace` / `EditNotebook` on product and test paths until both gates pass:
+
+1. **Feature branch** — not on `main` or `master`.
+2. **Planning review** — `staff-engineer` on the final plan, then `python3 scripts/sdlc/record_phase.py planning pass` committed in `scripts/sdlc/reviews/<branch-slug>.json` (or a valid owner `exception`).
+
+Exempt paths (SDLC bootstrap only): `scripts/sdlc/`, `.cursor/`.
+
+## Required workflow
+
+1. `git checkout -b feature/<short-name>`
+2. Draft and finalize the implementation plan (scope, tests, validation).
+3. Delegate to **`staff-engineer`** with `review_phase: planning` and the plan text.
+4. Address required findings; record: `python3 scripts/sdlc/record_phase.py planning pass`
+5. Commit the review JSON on the branch, then implement product code and tests.
+6. After implementation: `staff-engineer` implementation review, `record_phase.py implementation pass`, walkthrough, PR.
+
+Hook: `.cursor/hooks/before-implementation-edit.sh` → `scripts/sdlc/pre_implementation_gate.py`. See `scripts/sdlc/README.md`.

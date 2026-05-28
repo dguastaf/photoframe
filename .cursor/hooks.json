@@ -13,6 +13,14 @@
         "timeout": 300
       }
     ],
+    "preToolUse": [
+      {
+        "command": ".cursor/hooks/before-implementation-edit.sh",
+        "matcher": "Write|StrReplace|EditNotebook",
+        "failClosed": true,
+        "timeout": 15
+      }
+    ],
     "beforeShellExecution": [
       {
         "command": ".cursor/hooks/before-pr-create.sh",

@@ -9,6 +9,8 @@ alwaysApply: true
 
 Run this review **once on the final plan draft**, immediately before implementation starts.
 
+The Cursor `preToolUse` hook blocks product/test file edits until `planning` is recorded (see `.cursor/rules/pre-implementation-gates.mdc`).
+
 ## When to run
 
 1. **Before implementation begins** — after the plan is approved and finalized, run `staff-engineer` on the **final plan draft**.
