@@ -1,26 +1,30 @@
 ---
 description: >-
-  Feature branch and planning staff-engineer review are required before product
-  or test file edits. Enforced by the preToolUse hook.
+  Planning staff-engineer review and feature branch are automated before product
+  or test file edits. Enforced by Cursor hooks.
 alwaysApply: true
 ---
 
 # Pre-implementation gates (automated)
 
-Cursor **blocks** agent `Write` / `StrReplace` / `EditNotebook` on product and test paths until both gates pass:
+Cursor **blocks** agent `Write` / `StrReplace` / `EditNotebook` on product and test paths until planning passes. It also **blocks other Task subagents** until then.
 
-1. **Feature branch** — not on `main` or `master`.
-2. **Planning review** — `staff-engineer` on the final plan, then `python3 scripts/sdlc/record_phase.py planning pass` committed in `scripts/sdlc/reviews/<branch-slug>.json` (or a valid owner `exception`).
+## Automated workflow
 
-Exempt paths (SDLC bootstrap only): `scripts/sdlc/`, `.cursor/`.
+1. Agent attempts a product/test edit → **denied** with instructions.
+2. Agent delegates to **`staff-engineer`** with `review_phase: planning` and the **full final plan** (only allowed subagent while blocked).
+3. On **Ship** verdict with no required changes, `subagentStop` hook automatically:
+   - Creates and checks out `feature/<slug>` when on `main` / `master`
+   - Runs `python3 scripts/sdlc/record_phase.py planning pass`
+   - Submits a follow-up message so implementation can continue
+4. Product/test edits are then allowed on the feature branch.
 
-## Required workflow
+Override branch name: set `PHOTOFRAME_SDLC_BRANCH=feature/my-work` before the review, or include `Branch: feature/my-work` in the staff-engineer task.
 
-1. `git checkout -b feature/<short-name>`
-2. Draft and finalize the implementation plan (scope, tests, validation).
-3. Delegate to **`staff-engineer`** with `review_phase: planning` and the plan text.
-4. Address required findings; record: `python3 scripts/sdlc/record_phase.py planning pass`
-5. Commit the review JSON on the branch, then implement product code and tests.
-6. After implementation: `staff-engineer` implementation review, `record_phase.py implementation pass`, walkthrough, PR.
+Exempt paths (SDLC bootstrap): `scripts/sdlc/`, `.cursor/`.
 
-Hook: `.cursor/hooks/before-implementation-edit.sh` → `scripts/sdlc/pre_implementation_gate.py`. See `scripts/sdlc/README.md`.
+## After implementation
+
+`staff-engineer` implementation review → `record_phase.py implementation pass` → walkthrough → PR (see `AI-SDLC.md`).
+
+Hooks: `before-implementation-edit.sh`, `after-staff-engineer-planning.sh`. Details: `scripts/sdlc/README.md`.

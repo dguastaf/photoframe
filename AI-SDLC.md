@@ -83,7 +83,8 @@ When an AI agent is asked to perform work in this repo, it should:
 
 Use three layers:
 
-1. **Prevent** (pre-commit / local checks)
+1. **Prevent** (pre-implementation / pre-commit / local checks)
+  - Cursor hooks block product/test edits until `staff-engineer` planning review passes; on pass they create the feature branch and record planning (see `scripts/sdlc/README.md`)
   - Fast checks to catch obvious issues before commit
   - Confirm required docs/tests move with behavior changes
 2. **Gate** (CI required checks)
@@ -114,4 +115,5 @@ Use this loop to evolve the process:
 - 2026-05-27: Initial first-pass version on branch `chore/sdlc-single-source-of-truth`
 - 2026-05-27: Lifecycle table refined (staff-engineer in planning/implementation, product walkthrough, merged PR step, lightweight post-merge)
 - 2026-05-27: Control 2 — test plan required for product changes; process-only PRs exempt (see `scripts/sdlc/README.md`)
+- 2026-05-28: Pre-implementation Cursor hooks — staff-engineer planning review, auto feature branch + planning record before product/test edits
 
