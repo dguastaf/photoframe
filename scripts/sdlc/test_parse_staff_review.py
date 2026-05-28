@@ -43,6 +43,17 @@ Ship with changes
 """
         self.assertEqual(parse_planning_verdict(summary), "fail")
 
+    def test_verdict_section_limits_rework_search(self) -> None:
+        summary = """
+### Verdict
+Ship
+### Required changes
+None
+### Notes
+This avoids a Rework loop in later review phases.
+"""
+        self.assertEqual(parse_planning_verdict(summary), "pass")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -16,6 +16,7 @@ sys.path.insert(0, str(SDLC_DIR))
 from planning_orchestrator import (  # noqa: E402
     PENDING_FILE,
     clear_pending,
+    evaluate_subagent_stop,
     finalize_planning_after_review,
     propose_branch_name,
     save_pending,
@@ -112,6 +113,23 @@ class HookIntegrationTests(unittest.TestCase):
             }
         )
         self.assertEqual(out["permission"], "deny")
+
+    @patch("planning_orchestrator.finalize_planning_after_review")
+    @patch("planning_orchestrator.gates_satisfied", return_value=True)
+    def test_staff_engineer_stop_ignored_after_planning_pass(
+        self,
+        _gates: object,
+        mock_finalize: object,
+    ) -> None:
+        out = evaluate_subagent_stop(
+            {
+                "subagent_type": "staff-engineer",
+                "status": "completed",
+                "summary": "### Verdict\nRework\n### Required changes\n1. Fix implementation.\n",
+            }
+        )
+        self.assertEqual(out, {})
+        mock_finalize.assert_not_called()
 
 
 if __name__ == "__main__":

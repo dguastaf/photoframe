@@ -10,7 +10,7 @@ Verdict = Literal["pass", "fail", "unclear"]
 
 VERDICT_SECTION = re.compile(
     r"^###\s+Verdict\s*$.*?^\s*(.+?)\s*$",
-    re.MULTILINE | re.IGNORECASE,
+    re.MULTILINE | re.IGNORECASE | re.DOTALL,
 )
 REQUIRED_SECTION = re.compile(
     r"^###\s+Required changes\s*$(.*?)(?=^###\s|\Z)",
@@ -49,8 +49,8 @@ def parse_planning_verdict(summary: str) -> Verdict:
         verdict_line = verdict_match.group(1).strip()
     elif FAIL_VERDICT.search(text):
         return "fail"
-    elif PASS_VERDICT.search(text):
-        verdict_line = PASS_VERDICT.search(text).group(0)  # type: ignore[union-attr]
+    elif pass_match := PASS_VERDICT.search(text):
+        verdict_line = pass_match.group(0)
 
     if verdict_line and FAIL_VERDICT.search(verdict_line):
         return "fail"

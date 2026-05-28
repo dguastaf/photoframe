@@ -275,6 +275,8 @@ def evaluate_task_input(payload: dict) -> dict:
 def evaluate_subagent_stop(payload: dict) -> dict:
     if payload.get("subagent_type") != "staff-engineer":
         return {}
+    if gates_satisfied():
+        return {}
     if payload.get("status") != "completed":
         return {
             "followup_message": (
