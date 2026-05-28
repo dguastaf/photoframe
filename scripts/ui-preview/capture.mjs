@@ -327,6 +327,20 @@ async function captureVideo(browser) {
   }
 }
 
+/** GIF embeds inline in GitHub PR markdown via raw.githubusercontent.com (no manual upload). */
+async function exportFlowGif(webmPath) {
+  const dest = join(OUT_DIR, 'app-flow.gif')
+  await runFfmpeg([
+    '-y',
+    '-i',
+    webmPath,
+    '-vf',
+    'fps=6,scale=960:-1:flags=lanczos',
+    dest,
+  ])
+  return dest
+}
+
 async function writeManifest(assets) {
   const manifest = {
     generatedAt: new Date().toISOString(),
@@ -397,14 +411,22 @@ async function main() {
       }
 
       if (mode === 'video' || mode === 'all') {
-        const path = await captureVideo(browser)
+        const webmPath = await captureVideo(browser)
+        const gifPath = await exportFlowGif(webmPath)
         assets.push({
           type: 'video',
           path: '.github/ui-preview/app-flow.webm',
           description:
             'Library loading → first photo → auto-advance to next photo (60s timer)',
         })
-        console.log(`video: ${path}`)
+        assets.push({
+          type: 'gif',
+          path: '.github/ui-preview/app-flow.gif',
+          description:
+            'Same flow as WebM; embedded in PR descriptions via npm run ui:embed',
+        })
+        console.log(`video: ${webmPath}`)
+        console.log(`gif (PR embed): ${gifPath}`)
       }
     } finally {
       await browser.close()
@@ -415,7 +437,7 @@ async function main() {
     await runValidation()
     if (assets.length > 0) {
       const { printPrEmbedInstructions, currentBranch } = await import('./pr-embed.mjs')
-      printPrEmbedInstructions(currentBranch())
+      await printPrEmbedInstructions(currentBranch())
     }
   } finally {
     dev?.kill('SIGTERM')

@@ -50,10 +50,9 @@ for f in "${PREVIEW_CHANGED[@]}"; do
 done
 
 has_preview_asset() {
-  local f
-  for f in "${UI_PREVIEW_DIR}/app-shell.png" "${UI_PREVIEW_DIR}/app-flow.webm"; do
-    [[ -f "$f" && -s "$f" ]] && return 0
-  done
+  [[ -f "${UI_PREVIEW_DIR}/app-shell.png" && -s "${UI_PREVIEW_DIR}/app-shell.png" ]] \
+    && [[ -f "${UI_PREVIEW_DIR}/app-flow.gif" && -s "${UI_PREVIEW_DIR}/app-flow.gif" ]] \
+    && return 0
   return 1
 }
 

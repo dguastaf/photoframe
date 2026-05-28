@@ -1,21 +1,26 @@
 #!/usr/bin/env node
 /**
  * Print PR description markdown for ui-preview assets.
- * Screenshot links MUST use raw.githubusercontent.com — relative .github/ paths
- * do not render in GitHub PR descriptions.
+ * Screenshot and flow GIF use raw.githubusercontent.com (renders inline in PR bodies).
  *
  * Usage: node pr-embed.mjs [--branch NAME]
  */
+import { access } from 'node:fs/promises'
 import { execSync } from 'node:child_process'
-import { dirname, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
+const FLOW_GIF = join(ROOT, '.github/ui-preview/app-flow.gif')
 
 /** Markdown image hrefs to .github/ui-preview break in PR descriptions. */
 export const FORBIDDEN_PR_IMAGE_RE =
   /!\[[^]]*\]\(\.github\/ui-preview\/[^)]+\)/
+
+/** Repo links to video files do not render as inline players in PR descriptions. */
+export const FORBIDDEN_PR_VIDEO_LINK_RE =
+  /https:\/\/(?:raw\.githubusercontent\.com|github\.com)\/[^/]+\/[^/]+\/(?:blob|raw)\/[^)\s]*\/\.github\/ui-preview\/app-flow\.(?:webm|mp4)/
 
 export function parseGitHubRepo(cwd = ROOT) {
   let url
@@ -36,17 +41,28 @@ export function currentBranch(cwd = ROOT) {
   return execSync('git rev-parse --abbrev-ref HEAD', { cwd, encoding: 'utf8' }).trim()
 }
 
-export function buildPrEmbed({ owner, repo, branch }) {
+export async function flowGifExists() {
+  try {
+    await access(FLOW_GIF)
+    return true
+  } catch {
+    return false
+  }
+}
+
+export function buildPrEmbed({ owner, repo, branch, includeFlowGif = true }) {
   const rawScreenshot = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/.github/ui-preview/app-shell.png`
-  const blobVideo = `https://github.com/${owner}/${repo}/blob/${branch}/.github/ui-preview/app-flow.webm`
-  return [
+  const lines = [
     '## UI preview',
     '',
     `![App shell](${rawScreenshot})`,
     '',
-    blobVideo,
-    '',
-  ].join('\n')
+  ]
+  if (includeFlowGif) {
+    const rawGif = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/.github/ui-preview/app-flow.gif`
+    lines.push(`![UI flow](${rawGif})`, '')
+  }
+  return lines.join('\n')
 }
 
 export function assertNoRelativePreviewImages(markdown, label = 'text') {
@@ -59,13 +75,29 @@ export function assertNoRelativePreviewImages(markdown, label = 'text') {
   }
 }
 
-export function printPrEmbedInstructions(branch = currentBranch()) {
+export function assertNoRepoVideoLinks(markdown, label = 'text') {
+  if (FORBIDDEN_PR_VIDEO_LINK_RE.test(markdown)) {
+    throw new Error(
+      `${label} links to app-flow.webm/mp4 in the repo. ` +
+        'Use the app-flow.gif embed from npm run ui:embed instead. ' +
+        'Run: cd client && npm run ui:embed',
+    )
+  }
+}
+
+export async function printPrEmbedInstructions(branch = currentBranch()) {
+  const hasGif = await flowGifExists()
+  if (!hasGif) {
+    throw new Error(
+      'Missing .github/ui-preview/app-flow.gif — run: cd client && npm run ui:preview',
+    )
+  }
   const { owner, repo } = parseGitHubRepo()
   const block = buildPrEmbed({ owner, repo, branch })
   console.log('--- Paste into PR description (UI preview) ---\n')
   console.log(block)
   console.log(
-    '---\nScreenshot URL must stay on raw.githubusercontent.com (not .github/...).\n',
+    '---\nUse raw.githubusercontent.com URLs only (from npm run ui:embed).\n',
   )
   return block
 }
@@ -80,10 +112,8 @@ const isMain =
   import.meta.url === pathToFileURL(resolve(process.argv[1])).href
 
 if (isMain) {
-  try {
-    printPrEmbedInstructions(parseArgs())
-  } catch (err) {
+  printPrEmbedInstructions(parseArgs()).catch((err) => {
     console.error(err instanceof Error ? err.message : err)
     process.exit(1)
-  }
+  })
 }

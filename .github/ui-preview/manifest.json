@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-05-22T22:47:59.056Z",
-  "gitCommit": "cdf3b9cc30f4eb119667fecd6d9c36644c43296a",
-  "uiFilesHash": "ceea3d2f4955289b",
+  "generatedAt": "2026-05-28T22:34:02.321Z",
+  "gitCommit": "9efb2136e92fa1f0fe36f876158618b60a434ec0",
+  "uiFilesHash": "2f4e29384cb7ccbc",
   "assets": [
     {
-      "type": "screenshot",
-      "path": ".github/ui-preview/app-shell.png",
-      "description": "Fullscreen slideshow frame with first photo ready"
+      "type": "video",
+      "path": ".github/ui-preview/app-flow.webm",
+      "description": "Library load → first photo → swipe and arrow-key navigation between slides"
     }
   ]
 }
