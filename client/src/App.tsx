@@ -3,12 +3,20 @@ import type { PhotoDisplayStatus } from './features/photos/components/photo-disp
 import { FrameMessage } from './features/photos/components/photo-frame/frame-message'
 import { PhotoFrame } from './features/photos/components/photo-frame/photo-frame'
 import { PhotoDisplay } from './features/photos/components/photo-display/photo-display'
+import { useManualNavigation } from './features/photos/hooks/useManualNavigation'
 import { usePhotoLibrary } from './features/photos/hooks/usePhotoLibrary'
 import { useSlideshowTimer } from './features/photos/hooks/useSlideshowTimer'
 
 function App() {
-  const { status, data: photos, error, retry, currentPhotoId, goNext } =
-    usePhotoLibrary()
+  const {
+    status,
+    data: photos,
+    error,
+    retry,
+    currentPhotoId,
+    goNext,
+    goPrev,
+  } = usePhotoLibrary()
   const [slideshowPaused, setSlideshowPaused] = useState(true)
 
   const handlePhotoStatusChange = useCallback((s: PhotoDisplayStatus) => {
@@ -24,6 +32,12 @@ function App() {
     resetKey: currentPhotoId,
   })
 
+  const manualNavigation = useManualNavigation({
+    onNext: goNext,
+    onPrev: goPrev,
+    enabled: showSlideshow,
+  })
+
   if (!showSlideshow) {
     return (
       <FrameMessage
@@ -36,7 +50,7 @@ function App() {
   }
 
   return (
-    <PhotoFrame>
+    <PhotoFrame {...manualNavigation}>
       <PhotoDisplay
         key={currentPhotoId}
         photoId={currentPhotoId}
