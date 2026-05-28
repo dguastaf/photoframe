@@ -4,12 +4,11 @@ import { FrameMessage } from './features/photos/components/photo-frame/frame-mes
 import { PhotoFrame } from './features/photos/components/photo-frame/photo-frame'
 import { PhotoDisplay } from './features/photos/components/photo-display/photo-display'
 import { usePhotoLibrary } from './features/photos/hooks/usePhotoLibrary'
-import { usePhotosQuery } from './features/photos/hooks/usePhotosQuery'
 import { useSlideshowTimer } from './features/photos/hooks/useSlideshowTimer'
 
 function App() {
-  const { status, data: photos, error, retry } = usePhotosQuery()
-  const { currentPhotoId, goNext } = usePhotoLibrary(photos)
+  const { status, data: photos, error, retry, currentPhotoId, goNext } =
+    usePhotoLibrary()
   const [slideshowPaused, setSlideshowPaused] = useState(true)
 
   const handlePhotoStatusChange = useCallback((s: PhotoDisplayStatus) => {
