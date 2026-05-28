@@ -12,7 +12,6 @@
     "test:watch": "vitest",
     "test:e2e": "node tests/e2e/photo-library-flow.mjs && node tests/e2e/slideshow-flow.mjs",
     "ui:screenshot": "node ../scripts/ui-preview/capture.mjs --mode screenshot",
-    "ui:video": "node ../scripts/ui-preview/capture.mjs --mode video",
     "ui:preview": "node ../scripts/ui-preview/capture.mjs --mode video",
     "ui:validate": "node ../scripts/ui-preview/validate.mjs --require video",
     "ui:embed": "node ../scripts/ui-preview/pr-embed.mjs"

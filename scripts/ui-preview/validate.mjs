@@ -142,7 +142,7 @@ async function main() {
           const duration = await probeDurationSeconds(path)
           if (duration != null && duration < MIN_WEBM_SECONDS) {
             extra.push(
-              `app-flow.webm too short (${duration.toFixed(1)}s, need >= ${MIN_WEBM_SECONDS}s). Re-run \`cd client && npm run ui:video\` with slideshow visible.`,
+              `app-flow.webm too short (${duration.toFixed(1)}s, need >= ${MIN_WEBM_SECONDS}s). Re-run \`cd client && npm run ui:preview\` with slideshow visible.`,
             )
           }
           return extra

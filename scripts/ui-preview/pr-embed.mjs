@@ -102,8 +102,13 @@ const isMain =
   import.meta.url === pathToFileURL(resolve(process.argv[1])).href
 
 if (isMain) {
-  printPrEmbedInstructions(parseArgs()).catch((err) => {
+  try {
+    printPrEmbedInstructions(parseArgs()).catch((err) => {
+      console.error(err instanceof Error ? err.message : err)
+      process.exit(1)
+    })
+  } catch (err) {
     console.error(err instanceof Error ? err.message : err)
     process.exit(1)
-  })
+  }
 }

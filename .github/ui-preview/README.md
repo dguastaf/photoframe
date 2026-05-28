@@ -22,7 +22,6 @@ git add .github/ui-preview/
 | --- | --- |
 | `npm run ui:preview` | WebM, GIF, validate, print PR embed block |
 | `npm run ui:screenshot` | Static frame only |
-| `npm run ui:video` | WebM + GIF for PRs |
 | `npm run ui:validate` | Check existing assets without re-capturing |
 | `npm run ui:embed` | Print PR description markdown (raw GIF URL) |
 
@@ -30,10 +29,10 @@ Vite is started automatically (or reused if already on port 6389). API routes ar
 
 ### Why previews break
 
-- Running **`ui:video` only** after slideshow work → tiny WebM (~15KB) with no slide change.
+- Stale **`app-flow.webm`** after slideshow work without re-running **`ui:preview`** → tiny WebM (~15KB) with no slide change.
 - **`ui:screenshot` only** → flow assets stay stale.
 - Dev server port conflict → capture fails mid-run; commit truncated WebM.
-- **1×1 mock photo bytes** → `app-shell.png` looks empty (~4KB black frame). Capture uses `scripts/ui-preview/fixtures/mock-photo-*.png` (1280×720 gradients) instead.
+- **Missing fixtures** → capture fails or serves empty frames. Capture uses `scripts/ui-preview/fixtures/mock-photo-*.jpg` (1280×720 landscape photos).
 
 `ui:preview` records library load, first photo, then **fast-forwards the 60s timer** to show auto-advance. Validation fails if `app-flow.webm` &lt; 40KB or &lt; 3s (when `ffprobe` is available), or if `app-flow.gif` is missing or too small.
 
