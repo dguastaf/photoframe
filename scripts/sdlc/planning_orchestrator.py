@@ -37,10 +37,8 @@ def normalize_branch(name: str) -> str:
             cleaned = f"feature/{slugify(cleaned)}"
         else:
             cleaned = f"feature/{slugify(rest)}"
-    elif not cleaned.startswith("feature/"):
-        cleaned = f"feature/{slugify(cleaned.removeprefix('feature/'))}"
     else:
-        cleaned = f"feature/{slugify(cleaned.removeprefix('feature/'))}"
+        cleaned = f"feature/{slugify(cleaned)}"
     return cleaned
 
 

@@ -23,8 +23,6 @@ from planning_orchestrator import (
     evaluate_task_input,
     gates_satisfied,
 )
-from review_path import review_path
-from validate_review import load_review
 
 # Paths that may be edited while recording SDLC artifacts (no planning gate).
 EXEMPT_PREFIXES = (
@@ -144,12 +142,9 @@ def main() -> None:
         print("pre-implementation gate passed", file=sys.stderr)
         return
 
-    review_data = load_review(review_path())
-    _ = review_data
     for path in args.paths:
         if is_implementation_path(path):
-            for err in ["planning gate not satisfied"]:
-                print(f"error: {err}", file=sys.stderr)
+            print("error: planning gate not satisfied", file=sys.stderr)
             raise SystemExit(1)
     print("pre-implementation gate passed", file=sys.stderr)
 
