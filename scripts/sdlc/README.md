@@ -6,6 +6,9 @@ Scripts and review artifacts for [`AI-SDLC.md`](../../AI-SDLC.md) `staff-enginee
 | ------ | ------- |
 | `record_phase.py` | Record phase outcome in `reviews/<branch-slug>.json` |
 | `validate_review.py` | Validate review file (+ PR test plan in CI) |
+| `pre_implementation_gate.py` | Cursor hook entrypoints (edit/Task/subagentStop gates) |
+| `planning_orchestrator.py` | Pending branch, auto `git checkout -b`, planning record on review pass |
+| `parse_staff_review.py` | Parse staff-engineer verdict from subagent summary |
 | `review_path.py` | Resolve review file path for current branch |
 | `drift_check.py` | Verify automation files exist |
 | `sdlc-check.sh` | Local helper: optional tests + `validate_review --for-pr-create` |
@@ -24,12 +27,43 @@ scripts/sdlc/reviews/<branch-slug>.json
 
 | Check | Enforced by |
 | ----- | ----------- |
+| Feature branch (not `main` / `master`) before product/test edits | Cursor `preToolUse` hook (`.cursor/hooks/before-implementation-edit.sh`) |
+| `planning` phase recorded (`outcome: pass`) before product/test edits | Same `preToolUse` hook (owner `exception` may skip planning) |
 | `planning` + `implementation` phases recorded (`outcome: pass`) | Always — Cursor hook + CI `sdlc-policy` (owner `exception` may skip) |
 | PR **Test plan** section (non-empty, non-placeholder) | CI `sdlc-policy` when **production code** changed (`server/app/`, `client/src/`, runtime config) |
 | `walkthrough` / `pre_pr` phase records | Not enforced by hook or CI (optional audit trail) |
 | PR **Exceptions** section body fields | Not enforced (optional for now) |
 
 Workflow rules (`.cursor/rules/`) may still require walkthrough or a pre-PR `staff-engineer` run before you open a PR; that is separate from the gate above.
+
+### Pre-implementation hooks (planning review + branch)
+
+**Edit gate** (`preToolUse` on `Write` / `StrReplace` / `EditNotebook`): denies product/test path edits until planning is recorded on a feature branch (or valid owner `exception`).
+
+**Subagent gate** (`preToolUse` on `Task`): while blocked, only the **`staff-engineer`** subagent may run; other subagents are denied.
+
+**Planning completion** (`subagentStop` on `staff-engineer`): when the review completes with a **Ship** verdict and no required changes, the hook automatically:
+
+1. Runs `git checkout -b <proposed-branch>` when on `main` / `master` (branch name is proposed from the file path or `PHOTOFRAME_SDLC_BRANCH`)
+2. Runs `python3 scripts/sdlc/record_phase.py planning pass`
+3. Sends a follow-up message so the agent can continue implementation
+
+Agent flow: attempt edit → denied → delegate **staff-engineer** with `review_phase: planning` and the full plan → on pass, branch + review file are created → edits allowed.
+
+Exempt (always allowed): `scripts/sdlc/`, `.cursor/`.
+
+Manual check:
+
+```bash
+python3 scripts/sdlc/pre_implementation_gate.py --path client/src/App.tsx
+```
+
+Hook stdin smoke test:
+
+```bash
+printf '%s' '{"tool_name":"Write","tool_input":{"path":"client/src/App.tsx"}}' \
+  | python3 scripts/sdlc/pre_implementation_gate.py --hook-stdin
+```
 
 ### Split criteria (same diff, different gates)
 

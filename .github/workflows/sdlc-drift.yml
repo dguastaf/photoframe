@@ -16,3 +16,7 @@ jobs:
 
       - name: Check enforcement files match AI-SDLC map
         run: python3 scripts/sdlc/drift_check.py
+
+      - name: Pre-implementation gate unit tests
+        working-directory: scripts/sdlc
+        run: python3 -m unittest discover -p 'test_*.py'

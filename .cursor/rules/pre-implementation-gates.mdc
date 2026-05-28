@@ -1,0 +1,30 @@
+---
+description: >-
+  Planning staff-engineer review and feature branch are automated before product
+  or test file edits. Enforced by Cursor hooks.
+alwaysApply: true
+---
+
+# Pre-implementation gates (automated)
+
+Cursor **blocks** agent `Write` / `StrReplace` / `EditNotebook` on product and test paths until planning passes. It also **blocks other Task subagents** until then.
+
+## Automated workflow
+
+1. Agent attempts a product/test edit → **denied** with instructions.
+2. Agent delegates to **`staff-engineer`** with `review_phase: planning` and the **full final plan** (only allowed subagent while blocked).
+3. On **Ship** verdict with no required changes, `subagentStop` hook automatically:
+   - Creates and checks out `feature/<slug>` when on `main` / `master`
+   - Runs `python3 scripts/sdlc/record_phase.py planning pass`
+   - Submits a follow-up message so implementation can continue
+4. Product/test edits are then allowed on the feature branch.
+
+Override branch name: set `PHOTOFRAME_SDLC_BRANCH=feature/my-work` before the review, or include `Branch: feature/my-work` in the staff-engineer task.
+
+Exempt paths (SDLC bootstrap): `scripts/sdlc/`, `.cursor/`.
+
+## After implementation
+
+`staff-engineer` implementation review → `record_phase.py implementation pass` → walkthrough → PR (see `AI-SDLC.md`).
+
+Hooks: `before-implementation-edit.sh`, `after-staff-engineer-planning.sh`. Details: `scripts/sdlc/README.md`.

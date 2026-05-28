@@ -31,8 +31,10 @@ print(
                 f"Python dev environment is ready at {venv}. "
                 f"pytest and pip are on PATH for this session. "
                 f"Run tests from {server} with: cd server && pytest. "
-                f"SDLC: AI-SDLC.md. Before gh pr create, record planning + implementation in "
-                f"scripts/sdlc/reviews/ (record_phase.py). See scripts/sdlc/README.md."
+                f"SDLC: AI-SDLC.md. Product/test edits blocked until staff-engineer planning review passes; "
+                f"hooks then create the feature branch and record planning automatically. "
+                f"Before gh pr create: planning + implementation in scripts/sdlc/reviews/. "
+                f"See scripts/sdlc/README.md."
             ),
         }
     )

@@ -13,12 +13,34 @@
         "timeout": 300
       }
     ],
+    "preToolUse": [
+      {
+        "command": ".cursor/hooks/before-implementation-edit.sh",
+        "matcher": "Task",
+        "failClosed": true,
+        "timeout": 15
+      },
+      {
+        "command": ".cursor/hooks/before-implementation-edit.sh",
+        "matcher": "Write|StrReplace|EditNotebook",
+        "failClosed": true,
+        "timeout": 15
+      }
+    ],
     "beforeShellExecution": [
       {
         "command": ".cursor/hooks/before-pr-create.sh",
         "matcher": "gh pr create",
         "failClosed": true,
         "timeout": 30
+      }
+    ],
+    "subagentStop": [
+      {
+        "command": ".cursor/hooks/after-staff-engineer-planning.sh",
+        "matcher": "staff-engineer",
+        "failClosed": false,
+        "timeout": 60
       }
     ]
   }
