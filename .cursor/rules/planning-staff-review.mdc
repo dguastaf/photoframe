@@ -9,7 +9,7 @@ alwaysApply: true
 
 Run this review **once on the final plan draft**, immediately before implementation starts.
 
-The Cursor `preToolUse` hook blocks product/test file edits until `planning` is recorded (see `.cursor/rules/pre-implementation-gates.mdc`).
+The Cursor hooks block product/test edits until `planning` is recorded. On staff-engineer completion, `subagentStop` creates the feature branch and records planning automatically (see `.cursor/rules/pre-implementation-gates.mdc`).
 
 ## When to run
 

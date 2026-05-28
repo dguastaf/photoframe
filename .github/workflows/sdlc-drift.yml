@@ -19,4 +19,4 @@ jobs:
 
       - name: Pre-implementation gate unit tests
         working-directory: scripts/sdlc
-        run: python3 -m unittest test_pre_implementation_gate.py
+        run: python3 -m unittest discover -p 'test_*.py'

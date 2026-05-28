@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
-"""Gate product implementation edits: feature branch + planning staff-engineer pass.
+"""Gate product implementation edits: planning review + feature branch (automated).
 
-Used by the Cursor preToolUse hook before Write/StrReplace/EditNotebook on
-implementation paths. See scripts/sdlc/README.md and AI-SDLC.md control 1 + 5.
+Used by Cursor hooks:
+- preToolUse (Write/StrReplace/EditNotebook): block until planning passes
+- preToolUse (Task): only staff-engineer allowed until planning passes
+- subagentStop (staff-engineer): create branch + record planning on pass
+
+See scripts/sdlc/README.md and AI-SDLC.md control 1 + 5.
 """
 
 from __future__ import annotations
@@ -12,10 +16,15 @@ import json
 import sys
 
 from changed_paths import is_production_code_path
-from review_path import branch_name, review_path
-from validate_review import _exception_ok, _phase_ok, load_review
-
-PROTECTED_BRANCHES = frozenset({"main", "master"})
+from planning_orchestrator import (
+    block_agent_message,
+    ensure_pending_for_block,
+    evaluate_subagent_stop,
+    evaluate_task_input,
+    gates_satisfied,
+)
+from review_path import review_path
+from validate_review import load_review
 
 # Paths that may be edited while recording SDLC artifacts (no planning gate).
 EXEMPT_PREFIXES = (
@@ -53,49 +62,6 @@ def is_implementation_path(path: str) -> bool:
     return any(normalized.startswith(prefix) for prefix in TEST_PREFIXES)
 
 
-def validate_branch() -> list[str]:
-    try:
-        branch = branch_name()
-    except SystemExit:
-        return ["not on a git branch (detached HEAD?) — create a feature branch first"]
-    if branch in PROTECTED_BRANCHES:
-        return [
-            f"on protected branch {branch!r} — create a feature branch "
-            f"(e.g. git checkout -b feature/my-work) before editing product code"
-        ]
-    return []
-
-
-def validate_planning_gate(data: dict | None) -> list[str]:
-    if data is None:
-        return [
-            "planning staff-engineer review not recorded — run staff-engineer on the "
-            "final plan, address findings, then: python3 scripts/sdlc/record_phase.py planning pass"
-        ]
-    exc = data.get("exception")
-    if _exception_ok(exc):
-        return []
-    phases = data.get("phases")
-    if not isinstance(phases, dict):
-        return ["review file phases must be an object"]
-    planning = phases.get("planning")
-    if not _phase_ok(planning):
-        outcome = planning.get("outcome") if isinstance(planning, dict) else "missing"
-        return [
-            f"planning phase must be outcome=pass before implementation edits (got {outcome!r})"
-        ]
-    return []
-
-
-def check_path(path: str, *, review_data: dict | None) -> list[str]:
-    if not is_implementation_path(path):
-        return []
-    errors: list[str] = []
-    errors.extend(validate_branch())
-    errors.extend(validate_planning_gate(review_data))
-    return errors
-
-
 def paths_from_tool_input(tool_name: str, tool_input: object) -> list[str]:
     if not isinstance(tool_input, dict):
         return []
@@ -106,35 +72,38 @@ def paths_from_tool_input(tool_name: str, tool_input: object) -> list[str]:
     return [path] if isinstance(path, str) and path.strip() else []
 
 
-def evaluate_hook_input(payload: dict) -> dict:
+def evaluate_edit_hook_input(payload: dict) -> dict:
     tool_name = payload.get("tool_name", "")
     if tool_name not in IMPLEMENTATION_TOOLS:
+        return {"permission": "allow"}
+
+    if gates_satisfied():
         return {"permission": "allow"}
 
     paths = paths_from_tool_input(tool_name, payload.get("tool_input"))
     if not paths:
         return {"permission": "allow"}
 
-    review_data = load_review(review_path())
-
-    errors: list[str] = []
-    for path in paths:
-        errors.extend(check_path(path, review_data=review_data))
-
-    if not errors:
+    blocked = [p for p in paths if is_implementation_path(p)]
+    if not blocked:
         return {"permission": "allow"}
 
-    detail = "; ".join(dict.fromkeys(errors))
+    proposed = ensure_pending_for_block(trigger_path=blocked[0])
     return {
         "permission": "deny",
-        "user_message": f"SDLC gate: {detail}",
-        "agent_message": (
-            "Blocked before implementation: (1) work on a feature branch, not main; "
-            "(2) run staff-engineer on the final plan, then "
-            "python3 scripts/sdlc/record_phase.py planning pass and commit "
-            "scripts/sdlc/reviews/<branch-slug>.json. See AI-SDLC.md and scripts/sdlc/README.md."
+        "user_message": (
+            f"SDLC: planning review required before editing {blocked[0]!r}. "
+            f"Delegate to staff-engineer; branch `{proposed}` will be created on pass."
         ),
+        "agent_message": block_agent_message(proposed),
     }
+
+
+def evaluate_hook_input(payload: dict) -> dict:
+    tool_name = payload.get("tool_name", "")
+    if tool_name == "Task":
+        return evaluate_task_input(payload)
+    return evaluate_edit_hook_input(payload)
 
 
 def main() -> None:
@@ -151,6 +120,11 @@ def main() -> None:
         action="store_true",
         help="Read preToolUse hook JSON from stdin and print permission JSON",
     )
+    parser.add_argument(
+        "--subagent-stop-stdin",
+        action="store_true",
+        help="Read subagentStop hook JSON from stdin and print followup JSON",
+    )
     args = parser.parse_args()
 
     if args.hook_stdin:
@@ -158,18 +132,25 @@ def main() -> None:
         print(json.dumps(evaluate_hook_input(payload)))
         return
 
+    if args.subagent_stop_stdin:
+        payload = json.load(sys.stdin)
+        print(json.dumps(evaluate_subagent_stop(payload)))
+        return
+
     if not args.paths:
-        parser.error("specify --path and/or --hook-stdin")
+        parser.error("specify --path, --hook-stdin, and/or --subagent-stop-stdin")
+
+    if gates_satisfied():
+        print("pre-implementation gate passed", file=sys.stderr)
+        return
 
     review_data = load_review(review_path())
-    all_errors: list[str] = []
+    _ = review_data
     for path in args.paths:
-        all_errors.extend(check_path(path, review_data=review_data))
-
-    if all_errors:
-        for err in dict.fromkeys(all_errors):
-            print(f"error: {err}", file=sys.stderr)
-        raise SystemExit(1)
+        if is_implementation_path(path):
+            for err in ["planning gate not satisfied"]:
+                print(f"error: {err}", file=sys.stderr)
+            raise SystemExit(1)
     print("pre-implementation gate passed", file=sys.stderr)
 
 

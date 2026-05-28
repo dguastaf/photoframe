@@ -14,6 +14,9 @@ pytest.log
 .venv/
 venv/
 
+# Cursor hook runtime state (pending branch for SDLC orchestration)
+.cursor/hooks/state/
+
 # Editor / OS
 .vscode/*
 !.vscode/settings.json
