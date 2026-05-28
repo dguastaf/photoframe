@@ -1,4 +1,4 @@
-# AI-SDLC
+# AI-Assisted Software Development Lifecycle (SDLC)
 
 This document is the source of truth (SoT) for how software changes are proposed, planned, built, validated, reviewed, and released in this repository.
 
