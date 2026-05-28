@@ -1,0 +1,80 @@
+{
+  "license": "Pexels License (https://www.pexels.com/license/) — free for commercial and non-commercial use; modification allowed; no attribution required.",
+  "photos": [
+    {
+      "file": "mock-photo-1.jpg",
+      "source": "https://www.pexels.com/photo/scenic-view-of-mountains-during-golden-hour-417173/",
+      "subject": "Mountain golden hour"
+    },
+    {
+      "file": "mock-photo-2.jpg",
+      "source": "https://www.pexels.com/photo/body-of-water-surrounded-by-trees-3225517/",
+      "subject": "Lake and forest"
+    },
+    {
+      "file": "mock-photo-3.jpg",
+      "source": "https://www.pexels.com/photo/snow-covered-mountain-under-cloudy-sky-2662116/",
+      "subject": "Snowy peaks"
+    },
+    {
+      "file": "mock-photo-4.jpg",
+      "source": "https://www.pexels.com/photo/green-pine-trees-1287145/",
+      "subject": "Pine forest"
+    },
+    {
+      "file": "mock-photo-5.jpg",
+      "source": "https://www.pexels.com/photo/green-grass-field-1108099/",
+      "subject": "Green meadow"
+    },
+    {
+      "file": "mock-photo-6.jpg",
+      "source": "https://www.pexels.com/photo/photo-of-forest-lake-1578750/",
+      "subject": "Misty forest lake"
+    },
+    {
+      "file": "mock-photo-7.jpg",
+      "source": "https://www.pexels.com/photo/calm-body-of-water-2387869/",
+      "subject": "Calm lake reflection"
+    },
+    {
+      "file": "mock-photo-8.jpg",
+      "source": "https://www.pexels.com/photo/brown-rocky-mountain-under-blue-sky-1054218/",
+      "subject": "Rocky mountain"
+    },
+    {
+      "file": "mock-photo-9.jpg",
+      "source": "https://www.pexels.com/photo/photo-of-seashore-1866144/",
+      "subject": "Coastal shoreline"
+    },
+    {
+      "file": "mock-photo-10.jpg",
+      "source": "https://www.pexels.com/photo/green-leafed-trees-145939/",
+      "subject": "Forest canopy"
+    },
+    {
+      "file": "mock-photo-11.jpg",
+      "source": "https://www.pexels.com/photo/snow-covered-mountain-1323550/",
+      "subject": "Alpine ridge"
+    },
+    {
+      "file": "mock-photo-12.jpg",
+      "source": "https://www.pexels.com/photo/northern-lights-over-snowy-mountain-2437299/",
+      "subject": "Aurora over mountains"
+    },
+    {
+      "file": "mock-photo-13.jpg",
+      "source": "https://www.pexels.com/photo/green-grass-field-near-mountain-3408744/",
+      "subject": "Valley and peaks"
+    },
+    {
+      "file": "mock-photo-14.jpg",
+      "source": "https://www.pexels.com/photo/green-grass-field-during-daytime-414612/",
+      "subject": "Rolling hills"
+    },
+    {
+      "file": "mock-photo-15.jpg",
+      "source": "https://www.pexels.com/photo/photo-of-sea-wave-268533/",
+      "subject": "Ocean waves"
+    }
+  ]
+}

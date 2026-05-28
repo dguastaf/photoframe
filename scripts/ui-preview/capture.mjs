@@ -30,26 +30,27 @@ const apiV0PrefixMatch = apiPathsText.match(
 const API_V0_PREFIX = apiV0PrefixMatch?.[1] ?? '/api/v0'
 const PHOTOS_PATH = `${API_V0_PREFIX}/photos`
 
-/** Matches slideshow E2E — multiple photos so capture can show auto-advance. */
-const SAMPLE_PHOTOS = [
-  { id: 'ui-preview-photo-1', taken_at: '2026-04-26T11:25:59Z', folder: 'ui-preview/a' },
-  { id: 'ui-preview-photo-2', taken_at: '2026-04-27T11:25:59Z', folder: 'ui-preview/b' },
-  { id: 'ui-preview-photo-3', taken_at: '2026-04-28T11:25:59Z', folder: 'ui-preview/c' },
-]
-
-const DISPLAY_MS = 60_000
-
 const FIXTURES_DIR = join(__dirname, 'fixtures')
+const FIXTURE_COUNT = 15
 
-/** Full-size gradients so screenshots/video frames are visible on the black shell. */
+/** Matches slideshow E2E — enough photos for library + auto-advance preview. */
+const SAMPLE_PHOTOS = Array.from({ length: FIXTURE_COUNT }, (_, i) => ({
+  id: `ui-preview-photo-${i + 1}`,
+  taken_at: new Date(Date.UTC(2026, 3, 26 + i, 11, 25, 59)).toISOString(),
+  folder: `ui-preview/${String(i + 1).padStart(2, '0')}`,
+}))
+
+/** License-free landscape fixtures — see fixtures/sources.json. */
 const MOCK_IMAGE_BODIES = Object.fromEntries(
   await Promise.all(
     SAMPLE_PHOTOS.map(async (photo, i) => {
-      const buf = await readFile(join(FIXTURES_DIR, `mock-photo-${i + 1}.png`))
+      const buf = await readFile(join(FIXTURES_DIR, `mock-photo-${i + 1}.jpg`))
       return [photo.id, buf]
     }),
   ),
 )
+
+const DISPLAY_MS = 60_000
 
 const mode = (() => {
   const idx = process.argv.indexOf('--mode')
@@ -186,7 +187,7 @@ async function installPhotoRoutes(page, { libraryDelayMs = 0 } = {}) {
         MOCK_IMAGE_BODIES[SAMPLE_PHOTOS[0].id]
       await route.fulfill({
         status: 200,
-        contentType: 'image/png',
+        contentType: 'image/jpeg',
         body,
       })
       return

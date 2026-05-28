@@ -1,12 +1,17 @@
 {
-  "generatedAt": "2026-05-28T22:34:02.321Z",
-  "gitCommit": "9efb2136e92fa1f0fe36f876158618b60a434ec0",
-  "uiFilesHash": "2f4e29384cb7ccbc",
+  "generatedAt": "2026-05-28T23:01:10.711Z",
+  "gitCommit": "739ce1ee5c673ac401a4ae3b7a84f001c94581c5",
+  "uiFilesHash": "a3c2db0da25eb8ce",
   "assets": [
     {
       "type": "video",
       "path": ".github/ui-preview/app-flow.webm",
-      "description": "Library load → first photo → swipe and arrow-key navigation between slides"
+      "description": "Library loading → first photo → auto-advance to next photo (60s timer)"
+    },
+    {
+      "type": "gif",
+      "path": ".github/ui-preview/app-flow.gif",
+      "description": "Same flow as WebM; embedded in PR descriptions via npm run ui:embed"
     }
   ]
 }

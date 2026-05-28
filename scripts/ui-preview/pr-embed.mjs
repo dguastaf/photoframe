@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Print PR description markdown for ui-preview assets.
- * Screenshot and flow GIF use raw.githubusercontent.com (renders inline in PR bodies).
+ * Flow GIF uses raw.githubusercontent.com (renders inline in PR bodies).
  *
  * Usage: node pr-embed.mjs [--branch NAME]
  */
@@ -50,19 +50,9 @@ export async function flowGifExists() {
   }
 }
 
-export function buildPrEmbed({ owner, repo, branch, includeFlowGif = true }) {
-  const rawScreenshot = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/.github/ui-preview/app-shell.png`
-  const lines = [
-    '## UI preview',
-    '',
-    `![App shell](${rawScreenshot})`,
-    '',
-  ]
-  if (includeFlowGif) {
-    const rawGif = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/.github/ui-preview/app-flow.gif`
-    lines.push(`![UI flow](${rawGif})`, '')
-  }
-  return lines.join('\n')
+export function buildPrEmbed({ owner, repo, branch }) {
+  const rawGif = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/.github/ui-preview/app-flow.gif`
+  return ['## UI preview', '', `![UI flow](${rawGif})`, ''].join('\n')
 }
 
 export function assertNoRelativePreviewImages(markdown, label = 'text') {
