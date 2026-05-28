@@ -93,5 +93,5 @@ export function useManualNavigation({
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [enabled])
 
-  return enabled ? bind() : ({} as ManualNavigationBindings)
+  return bind()
 }
