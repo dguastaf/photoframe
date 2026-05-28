@@ -13,12 +13,20 @@ import {
   summarize,
 } from './helpers.mjs'
 
-const SWIPE_THRESHOLD = 48
+const VIEWPORT = { width: 1280, height: 720 }
+/** Match client SWIPE_THRESHOLD_VW (fraction of viewport width). */
+const SWIPE_THRESHOLD_VW = 0.0375
+const SWIPE_OVERSHOOT_VW = 0.03125
+const FRAME_EDGE_MARGIN_VW = 0.0625
+
+function swipeDistanceForViewport(width) {
+  return width * SWIPE_THRESHOLD_VW
+}
 const results = setupResults()
 
 const browser = await chromium.launch()
 const context = await browser.newContext({
-  viewport: { width: 1280, height: 720 },
+  viewport: VIEWPORT,
   colorScheme: 'dark',
 })
 
@@ -34,8 +42,8 @@ async function swipeHorizontal(page, direction) {
   const box = await page.locator('main.frame').boundingBox()
   if (!box) throw new Error('frame not found')
   const y = box.y + box.height / 2
-  const margin = 80
-  const distance = SWIPE_THRESHOLD + 40
+  const margin = VIEWPORT.width * FRAME_EDGE_MARGIN_VW
+  const distance = swipeDistanceForViewport(VIEWPORT.width) + VIEWPORT.width * SWIPE_OVERSHOOT_VW
   const fromX =
     direction === 'left' ? box.x + box.width - margin : box.x + margin
   const toX = direction === 'left' ? fromX - distance : fromX + distance

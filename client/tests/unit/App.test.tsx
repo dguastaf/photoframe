@@ -38,6 +38,30 @@ const slideshowTimerCalls: Array<{
   enabled: boolean
 }> = []
 
+const manualNavCalls: Array<{
+  enabled: boolean
+  onNext: ReturnType<typeof vi.fn>
+  onPrev: ReturnType<typeof vi.fn>
+}> = []
+
+vi.mock('@/features/photos/hooks/useManualNavigation', async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import('@/features/photos/hooks/useManualNavigation')
+    >()
+  return {
+    ...actual,
+    useManualNavigation: (
+      opts: Parameters<typeof actual.useManualNavigation>[0],
+    ) => {
+      const onNext = vi.fn(opts.onNext)
+      const onPrev = vi.fn(opts.onPrev)
+      manualNavCalls.push({ enabled: opts.enabled, onNext, onPrev })
+      return actual.useManualNavigation({ ...opts, onNext, onPrev })
+    },
+  }
+})
+
 vi.mock('@/features/photos/hooks/useSlideshowTimer', () => ({
   useSlideshowTimer: (opts: {
     onTick: () => void
@@ -54,9 +78,47 @@ vi.mock('@/features/photos/hooks/useSlideshowTimer', () => ({
 
 const mockedGetPhotos = vi.mocked(getPhotos)
 
+function tryManualNavigationInput() {
+  const frame = screen.getByRole('main')
+  const fromX = 400
+  const toX = 300
+  const y = 200
+  fireEvent.pointerDown(frame, {
+    clientX: fromX,
+    clientY: y,
+    pointerId: 1,
+    button: 0,
+    buttons: 1,
+    pointerType: 'mouse',
+  })
+  for (let i = 1; i <= 10; i++) {
+    fireEvent.pointerMove(frame, {
+      clientX: fromX + ((toX - fromX) * i) / 10,
+      clientY: y,
+      pointerId: 1,
+      buttons: 1,
+      pointerType: 'mouse',
+    })
+  }
+  fireEvent.pointerUp(frame, {
+    clientX: toX,
+    clientY: y,
+    pointerId: 1,
+    button: 0,
+    pointerType: 'mouse',
+  })
+  fireEvent.keyDown(window, { key: 'ArrowRight' })
+  fireEvent.keyDown(window, { key: 'ArrowLeft' })
+}
+
+function lastManualNavCall() {
+  return manualNavCalls.at(-1)
+}
+
 beforeEach(() => {
   mockedGetPhotos.mockReset()
   slideshowTimerCalls.length = 0
+  manualNavCalls.length = 0
 })
 
 afterEach(() => {
@@ -189,6 +251,57 @@ describe('App library flow', () => {
     vi.restoreAllMocks()
   })
 
+  it('does not navigate while library is loading', () => {
+    mockedGetPhotos.mockReturnValue(new Promise(() => {}))
+
+    render(<App />)
+
+    expect(screen.getByText('Loading photos…')).toBeInTheDocument()
+    expect(lastManualNavCall()?.enabled).toBe(false)
+
+    tryManualNavigationInput()
+
+    expect(lastManualNavCall()?.onNext).not.toHaveBeenCalled()
+    expect(lastManualNavCall()?.onPrev).not.toHaveBeenCalled()
+    expect(document.querySelector('[data-photo-id]')).not.toBeInTheDocument()
+  })
+
+  it('does not navigate when library fetch fails', async () => {
+    mockedGetPhotos.mockRejectedValue(
+      new ApiError(503, 'Photo library unavailable', '/api/v0/photos'),
+    )
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Photo library unavailable')).toBeInTheDocument()
+    })
+    expect(lastManualNavCall()?.enabled).toBe(false)
+
+    tryManualNavigationInput()
+
+    expect(lastManualNavCall()?.onNext).not.toHaveBeenCalled()
+    expect(lastManualNavCall()?.onPrev).not.toHaveBeenCalled()
+    expect(document.querySelector('[data-photo-id]')).not.toBeInTheDocument()
+  })
+
+  it('does not navigate when library is empty', async () => {
+    mockedGetPhotos.mockResolvedValue([])
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByText('No photos in library')).toBeInTheDocument()
+    })
+    expect(lastManualNavCall()?.enabled).toBe(false)
+
+    tryManualNavigationInput()
+
+    expect(lastManualNavCall()?.onNext).not.toHaveBeenCalled()
+    expect(lastManualNavCall()?.onPrev).not.toHaveBeenCalled()
+    expect(document.querySelector('[data-photo-id]')).not.toBeInTheDocument()
+  })
+
   it('swipe left advances to next photo when slideshow is visible', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0)
     mockedGetPhotos.mockResolvedValue(multiPhotos)
@@ -202,18 +315,32 @@ describe('App library flow', () => {
     const frame = screen.getByRole('main')
     const firstId = frame.querySelector('[data-photo-id]')?.getAttribute('data-photo-id')
 
+    const fromX = 400
+    const toX = 300
+    const y = 200
     fireEvent.pointerDown(frame, {
-      clientX: 400,
-      clientY: 200,
+      clientX: fromX,
+      clientY: y,
       pointerId: 1,
       button: 0,
       buttons: 1,
+      pointerType: 'mouse',
     })
+    for (let i = 1; i <= 10; i++) {
+      fireEvent.pointerMove(frame, {
+        clientX: fromX + ((toX - fromX) * i) / 10,
+        clientY: y,
+        pointerId: 1,
+        buttons: 1,
+        pointerType: 'mouse',
+      })
+    }
     fireEvent.pointerUp(frame, {
-      clientX: 300,
-      clientY: 200,
+      clientX: toX,
+      clientY: y,
       pointerId: 1,
       button: 0,
+      pointerType: 'mouse',
     })
 
     await waitFor(() => {

@@ -1,33 +1,29 @@
-import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from 'react'
+import { useDrag } from '@use-gesture/react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
-/** Minimum horizontal movement to count as a swipe (not a tap). Shared with D3 tap overlay. */
-export const SWIPE_THRESHOLD_PX = 48
+/** Minimum horizontal swipe distance as a fraction of viewport width (3.75%). */
+export const SWIPE_THRESHOLD_VW = 0.0375
 
-/** Max movement for a tap; D3 should use this when distinguishing tap vs swipe. */
-export const TAP_MAX_PX = 10
-
-type PointerStart = {
-  x: number
-  y: number
-  pointerId: number
+export function viewportWidth(): number {
+  if (typeof window === 'undefined') {
+    return 1280
+  }
+  return window.innerWidth
 }
 
-export type ManualNavigationHandlers = {
-  onPointerDown: (event: ReactPointerEvent<HTMLElement>) => void
-  onPointerUp: (event: ReactPointerEvent<HTMLElement>) => void
-  onPointerCancel: (event: ReactPointerEvent<HTMLElement>) => void
+/** Swipe distance for @use-gesture, derived from viewport width × {@link SWIPE_THRESHOLD_VW}. */
+export function swipeDistanceForViewport(width = viewportWidth()): number {
+  return width * SWIPE_THRESHOLD_VW
 }
+
+export type ManualNavigationBindings = ReturnType<
+  ReturnType<typeof useDrag>
+>
 
 type UseManualNavigationOptions = {
   onNext: () => void
   onPrev: () => void
   enabled: boolean
-}
-
-const EMPTY_HANDLERS: ManualNavigationHandlers = {
-  onPointerDown: () => {},
-  onPointerUp: () => {},
-  onPointerCancel: () => {},
 }
 
 /**
@@ -38,12 +34,47 @@ export function useManualNavigation({
   onNext,
   onPrev,
   enabled,
-}: UseManualNavigationOptions): ManualNavigationHandlers {
-  const startRef = useRef<PointerStart | null>(null)
+}: UseManualNavigationOptions): ManualNavigationBindings {
   const onNextRef = useRef(onNext)
   const onPrevRef = useRef(onPrev)
   onNextRef.current = onNext
   onPrevRef.current = onPrev
+
+  const [viewportW, setViewportW] = useState(viewportWidth)
+
+  useEffect(() => {
+    const onResize = () => setViewportW(window.innerWidth)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  const swipeDistance = swipeDistanceForViewport(viewportW)
+
+  const dragConfig = useMemo(
+    () => ({
+      axis: 'x' as const,
+      filterTaps: true,
+      enabled,
+      swipe: {
+        distance: swipeDistance,
+        velocity: 0.05,
+        duration: 2000,
+      },
+    }),
+    [enabled, swipeDistance],
+  )
+
+  const bind = useDrag(
+    ({ swipe: [swipeX], last }) => {
+      if (!last || swipeX === 0) return
+      if (swipeX < 0) {
+        onNextRef.current()
+      } else {
+        onPrevRef.current()
+      }
+    },
+    dragConfig,
+  )
 
   useEffect(() => {
     if (!enabled) return
@@ -62,45 +93,5 @@ export function useManualNavigation({
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [enabled])
 
-  if (!enabled) {
-    return EMPTY_HANDLERS
-  }
-
-  return {
-    onPointerDown(event) {
-      if (event.button !== 0) return
-      startRef.current = {
-        x: event.clientX,
-        y: event.clientY,
-        pointerId: event.pointerId,
-      }
-      event.currentTarget.setPointerCapture(event.pointerId)
-    },
-
-    onPointerUp(event) {
-      const start = startRef.current
-      startRef.current = null
-      if (!start || start.pointerId !== event.pointerId) return
-
-      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-        event.currentTarget.releasePointerCapture(event.pointerId)
-      }
-
-      const dx = event.clientX - start.x
-      const dy = event.clientY - start.y
-      const absDx = Math.abs(dx)
-      const absDy = Math.abs(dy)
-      if (absDx < SWIPE_THRESHOLD_PX || absDx <= absDy) return
-
-      if (dx < 0) {
-        onNextRef.current()
-      } else {
-        onPrevRef.current()
-      }
-    },
-
-    onPointerCancel() {
-      startRef.current = null
-    },
-  }
+  return enabled ? bind() : ({} as ManualNavigationBindings)
 }
