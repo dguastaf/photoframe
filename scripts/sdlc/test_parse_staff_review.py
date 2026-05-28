@@ -54,6 +54,24 @@ This avoids a Rework loop in later review phases.
 """
         self.assertEqual(parse_planning_verdict(summary), "pass")
 
+    def test_required_changes_placeholder_bullet_without_period_passes(self) -> None:
+        summary = """
+### Verdict
+Ship
+### Required changes
+- No required changes
+"""
+        self.assertEqual(parse_planning_verdict(summary), "pass")
+
+    def test_required_changes_placeholder_bullet_with_period_passes(self) -> None:
+        summary = """
+### Verdict
+Ship
+### Required changes
+- No required changes.
+"""
+        self.assertEqual(parse_planning_verdict(summary), "pass")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -247,7 +247,13 @@ def evaluate_task_input(payload: dict) -> dict:
 
     tool_input = payload.get("tool_input")
     if not isinstance(tool_input, dict):
-        return {"permission": "allow"}
+        return {
+            "permission": "deny",
+            "user_message": "SDLC: run staff-engineer planning review before other subagents.",
+            "agent_message": block_agent_message(
+                ensure_pending_for_block(trigger_path=None)
+            ),
+        }
 
     subagent_type = tool_input.get("subagent_type", "")
     if subagent_type == "staff-engineer":

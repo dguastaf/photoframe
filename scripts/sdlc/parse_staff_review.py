@@ -25,11 +25,12 @@ def _section_has_actionable_items(section: str) -> bool:
     lines = [ln.strip() for ln in section.splitlines() if ln.strip()]
     if not lines:
         return False
-    placeholders = {"none", "n/a", "na", "-", "—", "no required changes."}
+    placeholders = {"none", "n/a", "na", "-", "—", "no required changes"}
     if all(ln.lower().rstrip(".") in placeholders for ln in lines):
         return False
     return bool(NUMBERED_ITEM.search(section)) or any(
-        ln.startswith("- ") and ln[2:].strip().lower() not in placeholders for ln in lines
+        ln.startswith("- ") and ln[2:].strip().lower().rstrip(".") not in placeholders
+        for ln in lines
     )
 
 

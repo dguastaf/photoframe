@@ -114,6 +114,11 @@ class HookIntegrationTests(unittest.TestCase):
         )
         self.assertEqual(out["permission"], "deny")
 
+    @patch("planning_orchestrator.gates_satisfied", return_value=False)
+    def test_task_malformed_input_denied(self, _gates: object) -> None:
+        out = evaluate_hook_input({"tool_name": "Task", "tool_input": None})
+        self.assertEqual(out["permission"], "deny")
+
     @patch("planning_orchestrator.finalize_planning_after_review")
     @patch("planning_orchestrator.gates_satisfied", return_value=True)
     def test_staff_engineer_stop_ignored_after_planning_pass(
