@@ -14,10 +14,14 @@ function formatTakenAt(takenAt: string): string {
       ? navigator.language
       : Intl.DateTimeFormat().resolvedOptions().locale
 
-  return capture.setLocale(locale).toLocaleString({
-    dateStyle: 'long',
-    timeStyle: 'short',
-  })
+  // Intl may insert U+202F before AM/PM on some runtimes; normalize for stable display/tests.
+  return capture
+    .setLocale(locale)
+    .toLocaleString({
+      dateStyle: 'long',
+      timeStyle: 'short',
+    })
+    .replace(/\u202f/g, ' ')
 }
 
 type PhotoInfoOverlayProps = {

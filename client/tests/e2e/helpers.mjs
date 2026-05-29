@@ -58,20 +58,23 @@ export const SAMPLE_PHOTOS_OVERLAY = [
   },
 ]
 
+/** Normalize Intl date labels for cross-platform E2E comparison (macOS vs Linux). */
+export function normalizeDateLabel(label) {
+  return label.replace(/\u202f/g, ' ').trim()
+}
+
 /** Match PhotoInfoOverlay date formatting for E2E assertions. */
-export function formatTakenAtLabel(takenAt) {
+export function formatTakenAtLabel(takenAt, locale = 'en-US') {
   const capture = DateTime.fromISO(takenAt, { setZone: true })
   if (!capture.isValid) {
     return takenAt
   }
-  const locale =
-    typeof navigator !== 'undefined'
-      ? navigator.language
-      : Intl.DateTimeFormat().resolvedOptions().locale
-  return capture.setLocale(locale).toLocaleString({
-    dateStyle: 'long',
-    timeStyle: 'short',
-  })
+  return normalizeDateLabel(
+    capture.setLocale(locale).toLocaleString({
+      dateStyle: 'long',
+      timeStyle: 'short',
+    }),
+  )
 }
 
 export function isPhotoListRequest(url, method) {

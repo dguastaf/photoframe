@@ -5,6 +5,7 @@ import { chromium } from 'playwright'
 import {
   baseUrl,
   formatTakenAtLabel,
+  normalizeDateLabel,
   mockPhotoImages,
   mockPhotoLibrary,
   record,
@@ -28,6 +29,7 @@ const browser = await chromium.launch()
 const context = await browser.newContext({
   viewport: VIEWPORT,
   colorScheme: 'dark',
+  locale: 'en-US',
 })
 
 async function waitForSlideReady(page, timeout = 15000) {
@@ -87,7 +89,8 @@ async function swipeHorizontal(page, direction) {
   const dateVisible = await overlay.locator('.photo-info-overlay__date').textContent()
   const folderVisible = await overlay.locator('.photo-info-overlay__folder').textContent()
   const toggleOk =
-    dateVisible === expectedDate && folderVisible === firstPhoto.folder
+    normalizeDateLabel(dateVisible ?? '') === expectedDate &&
+    folderVisible === firstPhoto.folder
 
   await page.locator('main.frame').click()
   await waitForOverlayHidden(page)
@@ -134,7 +137,7 @@ async function swipeHorizontal(page, direction) {
   const expectedSecondDate = formatTakenAtLabel(secondPhoto.taken_at)
   const metadataOk =
     secondId !== firstId &&
-    dateAfterSwipe === expectedSecondDate &&
+    normalizeDateLabel(dateAfterSwipe ?? '') === expectedSecondDate &&
     folderAfterSwipe === secondPhoto.folder
 
   await shot(page, 'tap-overlay-02-swipe-close.png')
