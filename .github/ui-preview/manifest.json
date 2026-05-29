@@ -1,12 +1,17 @@
 {
-  "generatedAt": "2026-05-22T22:47:59.056Z",
-  "gitCommit": "cdf3b9cc30f4eb119667fecd6d9c36644c43296a",
-  "uiFilesHash": "ceea3d2f4955289b",
+  "generatedAt": "2026-05-28T23:01:10.711Z",
+  "gitCommit": "739ce1ee5c673ac401a4ae3b7a84f001c94581c5",
+  "uiFilesHash": "a3c2db0da25eb8ce",
   "assets": [
     {
-      "type": "screenshot",
-      "path": ".github/ui-preview/app-shell.png",
-      "description": "Fullscreen slideshow frame with first photo ready"
+      "type": "video",
+      "path": ".github/ui-preview/app-flow.webm",
+      "description": "Library loading → first photo → auto-advance to next photo (60s timer)"
+    },
+    {
+      "type": "gif",
+      "path": ".github/ui-preview/app-flow.gif",
+      "description": "Same flow as WebM; embedded in PR descriptions via npm run ui:embed"
     }
   ]
 }

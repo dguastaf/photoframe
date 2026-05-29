@@ -14,6 +14,8 @@ const OUT_DIR = join(ROOT, '.github/ui-preview')
 
 /** VP9 WebM is small; duration (ffprobe) is the primary gate for slideshow flows. */
 const MIN_WEBM_BYTES = 18_000
+/** PR-embed GIF (palette, 960w); catches empty or failed ffmpeg export. */
+const MIN_GIF_BYTES = 30_000
 /** Fullscreen frame with 1280×720 mock gradients (empty/black shells are ~4KB). */
 const MIN_PNG_BYTES = 15_000
 const MIN_PNG_WIDTH = 1280
@@ -140,11 +142,18 @@ async function main() {
           const duration = await probeDurationSeconds(path)
           if (duration != null && duration < MIN_WEBM_SECONDS) {
             extra.push(
-              `app-flow.webm too short (${duration.toFixed(1)}s, need >= ${MIN_WEBM_SECONDS}s). Re-run \`cd client && npm run ui:video\` with slideshow visible.`,
+              `app-flow.webm too short (${duration.toFixed(1)}s, need >= ${MIN_WEBM_SECONDS}s). Re-run \`cd client && npm run ui:preview\` with slideshow visible.`,
             )
           }
           return extra
         },
+      )),
+    )
+    errors.push(
+      ...(await checkAsset(
+        'app-flow.gif',
+        join(OUT_DIR, 'app-flow.gif'),
+        MIN_GIF_BYTES,
       )),
     )
   }
