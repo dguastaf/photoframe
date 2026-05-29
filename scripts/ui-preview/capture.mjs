@@ -233,11 +233,18 @@ async function waitForOverlayVisible(page, timeout = 5000) {
   await page.locator('.photo-info-overlay__date').waitFor({ timeout })
 }
 
-/** Show D3 metadata overlay long enough to read in PR GIF/WebM. */
-async function showTapOverlay(page) {
+/**
+ * Open metadata overlay, optionally capture frames while visible, then close.
+ * Frame-based GIF export must pass `whileVisible` — otherwise snaps run after close.
+ */
+async function showTapOverlay(page, { whileVisible, holdMs = 4000 } = {}) {
   await tapFrame(page)
   await waitForOverlayVisible(page)
-  await page.waitForTimeout(2800)
+  if (whileVisible) {
+    await whileVisible()
+  } else {
+    await page.waitForTimeout(holdMs)
+  }
   await tapFrame(page)
   await page.waitForFunction(
     () => document.querySelectorAll('[data-overlay-visible="true"]').length === 0,
@@ -320,16 +327,19 @@ async function captureVideoFrames(browser) {
   await snap()
   await page.waitForTimeout(400)
   await snap()
-  await showTapOverlay(page)
-  for (let i = 0; i < 6; i++) {
-    await snap()
-    await page.waitForTimeout(350)
-  }
+  await showTapOverlay(page, {
+    whileVisible: async () => {
+      for (let i = 0; i < 12; i++) {
+        await snap()
+        await page.waitForTimeout(400)
+      }
+    },
+  })
   await page.clock.fastForward(DISPLAY_MS)
   await waitForSlideChange(page, firstId)
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 4; i++) {
     await snap()
-    await page.waitForTimeout(250)
+    await page.waitForTimeout(300)
   }
   await page.close()
 
@@ -355,7 +365,12 @@ async function captureVideo(browser) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     if (!/ffmpeg|Executable doesn't exist/i.test(msg)) throw err
-    console.warn('Playwright ffmpeg unavailable; falling back to frame capture + system ffmpeg')
+    console.warn(
+      'Playwright ffmpeg unavailable; falling back to frame capture + system ffmpeg',
+    )
+    console.warn(
+      'For native video recording: cd client && npx playwright install ffmpeg',
+    )
     return captureVideoFrames(browser)
   }
 }
