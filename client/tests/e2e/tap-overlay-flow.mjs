@@ -101,9 +101,11 @@ async function swipeHorizontal(page, direction) {
     results,
     'Tap toggles overlay date and folder',
     toggleOk && hiddenOk,
-    toggleOk
+    toggleOk && hiddenOk
       ? `date=${dateVisible} folder=${folderVisible}`
-      : `date=${dateVisible} folder=${folderVisible}`,
+      : !toggleOk
+        ? `expected date=${expectedDate} folder=${firstPhoto.folder}; got date=${dateVisible ?? ''} folder=${folderVisible ?? ''}`
+        : 'overlay still visible after second tap',
   )
   await page.close()
 }
