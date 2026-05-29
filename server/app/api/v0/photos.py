@@ -29,7 +29,8 @@ async def list_photos(request: Request) -> list[PhotoMetadata]:
             backend=backend,
         )
     photos = [
-        PhotoMetadata(id=p.id, taken_at=p.taken_at, folder=p.folder) for p in raw_photos
+        PhotoMetadata(id=p.id, taken_at=p.taken_at, folder=p.folder)
+        for p in raw_photos
     ]
     duration_ms = (time.perf_counter() - started) * 1000
     logger.info(

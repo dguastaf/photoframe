@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { DateTime } from 'luxon'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -14,18 +15,67 @@ export const TINY_PNG = Buffer.from(
 )
 
 export const SAMPLE_PHOTOS_ONE = [
-  { id: 'e2e-photo-1', taken_at: '2026-04-26T11:25:59Z', folder: 'e2e/a' },
+  {
+    id: 'e2e-photo-1',
+    taken_at: '2026-04-26T11:25:59+00:00',
+    folder: 'e2e/a',
+  },
 ]
 
 export const SAMPLE_PHOTOS_TWO = [
-  { id: 'e2e-photo-1', taken_at: '2026-04-26T11:25:59Z', folder: 'e2e/a' },
-  { id: 'e2e-photo-2', taken_at: '2026-04-27T11:25:59Z', folder: 'e2e/b' },
+  {
+    id: 'e2e-photo-1',
+    taken_at: '2026-04-26T11:25:59+00:00',
+    folder: 'e2e/a',
+  },
+  {
+    id: 'e2e-photo-2',
+    taken_at: '2026-04-27T11:25:59+00:00',
+    folder: 'e2e/b',
+  },
 ]
 
 export const SAMPLE_PHOTOS_THREE = [
   ...SAMPLE_PHOTOS_TWO,
-  { id: 'e2e-photo-3', taken_at: '2026-04-28T11:25:59Z', folder: 'e2e/c' },
+  {
+    id: 'e2e-photo-3',
+    taken_at: '2026-04-28T11:25:59+00:00',
+    folder: 'e2e/c',
+  },
 ]
+
+/** Two photos for tap overlay metadata assertions. */
+export const SAMPLE_PHOTOS_OVERLAY = [
+  {
+    id: 'e2e-photo-1',
+    taken_at: '2026-04-26T11:25:59+00:00',
+    folder: 'e2e/a',
+  },
+  {
+    id: 'e2e-photo-2',
+    taken_at: '2026-04-27T11:25:59+00:00',
+    folder: 'e2e/b',
+  },
+]
+
+/** Normalize Intl date labels for cross-platform E2E comparison (macOS vs Linux). */
+export function normalizeDateLabel(label) {
+  return label.replace(/\u202f/g, ' ').trim()
+}
+
+/** Match PhotoInfoOverlay date formatting for E2E assertions. */
+export function formatTakenAtLabel(takenAt, locale = 'en-US') {
+  const capture = DateTime.fromISO(takenAt, { setZone: true })
+  if (!capture.isValid) {
+    return takenAt
+  }
+  return normalizeDateLabel(
+    capture.setLocale(locale).toLocaleString({
+      dateStyle: 'long',
+      timeStyle: 'short',
+    }),
+  )
+}
 
 export function isPhotoListRequest(url, method) {
   return (

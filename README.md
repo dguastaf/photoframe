@@ -105,10 +105,10 @@ npm run dev
 Open http://localhost:6389. Start the API on **52525** first (Vite proxies `/api` to that port; see `config/ports.json`):
 
 ```bash
-cd server
-source .venv/bin/activate
-uvicorn app.main:app --host 127.0.0.1 --port 52525 --reload
+./server/scripts/dev_server.sh
 ```
+
+(from the repo root, or `scripts/dev_server.sh` from `server/`)
 
 For a single service on **6389** (built UI + API, no Vite), use `docker compose up` from the repo root instead — do not run that alongside `npm run dev` (both use port **6389**).
 

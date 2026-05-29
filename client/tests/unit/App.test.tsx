@@ -11,20 +11,32 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '@/App'
 import { getPhotos } from '@/features/photos/api/photos'
 import { ApiError } from '@/lib/api-client'
-import type { PhotoMetadata } from '@/types/api'
+import { testPhoto } from '../support/photo'
 
-const samplePhotos: PhotoMetadata[] = [
-  {
+const samplePhotos = [
+  testPhoto({
     id: 'photo-1',
-    taken_at: '2026-04-26T11:25:59Z',
+    taken_at: '2026-04-26T11:25:59+00:00',
     folder: '2026/sample',
-  },
+  }),
 ]
 
-const multiPhotos: PhotoMetadata[] = [
-  { id: 'photo-1', taken_at: '2026-04-26T11:25:59Z', folder: 'a' },
-  { id: 'photo-2', taken_at: '2026-04-27T11:25:59Z', folder: 'b' },
-  { id: 'photo-3', taken_at: '2026-04-28T11:25:59Z', folder: 'c' },
+const multiPhotos = [
+  testPhoto({
+    id: 'photo-1',
+    taken_at: '2026-04-26T11:25:59+00:00',
+    folder: 'a',
+  }),
+  testPhoto({
+    id: 'photo-2',
+    taken_at: '2026-04-27T11:25:59+00:00',
+    folder: 'b',
+  }),
+  testPhoto({
+    id: 'photo-3',
+    taken_at: '2026-04-28T11:25:59+00:00',
+    folder: 'c',
+  }),
 ]
 
 vi.mock('@/features/photos/api/photos', async (importOriginal) => {
@@ -385,5 +397,164 @@ describe('App library flow', () => {
     })
 
     vi.restoreAllMocks()
+  })
+})
+
+describe('App tap overlay', () => {
+  it('tap toggles overlay with formatted date and folder', async () => {
+    mockedGetPhotos.mockResolvedValue(samplePhotos)
+    const user = userEvent.setup()
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(document.querySelector('.photo-display__img')).toBeInTheDocument()
+    })
+
+    const frame = screen.getByRole('main')
+    await user.click(frame)
+
+    expect(screen.getByText(/April 26, 2026/)).toBeInTheDocument()
+    expect(screen.getByText('2026/sample')).toBeInTheDocument()
+    expect(document.querySelector('[data-overlay-visible="true"]')).toBeInTheDocument()
+
+    await user.click(frame)
+
+    expect(document.querySelector('[data-overlay-visible="true"]')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('region', { name: 'Photo information' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('click does not advance photo when overlay toggles', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    mockedGetPhotos.mockResolvedValue(multiPhotos)
+    const user = userEvent.setup()
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-photo-id]')).toBeInTheDocument()
+    })
+
+    const frame = screen.getByRole('main')
+    const firstId = frame.querySelector('[data-photo-id]')?.getAttribute('data-photo-id')
+
+    await user.click(frame)
+    await user.click(frame)
+
+    expect(lastManualNavCall()?.onNext).not.toHaveBeenCalled()
+    expect(lastManualNavCall()?.onPrev).not.toHaveBeenCalled()
+    expect(frame.querySelector('[data-photo-id]')?.getAttribute('data-photo-id')).toBe(
+      firstId,
+    )
+
+    vi.restoreAllMocks()
+  })
+
+  it('auto-dismisses overlay after 10 seconds and restarts timer on re-open', async () => {
+    mockedGetPhotos.mockResolvedValue(samplePhotos)
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(document.querySelector('.photo-display__img')).toBeInTheDocument()
+    })
+
+    vi.useFakeTimers()
+    try {
+      const frame = screen.getByRole('main')
+      fireEvent.click(frame)
+      expect(document.querySelector('[data-overlay-visible="true"]')).toBeInTheDocument()
+
+      act(() => {
+        vi.advanceTimersByTime(10_000)
+      })
+
+      expect(document.querySelector('[data-overlay-visible="true"]')).not.toBeInTheDocument()
+
+      fireEvent.click(frame)
+      expect(document.querySelector('[data-overlay-visible="true"]')).toBeInTheDocument()
+
+      act(() => {
+        vi.advanceTimersByTime(10_000)
+      })
+
+      expect(document.querySelector('[data-overlay-visible="true"]')).not.toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('closes overlay when photo changes', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    mockedGetPhotos.mockResolvedValue(multiPhotos)
+    const user = userEvent.setup()
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-photo-id]')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('main'))
+    expect(screen.getByText(/April 27, 2026/)).toBeInTheDocument()
+    expect(document.querySelector('[data-overlay-visible="true"]')).toBeInTheDocument()
+
+    act(() => {
+      slideshowTimerCalls.at(-1)!.onTick()
+    })
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-overlay-visible="true"]')).not.toBeInTheDocument()
+    })
+    expect(screen.queryByText('c')).not.toBeInTheDocument()
+
+    vi.restoreAllMocks()
+  })
+
+  it('hides overlay without showing next photo metadata when using arrow keys', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    mockedGetPhotos.mockResolvedValue(multiPhotos)
+    const user = userEvent.setup()
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-photo-id]')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('main'))
+    expect(screen.getByText(/April 27, 2026/)).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: 'ArrowRight' })
+
+    expect(document.querySelector('[data-overlay-visible="true"]')).not.toBeInTheDocument()
+    expect(screen.queryByText('c')).not.toBeInTheDocument()
+
+    vi.restoreAllMocks()
+  })
+
+  it('does not pause slideshow timer when overlay opens', async () => {
+    mockedGetPhotos.mockResolvedValue(samplePhotos)
+    const user = userEvent.setup()
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(document.querySelector('.photo-display__img')).toBeInTheDocument()
+    })
+
+    const img = document.querySelector('.photo-display__img') as HTMLImageElement
+    fireEvent.load(img)
+
+    await waitFor(() => {
+      expect(slideshowTimerCalls.at(-1)?.paused).toBe(false)
+    })
+
+    await user.click(screen.getByRole('main'))
+
+    expect(slideshowTimerCalls.at(-1)?.paused).toBe(false)
+    expect(document.querySelector('[data-overlay-visible="true"]')).toBeInTheDocument()
   })
 })
