@@ -20,10 +20,11 @@ function stripInlineCode(text) {
 async function listMarkdownFiles(dir, acc = []) {
   const entries = await readdir(dir, { withFileTypes: true })
   for (const entry of entries) {
-    if (entry.name === 'node_modules') continue
     const full = join(dir, entry.name)
     if (entry.isDirectory()) {
-      await listMarkdownFiles(full, acc)
+      if (entry.name !== 'node_modules') {
+        await listMarkdownFiles(full, acc)
+      }
     } else if (/\.(md|mdc)$/.test(entry.name)) {
       acc.push(full)
     }
