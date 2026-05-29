@@ -1,10 +1,9 @@
 import sys
 from collections.abc import AsyncIterator
-from datetime import UTC, datetime
-
 import httpx
 
 from app.photo_source.base import Photo, PhotoLibraryAdapter
+from app.photo_source.photoprism_normalize import taken_at_from_record
 from app.photo_source.httpx_errors import map_httpx_status_error
 
 _PAGE_SIZE = 1000
@@ -36,8 +35,11 @@ def _photo_from_record(record: dict) -> Photo:
     if missing:
         msg = f"Photoprism photo record missing required keys: {', '.join(missing)}"
         raise ValueError(msg)
-    taken_at = datetime.fromisoformat(record["TakenAt"].replace("Z", "+00:00")).astimezone(UTC)
-    return Photo(id=record["UID"], taken_at=taken_at, folder=record["Path"])
+    return Photo(
+        id=record["UID"],
+        taken_at=taken_at_from_record(record),
+        folder=record["Path"],
+    )
 
 
 class PhotoprismAdapter(PhotoLibraryAdapter):

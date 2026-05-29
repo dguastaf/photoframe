@@ -3,7 +3,7 @@ import { getPhotos } from '../api/photos'
 import { LIBRARY_REFRESH_MS } from '../constants'
 import { shuffle } from '../lib/shuffle'
 import { ApiError } from '../../../lib/api-client'
-import type { PhotoMetadata } from '../../../types/api'
+import type { Photo } from '../../../types/api'
 
 export type LibraryStatus = 'loading' | 'success' | 'error'
 
@@ -14,7 +14,7 @@ type PlaybackState = {
 
 const EMPTY_PLAYBACK: PlaybackState = { shuffledIds: [], cursor: 0 }
 
-async function fetchLibrary(signal: AbortSignal): Promise<PhotoMetadata[]> {
+async function fetchLibrary(signal: AbortSignal): Promise<Photo[]> {
   try {
     return await getPhotos({ signal })
   } catch (err: unknown) {
@@ -31,7 +31,7 @@ async function fetchLibrary(signal: AbortSignal): Promise<PhotoMetadata[]> {
  */
 export function usePhotoLibrary() {
   const [status, setStatus] = useState<LibraryStatus>('loading')
-  const [data, setData] = useState<PhotoMetadata[] | null>(null)
+  const [data, setData] = useState<Photo[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [playback, setPlayback] = useState<PlaybackState>(EMPTY_PLAYBACK)
   const [fetchKey, setFetchKey] = useState(0)
@@ -48,7 +48,7 @@ export function usePhotoLibrary() {
   }, [])
 
   const applyLibrary = useCallback(
-    (photos: PhotoMetadata[]) => {
+    (photos: Photo[]) => {
       setData(photos)
       setStatus('success')
       setError(null)

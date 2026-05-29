@@ -1,0 +1,32 @@
+.photo-info-overlay {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  padding: 1rem 1.25rem;
+  color: #fff;
+  pointer-events: none;
+  background: rgb(0 0 0 / 55%);
+}
+
+.photo-info-overlay[aria-hidden='true'] {
+  display: none;
+}
+
+.photo-info-overlay__date,
+.photo-info-overlay__folder {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.photo-info-overlay__date {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.photo-info-overlay__folder {
+  margin-top: 0.25rem;
+  font-size: 0.95rem;
+  opacity: 0.9;
+}

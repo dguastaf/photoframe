@@ -16,8 +16,10 @@ export function PhotoDisplay({ photoId, onStatusChange }: PhotoDisplayProps) {
   const [status, setStatus] = useState<PhotoDisplayStatus>('loading')
   const [retryCount, setRetryCount] = useState(0)
   const imgRef = useRef<HTMLImageElement>(null)
+  const loadTokenRef = useRef(0)
 
   useLayoutEffect(() => {
+    loadTokenRef.current += 1
     setStatus('loading')
     setRetryCount(0)
   }, [photoId])
@@ -38,9 +40,20 @@ export function PhotoDisplay({ photoId, onStatusChange }: PhotoDisplayProps) {
 
   const handleImgRef = (node: HTMLImageElement | null) => {
     imgRef.current = node
+    const token = loadTokenRef.current
     if (node?.complete && node.naturalWidth > 0) {
-      setStatus('ready')
+      setStatus((current) => (token === loadTokenRef.current ? 'ready' : current))
     }
+  }
+
+  const handleLoad = () => {
+    const token = loadTokenRef.current
+    setStatus((current) => (token === loadTokenRef.current ? 'ready' : current))
+  }
+
+  const handleError = () => {
+    const token = loadTokenRef.current
+    setStatus((current) => (token === loadTokenRef.current ? 'error' : current))
   }
 
   return (
@@ -62,8 +75,8 @@ export function PhotoDisplay({ photoId, onStatusChange }: PhotoDisplayProps) {
         src={src}
         alt=""
         hidden={status !== 'ready'}
-        onLoad={() => setStatus('ready')}
-        onError={() => setStatus('error')}
+        onLoad={handleLoad}
+        onError={handleError}
       />
     </div>
   )

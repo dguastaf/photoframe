@@ -4,7 +4,8 @@ import { getPhotos } from '@/features/photos/api/photos'
 import { usePhotoLibrary } from '@/features/photos/hooks/usePhotoLibrary'
 import * as shuffleLib from '@/features/photos/lib/shuffle'
 import { ApiError } from '@/lib/api-client'
-import type { PhotoMetadata } from '@/types/api'
+import type { Photo } from '@/types/api'
+import { testPhoto } from '../../../../support/photo'
 
 vi.mock('@/features/photos/constants', async (importOriginal) => {
   const actual =
@@ -20,11 +21,15 @@ vi.mock('@/features/photos/api/photos', async (importOriginal) => {
 
 const mockedGetPhotos = vi.mocked(getPhotos)
 
-function meta(id: string): PhotoMetadata {
-  return { id, taken_at: '2026-04-26T11:25:59Z', folder: 'sample' }
+function meta(id: string): Photo {
+  return testPhoto({
+    id,
+    taken_at: '2026-04-26T11:25:59+00:00',
+    folder: 'sample',
+  })
 }
 
-const samplePhotos: PhotoMetadata[] = [meta('photo-1')]
+const samplePhotos: Photo[] = [meta('photo-1')]
 
 const catalogThree = [meta('a'), meta('b'), meta('c')]
 
@@ -96,9 +101,9 @@ describe('usePhotoLibrary', () => {
 
   it('refetches the library after the refresh interval', async () => {
     vi.useFakeTimers()
-    const refreshed: PhotoMetadata[] = [meta('photo-2')]
-    let resolveRefresh!: (value: PhotoMetadata[]) => void
-    const refreshPending = new Promise<PhotoMetadata[]>((resolve) => {
+    const refreshed: Photo[] = [meta('photo-2')]
+    let resolveRefresh!: (value: Photo[]) => void
+    const refreshPending = new Promise<Photo[]>((resolve) => {
       resolveRefresh = resolve
     })
     mockedGetPhotos

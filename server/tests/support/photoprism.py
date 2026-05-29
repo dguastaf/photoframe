@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from datetime import UTC, datetime
 
 from httpx import Request, Response
 
+from app.models import PhotoMetadata
 from app.photo_source.base import Photo
+from app.photo_source.photoprism_normalize import taken_at_from_record
 from app.photo_source.photoprism import _PAGE_SIZE
 
 # Used by respx in unit tests only.
@@ -27,14 +28,20 @@ MOCK_JPEG_BYTES = bytes.fromhex(
 
 
 def photo_from_export_record(record: dict) -> Photo:
-    taken_at = datetime.fromisoformat(record["TakenAt"].replace("Z", "+00:00")).astimezone(UTC)
-    return Photo(id=record["UID"], taken_at=taken_at, folder=record["Path"])
+    return Photo(
+        id=record["UID"],
+        taken_at=taken_at_from_record(record),
+        folder=record["Path"],
+    )
 
 
 def metadata_json_from_export_record(record: dict) -> dict:
     photo = photo_from_export_record(record)
-    taken_at = photo.taken_at.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
-    return {"id": photo.id, "taken_at": taken_at, "folder": photo.folder}
+    return PhotoMetadata(
+        id=photo.id,
+        taken_at=photo.taken_at,
+        folder=photo.folder,
+    ).model_dump(mode="json")
 
 
 def paginated_batch(

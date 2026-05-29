@@ -36,7 +36,9 @@ const FIXTURE_COUNT = 15
 /** Matches slideshow E2E — enough photos for library + auto-advance preview. */
 const SAMPLE_PHOTOS = Array.from({ length: FIXTURE_COUNT }, (_, i) => ({
   id: `ui-preview-photo-${i + 1}`,
-  taken_at: new Date(Date.UTC(2026, 3, 26 + i, 11, 25, 59)).toISOString(),
+  taken_at: new Date(Date.UTC(2026, 3, 26 + i, 11, 25, 59))
+    .toISOString()
+    .replace('Z', '+00:00'),
   folder: `ui-preview/${String(i + 1).padStart(2, '0')}`,
 }))
 

@@ -7,7 +7,7 @@ from datetime import datetime
 @dataclass(slots=True, frozen=True)
 class Photo:
     id: str
-    taken_at: datetime
+    taken_at: datetime  # timezone-aware capture-local time from adapter normalization
     folder: str
 
 

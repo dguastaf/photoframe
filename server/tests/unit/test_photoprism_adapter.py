@@ -57,11 +57,35 @@ def test_photo_from_record_maps_fields():
             "UID": "abc",
             "TakenAt": "2024-06-01T12:00:00Z",
             "Path": "vacation/2024",
+            "TimeZone": "UTC+2",
         }
     )
     assert photo.id == "abc"
     assert photo.folder == "vacation/2024"
-    assert photo.taken_at.year == 2024
+    assert photo.taken_at.isoformat() == "2024-06-01T14:00:00+02:00"
+
+
+def test_photo_from_record_maps_utc_minus_seven():
+    photo = _photo_from_record(
+        {
+            "UID": "abc",
+            "TakenAt": "2024-06-01T12:00:00Z",
+            "Path": "vacation/2024",
+            "TimeZone": "UTC-7",
+        }
+    )
+    assert photo.taken_at.isoformat() == "2024-06-01T05:00:00-07:00"
+
+
+def test_photo_from_record_normalizes_missing_time_zone_to_utc_offset():
+    photo = _photo_from_record(
+        {
+            "UID": "abc",
+            "TakenAt": "2024-06-01T12:00:00Z",
+            "Path": "vacation/2024",
+        }
+    )
+    assert photo.taken_at.isoformat() == "2024-06-01T12:00:00+00:00"
 
 
 # --- Adapter HTTP (respx) -----------------------------------------------------

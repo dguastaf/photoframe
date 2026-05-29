@@ -11,6 +11,7 @@ client/tests/
     ├── photo-library-flow.mjs   # Playwright: library load, errors, empty, retry
     ├── slideshow-flow.mjs       # Playwright: auto-advance, pause while loading
     ├── swipe-navigation-flow.mjs # Playwright: swipe and arrow-key navigation
+    ├── tap-overlay-flow.mjs       # Playwright: tap metadata overlay toggle + swipe dismiss
     └── screenshots/             # gitignored output from e2e flows
 ```
 
@@ -35,6 +36,7 @@ CI runs `npm run test:e2e` in the `client-e2e` job (mock API on **52525**, Vite 
 | `photo-library-flow.mjs` | Loading, happy path, API errors, empty library, retry |
 | `slideshow-flow.mjs` | Auto-advance (60s), pause while loading, multi-photo cycle, empty |
 | `swipe-navigation-flow.mjs` | Swipe left/right and arrow keys forward/back through shuffle |
+| `tap-overlay-flow.mjs` | Tap toggles date/folder overlay; swipe while open hides overlay and updates metadata |
 
 Both flows mock `GET /api/v0/photos` and image routes via Playwright helpers — **Photoprism is not required** for most scenarios. Scenario 1 in `photo-library-flow` uses a delayed proxy response when the list route is not mocked.
 
