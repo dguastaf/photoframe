@@ -3,7 +3,7 @@
  * Capture UI screenshots and flow videos for PRs.
  * Usage: node capture.mjs [--mode screenshot|video|all]
  *
- * Video records: library loading → first photo → auto-advance to second photo (slideshow).
+ * Video records: library loading → first photo → tap metadata overlay → auto-advance.
  */
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
@@ -224,6 +224,29 @@ async function waitForSlideChange(page, previousId, timeout = 10_000) {
   await page.waitForTimeout(400)
 }
 
+async function tapFrame(page) {
+  await page.locator('main.frame').click()
+}
+
+async function waitForOverlayVisible(page, timeout = 5000) {
+  await page.locator('[data-overlay-visible="true"]').waitFor({ timeout })
+  await page.locator('.photo-info-overlay__date').waitFor({ timeout })
+}
+
+/** Show D3 metadata overlay long enough to read in PR GIF/WebM. */
+async function showTapOverlay(page) {
+  await tapFrame(page)
+  await waitForOverlayVisible(page)
+  await page.waitForTimeout(2800)
+  await tapFrame(page)
+  await page.waitForFunction(
+    () => document.querySelectorAll('[data-overlay-visible="true"]').length === 0,
+    undefined,
+    { timeout: 5000 },
+  )
+  await page.waitForTimeout(400)
+}
+
 async function captureVideoPlaywright(browser) {
   await mkdir(OUT_DIR, { recursive: true })
   const videoDir = join(OUT_DIR, '.recordings')
@@ -239,7 +262,9 @@ async function captureVideoPlaywright(browser) {
   await page.goto(CLIENT_URL, { waitUntil: 'domcontentloaded' })
   await waitForSlideReady(page)
   const firstId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
-  await page.waitForTimeout(1500)
+  await page.waitForTimeout(1200)
+  await showTapOverlay(page)
+  await page.waitForTimeout(600)
   await page.clock.fastForward(DISPLAY_MS)
   await waitForSlideChange(page, firstId)
   const secondId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
@@ -295,6 +320,11 @@ async function captureVideoFrames(browser) {
   await snap()
   await page.waitForTimeout(400)
   await snap()
+  await showTapOverlay(page)
+  for (let i = 0; i < 6; i++) {
+    await snap()
+    await page.waitForTimeout(350)
+  }
   await page.clock.fastForward(DISPLAY_MS)
   await waitForSlideChange(page, firstId)
   for (let i = 0; i < 8; i++) {
@@ -420,13 +450,13 @@ async function main() {
           type: 'video',
           path: '.github/ui-preview/app-flow.webm',
           description:
-            'Library loading → first photo → auto-advance to next photo (60s timer)',
+            'Library loading → first photo → tap metadata overlay → auto-advance (60s timer)',
         })
         assets.push({
           type: 'gif',
           path: '.github/ui-preview/app-flow.gif',
           description:
-            'Same flow as WebM; embedded in PR descriptions via npm run ui:embed',
+            'Same flow as WebM (includes tap overlay); embedded in PRs via npm run ui:embed',
         })
         console.log(`video: ${webmPath}`)
         console.log(`gif (PR embed): ${gifPath}`)

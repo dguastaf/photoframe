@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-05-29T17:59:14.439Z",
-  "gitCommit": "bdcf59c380f08c4395d8f57406026bce78a986eb",
-  "uiFilesHash": "2aa2af68ed584c0f",
+  "generatedAt": "2026-05-29T21:43:26.366Z",
+  "gitCommit": "6b97c705b42318648b186158207fe7a72bcca354",
+  "uiFilesHash": "6c3e7ac0a31aad0d",
   "assets": [
     {
       "type": "video",
       "path": ".github/ui-preview/app-flow.webm",
-      "description": "Library loading → first photo → auto-advance to next photo (60s timer)"
+      "description": "Library loading → first photo → tap metadata overlay → auto-advance (60s timer)"
     },
     {
       "type": "gif",
       "path": ".github/ui-preview/app-flow.gif",
-      "description": "Same flow as WebM; embedded in PR descriptions via npm run ui:embed"
+      "description": "Same flow as WebM (includes tap overlay); embedded in PRs via npm run ui:embed"
     }
   ]
 }
