@@ -258,7 +258,9 @@ async function showTapOverlay(page, { whileVisible, holdMs = 4000 } = {}) {
   } else {
     await page.waitForTimeout(holdMs)
   }
-  await tapFrame(page)
+  if ((await page.locator('[data-overlay-visible="true"]').count()) > 0) {
+    await tapFrame(page)
+  }
   await page.waitForFunction(
     () => document.querySelectorAll('[data-overlay-visible="true"]').length === 0,
     undefined,

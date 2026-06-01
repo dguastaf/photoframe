@@ -586,7 +586,8 @@ describe('App settings navigation', () => {
       expect(document.querySelector('[data-photo-id]')).toBeInTheDocument()
     })
 
-    expect(frame.querySelector('[data-photo-id]')?.getAttribute('data-photo-id')).toBe(
+    const returnedFrame = screen.getByRole('main')
+    expect(returnedFrame.querySelector('[data-photo-id]')?.getAttribute('data-photo-id')).toBe(
       firstId,
     )
     expect(mockedGetPhotos).toHaveBeenCalledTimes(1)
