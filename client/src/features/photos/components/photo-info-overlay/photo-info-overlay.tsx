@@ -1,7 +1,9 @@
 import { DateTime } from 'luxon'
+import { Link } from 'react-router-dom'
 
 import type { Photo } from '../../../../types/api'
 import './photo-info-overlay.css'
+import { SettingsGearIcon } from './settings-gear-icon'
 
 function formatTakenAt(takenAt: string): string {
   const capture = DateTime.fromISO(takenAt, { setZone: true })
@@ -41,7 +43,19 @@ export function PhotoInfoOverlay({ visible, photo }: PhotoInfoOverlayProps) {
       aria-hidden={!visible}
       data-overlay-visible={visible ? 'true' : 'false'}
     >
-      <p className="photo-info-overlay__date">{takenAtLabel}</p>
+      <div className="photo-info-overlay__top">
+        <p className="photo-info-overlay__date">{takenAtLabel}</p>
+        <Link
+          to="/settings"
+          className="photo-info-overlay__settings"
+          aria-label="Settings"
+          onClick={(event) => {
+            event.stopPropagation()
+          }}
+        >
+          <SettingsGearIcon className="photo-info-overlay__settings-icon" />
+        </Link>
+      </div>
       <p className="photo-info-overlay__folder">{folder}</p>
     </aside>
   )

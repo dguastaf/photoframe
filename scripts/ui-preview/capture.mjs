@@ -3,7 +3,7 @@
  * Capture UI screenshots and flow videos for PRs.
  * Usage: node capture.mjs [--mode screenshot|video|all]
  *
- * Video records: library loading → first photo → tap metadata overlay → auto-advance.
+ * Video records: library loading → first photo → tap overlay → settings → back → auto-advance.
  */
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
@@ -233,6 +233,19 @@ async function waitForOverlayVisible(page, timeout = 5000) {
   await page.locator('.photo-info-overlay__date').waitFor({ timeout })
 }
 
+/** Tap overlay → gear → settings stub → back to slideshow. */
+async function showOverlaySettingsRoundTrip(page, { holdMs = 1200 } = {}) {
+  await tapFrame(page)
+  await waitForOverlayVisible(page)
+  await page.waitForTimeout(holdMs)
+  await page.getByRole('link', { name: 'Settings' }).click()
+  await page.getByRole('heading', { name: 'Settings' }).waitFor()
+  await page.waitForTimeout(600)
+  await page.getByRole('link', { name: 'Back to slideshow' }).click()
+  await waitForSlideReady(page)
+  await page.waitForTimeout(400)
+}
+
 /**
  * Open metadata overlay, optionally capture frames while visible, then close.
  * Frame-based GIF export must pass `whileVisible` — otherwise snaps run after close.
@@ -245,7 +258,9 @@ async function showTapOverlay(page, { whileVisible, holdMs = 4000 } = {}) {
   } else {
     await page.waitForTimeout(holdMs)
   }
-  await tapFrame(page)
+  if ((await page.locator('[data-overlay-visible="true"]').count()) > 0) {
+    await tapFrame(page)
+  }
   await page.waitForFunction(
     () => document.querySelectorAll('[data-overlay-visible="true"]').length === 0,
     undefined,
@@ -270,7 +285,7 @@ async function captureVideoPlaywright(browser) {
   await waitForSlideReady(page)
   const firstId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
   await page.waitForTimeout(1200)
-  await showTapOverlay(page)
+  await showOverlaySettingsRoundTrip(page)
   await page.waitForTimeout(600)
   await page.clock.fastForward(DISPLAY_MS)
   await waitForSlideChange(page, firstId)
@@ -329,9 +344,21 @@ async function captureVideoFrames(browser) {
   await snap()
   await showTapOverlay(page, {
     whileVisible: async () => {
-      for (let i = 0; i < 12; i++) {
+      for (let i = 0; i < 6; i++) {
         await snap()
         await page.waitForTimeout(400)
+      }
+      await page.getByRole('link', { name: 'Settings' }).click()
+      await page.getByRole('heading', { name: 'Settings' }).waitFor()
+      for (let i = 0; i < 4; i++) {
+        await snap()
+        await page.waitForTimeout(400)
+      }
+      await page.getByRole('link', { name: 'Back to slideshow' }).click()
+      await waitForSlideReady(page)
+      for (let i = 0; i < 2; i++) {
+        await snap()
+        await page.waitForTimeout(300)
       }
     },
   })
@@ -465,7 +492,7 @@ async function main() {
           type: 'video',
           path: '.github/ui-preview/app-flow.webm',
           description:
-            'Library loading → first photo → tap metadata overlay → auto-advance (60s timer)',
+            'Library loading → first photo → tap overlay → settings → back → auto-advance (60s timer)',
         })
         assets.push({
           type: 'gif',

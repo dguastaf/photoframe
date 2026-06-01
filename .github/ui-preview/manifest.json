@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-05-29T21:46:29.191Z",
-  "gitCommit": "242cd31407a62d686a275c181de1074cb75ea5a8",
-  "uiFilesHash": "6c3e7ac0a31aad0d",
+  "generatedAt": "2026-06-01T18:36:56.119Z",
+  "gitCommit": "7dd1c61c7a8c67752da1df24479a4fb29fb81468",
+  "uiFilesHash": "495f52e52e5476f6",
   "assets": [
     {
       "type": "video",
       "path": ".github/ui-preview/app-flow.webm",
-      "description": "Library loading → first photo → tap metadata overlay → auto-advance (60s timer)"
+      "description": "Library loading → first photo → tap overlay → settings → back → auto-advance (60s timer)"
     },
     {
       "type": "gif",
