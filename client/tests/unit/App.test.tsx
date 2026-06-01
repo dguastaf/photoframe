@@ -558,3 +558,39 @@ describe('App tap overlay', () => {
     expect(document.querySelector('[data-overlay-visible="true"]')).toBeInTheDocument()
   })
 })
+
+describe('App settings navigation', () => {
+  it('preserves photo when returning from settings via back link', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    mockedGetPhotos.mockResolvedValue(multiPhotos)
+    const user = userEvent.setup()
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-photo-id]')).toBeInTheDocument()
+    })
+
+    const frame = screen.getByRole('main')
+    const firstId = frame.querySelector('[data-photo-id]')?.getAttribute('data-photo-id')
+
+    await user.click(frame)
+    await user.click(screen.getByRole('link', { name: 'Settings' }))
+
+    expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument()
+    expect(mockedGetPhotos).toHaveBeenCalledTimes(1)
+
+    await user.click(screen.getByRole('link', { name: 'Back to slideshow' }))
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-photo-id]')).toBeInTheDocument()
+    })
+
+    expect(frame.querySelector('[data-photo-id]')?.getAttribute('data-photo-id')).toBe(
+      firstId,
+    )
+    expect(mockedGetPhotos).toHaveBeenCalledTimes(1)
+
+    vi.restoreAllMocks()
+  })
+})
