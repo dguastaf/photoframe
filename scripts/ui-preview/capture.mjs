@@ -250,13 +250,19 @@ async function showOverlaySettingsRoundTrip(page, { holdMs = 1200 } = {}) {
  * Open metadata overlay, optionally capture frames while visible, then close.
  * Frame-based GIF export must pass `whileVisible` — otherwise snaps run after close.
  */
-async function showTapOverlay(page, { whileVisible, holdMs = 4000 } = {}) {
+async function showTapOverlay(
+  page,
+  { whileVisible, holdMs = 4000, closeAfter = true } = {},
+) {
   await tapFrame(page)
   await waitForOverlayVisible(page)
   if (whileVisible) {
     await whileVisible()
   } else {
     await page.waitForTimeout(holdMs)
+  }
+  if (!closeAfter) {
+    return
   }
   if ((await page.locator('[data-overlay-visible="true"]').count()) > 0) {
     await tapFrame(page)
@@ -343,6 +349,7 @@ async function captureVideoFrames(browser) {
   await page.waitForTimeout(400)
   await snap()
   await showTapOverlay(page, {
+    closeAfter: false,
     whileVisible: async () => {
       for (let i = 0; i < 6; i++) {
         await snap()
