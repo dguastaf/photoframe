@@ -3,13 +3,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getPhotos } from '@/features/photos/api/photos'
 import { usePhotoLibrary } from '@/features/photos/hooks/usePhotoLibrary'
 import * as shuffleLib from '@/features/photos/lib/shuffle'
+import { SETTINGS_STORAGE_KEY } from '@/lib/settings/constants'
 import { ApiError } from '@/lib/api-client'
 import type { Photo } from '@/types/api'
 import { testPhoto } from '../../../../support/photo'
 
-vi.mock('@/features/photos/constants', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@/features/photos/constants')>()
+vi.mock('@/client-constants', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/client-constants')>()
   return { ...actual, LIBRARY_REFRESH_MS: 1_000 }
 })
 
@@ -35,6 +35,7 @@ const catalogThree = [meta('a'), meta('b'), meta('c')]
 
 beforeEach(() => {
   mockedGetPhotos.mockReset()
+  window.localStorage.removeItem(SETTINGS_STORAGE_KEY)
 })
 
 afterEach(() => {
@@ -300,5 +301,71 @@ describe('usePhotoLibrary', () => {
     await waitFor(() => expect(result.current.status).toBe('success'))
     expect(result.current.photos).toEqual(catalog)
     expect(result.current.shuffledIds).toHaveLength(2)
+  })
+
+  it('persists lastRefreshAt after successful fetch', async () => {
+    mockedGetPhotos.mockResolvedValue(samplePhotos)
+    renderHook(() => usePhotoLibrary())
+    await waitFor(() => expect(mockedGetPhotos).toHaveBeenCalled())
+
+    const stored = JSON.parse(
+      window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}',
+    )
+    expect(typeof stored.lastRefreshAt).toBe('string')
+    expect(Number.isNaN(Date.parse(stored.lastRefreshAt))).toBe(false)
+  })
+
+  it('does not update lastRefreshAt when background refresh fails', async () => {
+    vi.useFakeTimers()
+    mockedGetPhotos
+      .mockResolvedValueOnce(samplePhotos)
+      .mockRejectedValueOnce(new Error('network'))
+
+    renderHook(() => usePhotoLibrary())
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    const afterSuccess = JSON.parse(
+      window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}',
+    ).lastRefreshAt
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000)
+      await Promise.resolve()
+    })
+
+    const afterFailure = JSON.parse(
+      window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}',
+    ).lastRefreshAt
+    expect(afterFailure).toBe(afterSuccess)
+  })
+
+  it('schedules next refresh from updated lastRefreshAt without immediate refetch', async () => {
+    vi.useFakeTimers()
+    const overdue = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString()
+    window.localStorage.setItem(
+      SETTINGS_STORAGE_KEY,
+      JSON.stringify({
+        version: 0,
+        displayDurationMs: 60_000,
+        lastRefreshAt: overdue,
+        dailyRefreshTime: null,
+      }),
+    )
+    mockedGetPhotos.mockResolvedValue(samplePhotos)
+
+    renderHook(() => usePhotoLibrary())
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(mockedGetPhotos).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(999)
+    })
+    expect(mockedGetPhotos).toHaveBeenCalledTimes(1)
   })
 })

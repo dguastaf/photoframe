@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { msUntilNextRefresh } from '@/lib/settings/timing'
+import { saveSettings } from '@/lib/settings/storage'
+
 import { getPhotos } from '../api/photos'
-import { LIBRARY_REFRESH_MS } from '../constants'
 import { shuffle } from '../lib/shuffle'
 import { ApiError } from '../../../lib/api-client'
 import type { Photo } from '../../../types/api'
@@ -40,11 +42,11 @@ export function usePhotoLibrary() {
     undefined,
   )
 
-  const scheduleRefresh = useCallback(() => {
+  const scheduleRefresh = useCallback((lastRefreshAt: string) => {
     window.clearTimeout(refreshTimerRef.current)
     refreshTimerRef.current = window.setTimeout(() => {
       setFetchKey((k) => k + 1)
-    }, LIBRARY_REFRESH_MS)
+    }, msUntilNextRefresh(lastRefreshAt))
   }, [])
 
   const applyLibrary = useCallback(
@@ -60,7 +62,9 @@ export function usePhotoLibrary() {
           cursor: 0,
         })
       }
-      scheduleRefresh()
+      const lastRefreshAt = new Date().toISOString()
+      saveSettings({ lastRefreshAt })
+      scheduleRefresh(lastRefreshAt)
     },
     [scheduleRefresh],
   )
