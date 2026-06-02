@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { DEFAULT_DISPLAY_MS } from '../constants'
+import { DEFAULT_DISPLAY_MS } from '@/client-constants'
 
 type UseSlideshowTimerOptions = {
   onTick: () => void

@@ -8,6 +8,7 @@ import { PhotoDisplay } from '../features/photos/components/photo-display/photo-
 import { OVERLAY_DISMISS_MS } from '../features/photos/constants'
 import { usePhotoLibraryContext } from '../features/photos/photo-library-context'
 import { useManualNavigation } from '../features/photos/hooks/useManualNavigation'
+import { useDisplayDuration } from '../features/settings/hooks/use-display-duration'
 import { useSlideshowTimer } from '../features/photos/hooks/useSlideshowTimer'
 
 export function SlideshowPage() {
@@ -28,12 +29,14 @@ export function SlideshowPage() {
   }, [])
 
   const showSlideshow = status === 'success' && currentPhotoId != null
+  const { displayDurationMs } = useDisplayDuration()
 
   useSlideshowTimer({
     onTick: goNext,
     paused: slideshowPaused,
     enabled: showSlideshow,
     resetKey: currentPhotoId,
+    intervalMs: displayDurationMs,
   })
 
   const manualNavigation = useManualNavigation({
