@@ -8,7 +8,7 @@ import { PhotoDisplay } from '../features/photos/components/photo-display/photo-
 import { OVERLAY_DISMISS_MS } from '../features/photos/constants'
 import { usePhotoLibraryContext } from '../features/photos/photo-library-context'
 import { useManualNavigation } from '../features/photos/hooks/useManualNavigation'
-import { useDisplayDuration } from '../features/settings/hooks/use-display-duration'
+import { useDisplayDuration } from '../features/settings/settings-duration-context'
 import { useSlideshowTimer } from '../features/photos/hooks/useSlideshowTimer'
 
 export function SlideshowPage() {

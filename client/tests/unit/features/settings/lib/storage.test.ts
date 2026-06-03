@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_DISPLAY_MS } from '@/client-constants'
-import { SETTINGS_STORAGE_KEY } from '@/lib/settings/constants'
-import { loadSettings, saveSettings } from '@/lib/settings/storage'
-import { defaultSettings } from '@/lib/settings/types'
+import { SETTINGS_STORAGE_KEY } from '@/features/settings/lib/constants'
+import { loadSettings, saveSettings } from '@/features/settings/lib/storage'
+import { defaultSettings } from '@/features/settings/lib/types'
 
-describe('settings-storage', () => {
+describe('settings storage', () => {
   beforeEach(() => {
     window.localStorage.removeItem(SETTINGS_STORAGE_KEY)
     vi.spyOn(console, 'warn').mockImplementation(() => {})

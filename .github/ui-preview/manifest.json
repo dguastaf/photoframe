@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-01T18:36:56.119Z",
-  "gitCommit": "7dd1c61c7a8c67752da1df24479a4fb29fb81468",
-  "uiFilesHash": "495f52e52e5476f6",
+  "generatedAt": "2026-06-03T16:08:14.053Z",
+  "gitCommit": "06bf8d1f997aa1e7fced4f92d831ecf842821829",
+  "uiFilesHash": "80e4d537a7ed2385",
   "assets": [
     {
       "type": "video",
@@ -11,7 +11,7 @@
     {
       "type": "gif",
       "path": ".github/ui-preview/app-flow.gif",
-      "description": "Same flow as WebM (includes tap overlay); embedded in PRs via npm run ui:embed"
+      "description": "Same flow as WebM (overlay + settings screen); embedded in PRs via npm run ui:embed"
     }
   ]
 }

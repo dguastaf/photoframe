@@ -14,6 +14,7 @@ client/tests/
     ├── tap-overlay-flow.mjs       # Playwright: tap metadata overlay toggle + swipe dismiss
     ├── settings-navigation-flow.mjs # Playwright: gear → settings → back preserves photo
     ├── settings-persist-flow.mjs    # Playwright: localStorage duration + lastRefreshAt
+    ├── settings-controls-flow.mjs   # Playwright: settings UI duration + Sync now + sync failure
     └── screenshots/             # gitignored output from e2e flows
 ```
 
@@ -41,6 +42,7 @@ CI runs `npm run test:e2e` in the `client-e2e` job (mock API on **52525**, Vite 
 | `tap-overlay-flow.mjs` | Tap toggles date/folder overlay; swipe while open hides overlay and updates metadata |
 | `settings-navigation-flow.mjs` | Gear → settings → browser back / back link preserves photo; no list refetch on navigation |
 | `settings-persist-flow.mjs` | Stored display duration after reload; `lastRefreshAt` persisted; overdue refresh uses one list fetch |
+| `settings-controls-flow.mjs` | Settings duration save + auto-advance; Sync now updates `lastRefreshAt`; sync failure → error on slideshow |
 
 E2E flows mock `GET /api/v0/photos` and image routes via Playwright helpers — **Photoprism is not required** for most scenarios. Scenario 1 in `photo-library-flow` uses a delayed proxy response when the list route is not mocked.
 

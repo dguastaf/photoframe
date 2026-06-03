@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { msUntilNextRefresh } from '@/lib/settings/timing'
-import { saveSettings } from '@/lib/settings/storage'
+import { loadSettings, saveSettings } from '@/features/settings/lib/storage'
+import { msUntilNextRefresh } from '@/features/settings/lib/timing'
 
 import { getPhotos } from '../api/photos'
 import { shuffle } from '../lib/shuffle'
@@ -37,17 +37,29 @@ export function usePhotoLibrary() {
   const [error, setError] = useState<string | null>(null)
   const [playback, setPlayback] = useState<PlaybackState>(EMPTY_PLAYBACK)
   const [fetchKey, setFetchKey] = useState(0)
+  const [lastRefreshAt, setLastRefreshAt] = useState<string | null>(
+    () => loadSettings().lastRefreshAt,
+  )
+  const [isSyncing, setIsSyncing] = useState(false)
 
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   )
 
-  const scheduleRefresh = useCallback((lastRefreshAt: string) => {
-    window.clearTimeout(refreshTimerRef.current)
-    refreshTimerRef.current = window.setTimeout(() => {
-      setFetchKey((k) => k + 1)
-    }, msUntilNextRefresh(lastRefreshAt))
+  const triggerRefresh = useCallback(() => {
+    setIsSyncing(true)
+    setFetchKey((k) => k + 1)
   }, [])
+
+  const scheduleRefresh = useCallback(
+    (lastRefreshAt: string) => {
+      window.clearTimeout(refreshTimerRef.current)
+      refreshTimerRef.current = window.setTimeout(() => {
+        triggerRefresh()
+      }, msUntilNextRefresh(lastRefreshAt))
+    },
+    [triggerRefresh],
+  )
 
   const applyLibrary = useCallback(
     (photos: Photo[]) => {
@@ -62,12 +74,18 @@ export function usePhotoLibrary() {
           cursor: 0,
         })
       }
-      const lastRefreshAt = new Date().toISOString()
-      saveSettings({ lastRefreshAt })
-      scheduleRefresh(lastRefreshAt)
+      const refreshedAt = new Date().toISOString()
+      setLastRefreshAt(refreshedAt)
+      saveSettings({ lastRefreshAt: refreshedAt })
+      scheduleRefresh(refreshedAt)
     },
     [scheduleRefresh],
   )
+
+  const syncNow = useCallback(() => {
+    window.clearTimeout(refreshTimerRef.current)
+    triggerRefresh()
+  }, [triggerRefresh])
 
   const retry = useCallback(() => {
     window.clearTimeout(refreshTimerRef.current)
@@ -94,8 +112,15 @@ export function usePhotoLibrary() {
         setError(message)
         setStatus('error')
       })
+      .finally(() => {
+        if (!ac.signal.aborted) {
+          setIsSyncing(false)
+        }
+      })
 
-    return () => ac.abort()
+    return () => {
+      ac.abort()
+    }
   }, [fetchKey, applyLibrary])
 
   useEffect(() => {
@@ -136,12 +161,27 @@ export function usePhotoLibrary() {
       data,
       error,
       retry,
+      syncNow,
+      isSyncing,
+      lastRefreshAt,
       photos: data ?? [],
       shuffledIds,
       currentPhotoId,
       goNext,
       goPrev,
     }),
-    [status, data, error, retry, shuffledIds, currentPhotoId, goNext, goPrev],
+    [
+      status,
+      data,
+      error,
+      retry,
+      syncNow,
+      isSyncing,
+      lastRefreshAt,
+      shuffledIds,
+      currentPhotoId,
+      goNext,
+      goPrev,
+    ],
   )
 }
