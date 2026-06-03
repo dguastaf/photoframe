@@ -54,6 +54,11 @@ const MOCK_IMAGE_BODIES = Object.fromEntries(
 
 const DISPLAY_MS = 60_000
 
+/** Real wall-clock sleep (safe while recording video; page.waitForTimeout uses fake clock). */
+function wallSleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 const mode = (() => {
   const idx = process.argv.indexOf('--mode')
   return idx >= 0 ? process.argv[idx + 1] : 'all'
@@ -233,17 +238,24 @@ async function waitForOverlayVisible(page, timeout = 5000) {
   await page.locator('.photo-info-overlay__date').waitFor({ timeout })
 }
 
-/** Tap overlay → gear → settings stub → back to slideshow. */
-async function showOverlaySettingsRoundTrip(page, { holdMs = 1200 } = {}) {
+/** Tap overlay → settings (dwell) → back to slideshow. */
+async function showOverlaySettingsRoundTrip(
+  page,
+  { overlayHoldMs = 1500, settingsHoldMs = 3000 } = {},
+) {
   await tapFrame(page)
   await waitForOverlayVisible(page)
-  await page.waitForTimeout(holdMs)
+  await wallSleep(overlayHoldMs)
   await page.getByRole('link', { name: 'Settings' }).click()
+  await page.waitForURL('**/settings')
+  await page.locator('.settings-page').waitFor()
   await page.getByRole('heading', { name: 'Settings' }).waitFor()
-  await page.waitForTimeout(600)
+  await page.getByLabel('Display duration unit').waitFor()
+  await page.getByRole('button', { name: 'Sync now' }).waitFor()
+  await wallSleep(settingsHoldMs)
   await page.getByRole('link', { name: 'Back to slideshow' }).click()
   await waitForSlideReady(page)
-  await page.waitForTimeout(400)
+  await wallSleep(400)
 }
 
 /**
@@ -285,21 +297,22 @@ async function captureVideoPlaywright(browser) {
     recordVideo: { dir: videoDir, size: { width: 1280, height: 720 } },
   })
   const page = await context.newPage()
-  await page.clock.install()
   await installPhotoRoutes(page, { libraryDelayMs: 1500 })
   await page.goto(CLIENT_URL, { waitUntil: 'domcontentloaded' })
   await waitForSlideReady(page)
   const firstId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
-  await page.waitForTimeout(1200)
+  // Fake clock for timer fast-forward; dwell uses wallSleep so it still appears in the recording.
+  await page.clock.install()
+  await wallSleep(1200)
   await showOverlaySettingsRoundTrip(page)
-  await page.waitForTimeout(600)
+  await wallSleep(600)
   await page.clock.fastForward(DISPLAY_MS)
   await waitForSlideChange(page, firstId)
   const secondId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
   if (!secondId || secondId === firstId) {
     throw new Error('Slideshow did not advance — cannot produce app-flow.webm preview')
   }
-  await page.waitForTimeout(2500)
+  await wallSleep(2500)
   await context.close()
 
   const entries = await readdir(videoDir)
@@ -332,11 +345,11 @@ async function captureVideoFrames(browser) {
   await mkdir(framesDir, { recursive: true })
 
   const page = await browser.newPage()
-  await page.clock.install()
   await installPhotoRoutes(page, { libraryDelayMs: 1500 })
   await page.goto(CLIENT_URL, { waitUntil: 'domcontentloaded' })
   await waitForSlideReady(page)
   const firstId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
+  await page.clock.install()
 
   let frame = 0
   const snap = async () => {
@@ -346,26 +359,27 @@ async function captureVideoFrames(browser) {
   }
 
   await snap()
-  await page.waitForTimeout(400)
+  await wallSleep(400)
   await snap()
   await showTapOverlay(page, {
     closeAfter: false,
     whileVisible: async () => {
       for (let i = 0; i < 6; i++) {
         await snap()
-        await page.waitForTimeout(400)
+        await wallSleep(400)
       }
       await page.getByRole('link', { name: 'Settings' }).click()
-      await page.getByRole('heading', { name: 'Settings' }).waitFor()
-      for (let i = 0; i < 4; i++) {
+      await page.waitForURL('**/settings')
+      await page.locator('.settings-page').waitFor()
+      for (let i = 0; i < 8; i++) {
         await snap()
-        await page.waitForTimeout(400)
+        await wallSleep(450)
       }
       await page.getByRole('link', { name: 'Back to slideshow' }).click()
       await waitForSlideReady(page)
       for (let i = 0; i < 2; i++) {
         await snap()
-        await page.waitForTimeout(300)
+        await wallSleep(300)
       }
     },
   })
@@ -373,7 +387,7 @@ async function captureVideoFrames(browser) {
   await waitForSlideChange(page, firstId)
   for (let i = 0; i < 4; i++) {
     await snap()
-    await page.waitForTimeout(300)
+    await wallSleep(300)
   }
   await page.close()
 
@@ -505,7 +519,7 @@ async function main() {
           type: 'gif',
           path: '.github/ui-preview/app-flow.gif',
           description:
-            'Same flow as WebM (includes tap overlay); embedded in PRs via npm run ui:embed',
+            'Same flow as WebM (overlay + settings screen); embedded in PRs via npm run ui:embed',
         })
         console.log(`video: ${webmPath}`)
         console.log(`gif (PR embed): ${gifPath}`)
