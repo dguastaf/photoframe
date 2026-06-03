@@ -44,9 +44,9 @@ async function currentPhotoId(page) {
   await page.getByRole('link', { name: 'Settings' }).click()
   await page.waitForURL('**/settings')
 
-  await page.getByLabel('Display duration unit').selectOption('seconds')
+  // Set value before unit: switching to seconds with "1" (from 1 min) is below minimum and reverts the unit.
   await page.getByRole('spinbutton', { name: 'Display duration' }).fill('5')
-  await page.getByRole('spinbutton', { name: 'Display duration' }).blur()
+  await page.getByLabel('Display duration unit').selectOption('seconds')
 
   const stored = await page.evaluate((key) => {
     const raw = window.localStorage.getItem(key)
