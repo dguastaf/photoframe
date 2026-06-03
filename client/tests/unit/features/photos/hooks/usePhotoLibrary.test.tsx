@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getPhotos } from '@/features/photos/api/photos'
 import { usePhotoLibrary } from '@/features/photos/hooks/usePhotoLibrary'
 import * as shuffleLib from '@/features/photos/lib/shuffle'
-import { SETTINGS_STORAGE_KEY } from '@/lib/settings/constants'
+import { SETTINGS_STORAGE_KEY } from '@/features/settings/lib/constants'
 import { ApiError } from '@/lib/api-client'
 import type { Photo } from '@/types/api'
 import { testPhoto } from '../../../../support/photo'
@@ -367,5 +367,69 @@ describe('usePhotoLibrary', () => {
       await vi.advanceTimersByTimeAsync(999)
     })
     expect(mockedGetPhotos).toHaveBeenCalledTimes(1)
+  })
+
+  it('exposes lastRefreshAt after successful fetch', async () => {
+    mockedGetPhotos.mockResolvedValue(samplePhotos)
+    const { result } = renderHook(() => usePhotoLibrary())
+    await waitFor(() => expect(result.current.status).toBe('success'))
+
+    expect(result.current.lastRefreshAt).toMatch(/^\d{4}-\d{2}-\d{2}T/)
+  })
+
+  it('syncNow triggers a second fetch', async () => {
+    mockedGetPhotos.mockResolvedValue(samplePhotos)
+    const { result } = renderHook(() => usePhotoLibrary())
+    await waitFor(() => expect(result.current.status).toBe('success'))
+
+    act(() => {
+      result.current.syncNow()
+    })
+    await waitFor(() => expect(mockedGetPhotos).toHaveBeenCalledTimes(2))
+    expect(result.current.lastRefreshAt).toMatch(/^\d{4}-\d{2}-\d{2}T/)
+  })
+
+  it('does not update lastRefreshAt when syncNow fails', async () => {
+    mockedGetPhotos
+      .mockResolvedValueOnce(samplePhotos)
+      .mockRejectedValueOnce(new Error('network'))
+
+    const { result } = renderHook(() => usePhotoLibrary())
+    await waitFor(() => expect(result.current.status).toBe('success'))
+
+    const before = result.current.lastRefreshAt
+
+    act(() => {
+      result.current.syncNow()
+    })
+    await waitFor(() => expect(result.current.status).toBe('error'))
+    expect(result.current.lastRefreshAt).toBe(before)
+  })
+
+  it('sets isSyncing during syncNow fetch', async () => {
+    let resolveSecond: (photos: Photo[]) => void = () => {}
+    mockedGetPhotos
+      .mockResolvedValueOnce(samplePhotos)
+      .mockImplementationOnce(
+        () =>
+          new Promise<Photo[]>((resolve) => {
+            resolveSecond = resolve
+          }),
+      )
+
+    const { result } = renderHook(() => usePhotoLibrary())
+    await waitFor(() => expect(result.current.status).toBe('success'))
+    expect(result.current.isSyncing).toBe(false)
+
+    act(() => {
+      result.current.syncNow()
+    })
+    await waitFor(() => expect(result.current.isSyncing).toBe(true))
+
+    await act(async () => {
+      resolveSecond(samplePhotos)
+      await Promise.resolve()
+    })
+    await waitFor(() => expect(result.current.isSyncing).toBe(false))
   })
 })
