@@ -36,7 +36,6 @@ Prerequisites: Docker + Docker Compose.
 4. Run `docker compose up -d`
 5. Open **http://localhost:6389** in browser
 
-If the package is private, run `docker login ghcr.io` first.
 
 ### Updates
 
