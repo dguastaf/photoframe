@@ -36,12 +36,22 @@ Prerequisites: Docker + Docker Compose.
 4. Run `docker compose up -d`
 5. Open **http://localhost:6389** in browser
 
+If the package is private, run `docker login ghcr.io` first.
+
 ### Updates
 
 ```bash
-docker compose down
-git pull
-docker compose up -d
+docker compose up -d --pull always
+```
+
+Run `git pull` only when you need an updated `docker-compose.yml` or `.env.example`.
+
+### Build from source
+
+Contributors can build locally instead of pulling from GHCR:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up --build -d
 ```
 
 ### Advanced

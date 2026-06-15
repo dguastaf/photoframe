@@ -1,0 +1,7 @@
+# Build from source instead of pulling from GHCR. Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up --build -d
+services:
+  server:
+    build: .
+    image: photoframe-local:dev
+    pull_policy: build

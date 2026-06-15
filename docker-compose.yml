@@ -1,7 +1,6 @@
 services:
   server:
-    build: .
-    pull_policy: build
+    image: ghcr.io/dguastaf/photoframe:latest
     env_file: .env
     ports:
       - "6389:6389"
