@@ -3,7 +3,7 @@
  * Capture UI screenshots and flow videos for PRs.
  * Usage: node capture.mjs [--mode screenshot|video|all]
  *
- * Video records: library loading → first photo → arrow-key forward/back (no loading spinner).
+ * Video records: first photo ready → arrow forward → arrow back (no loading spinner).
  */
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
@@ -46,9 +46,9 @@ const MOCK_IMAGE_BODIES = Object.fromEntries(
 )
 
 const VIEWPORT_WIDTH = 1280
-/** Dwell after each slide is ready so prefetch can warm the next image. */
-const PREFETCH_DWELL_MS = 1500
-const SLIDE_DWELL_MS = 2000
+/** Dwell so prefetch can warm the next slide; keep short for a tight PR GIF. */
+const PREFETCH_DWELL_MS = 1200
+const SLIDE_DWELL_MS = 1800
 
 /** Real wall-clock sleep (safe while recording video; page.waitForTimeout uses fake clock). */
 function wallSleep(ms) {
@@ -269,11 +269,6 @@ async function showKeyboardNavigationRoundTrip(page, { onStep } = {}) {
   if (backId !== firstId) {
     throw new Error(`ArrowLeft expected ${firstId}, got ${backId}`)
   }
-
-  await page.keyboard.press('ArrowRight')
-  await waitForSlideChange(page, backId)
-  await dwellOnReadySlide(page, SLIDE_DWELL_MS)
-  await step()
 }
 
 async function captureVideoPlaywright(browser) {
@@ -290,10 +285,9 @@ async function captureVideoPlaywright(browser) {
   await page.addInitScript(() => {
     Math.random = () => 0
   })
-  await installPhotoRoutes(page, { libraryDelayMs: 1500 })
+  await installPhotoRoutes(page)
   await page.goto(CLIENT_URL, { waitUntil: 'domcontentloaded' })
   await waitForSlideReady(page)
-  await wallSleep(800)
   await showKeyboardNavigationRoundTrip(page)
   await context.close()
 
@@ -330,7 +324,7 @@ async function captureVideoFrames(browser) {
   await page.addInitScript(() => {
     Math.random = () => 0
   })
-  await installPhotoRoutes(page, { libraryDelayMs: 1500 })
+  await installPhotoRoutes(page)
   await page.goto(CLIENT_URL, { waitUntil: 'domcontentloaded' })
   await waitForSlideReady(page)
 
@@ -341,8 +335,6 @@ async function captureVideoFrames(browser) {
     })
   }
 
-  await snap()
-  await wallSleep(400)
   await showKeyboardNavigationRoundTrip(page, {
     onStep: async () => {
       for (let i = 0; i < 5; i++) {
@@ -475,13 +467,13 @@ async function main() {
           type: 'video',
           path: '.github/ui-preview/app-flow.webm',
           description:
-            'Library loading → first photo → arrow-key forward/back without loading spinner',
+            'First photo → arrow forward → arrow back without loading spinner',
         })
         assets.push({
           type: 'gif',
           path: '.github/ui-preview/app-flow.gif',
           description:
-            'Keyboard navigation round-trip with prefetched slides; embedded in PRs via npm run ui:embed',
+            'Slideshow forward/back keyboard navigation; embedded in PRs via npm run ui:embed',
         })
         console.log(`video: ${webmPath}`)
         console.log(`gif (PR embed): ${gifPath}`)

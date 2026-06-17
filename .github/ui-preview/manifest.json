@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-06-17T00:34:42.543Z",
-  "gitCommit": "35ffb51c348ca59fd2afea41ea2fd5fa41c06177",
-  "uiFilesHash": "f553a662fff39fe6",
+  "generatedAt": "2026-06-17T00:35:56.403Z",
+  "gitCommit": "01507617532b2d604923f6315e6de5f1dd39237c",
+  "uiFilesHash": "4dea5677afef3a8d",
   "assets": [
     {
       "type": "video",
       "path": ".github/ui-preview/app-flow.webm",
-      "description": "Library loading → first photo → arrow-key forward/back without loading spinner"
+      "description": "First photo → arrow forward → arrow back without loading spinner"
     },
     {
       "type": "gif",
       "path": ".github/ui-preview/app-flow.gif",
-      "description": "Keyboard navigation round-trip with prefetched slides; embedded in PRs via npm run ui:embed"
+      "description": "Slideshow forward/back keyboard navigation; embedded in PRs via npm run ui:embed"
     }
   ]
 }
