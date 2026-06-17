@@ -3,7 +3,7 @@
  * Capture UI screenshots and flow videos for PRs.
  * Usage: node capture.mjs [--mode screenshot|video|all]
  *
- * Video records: library loading → first photo → swipe forward/back (no loading spinner).
+ * Video records: library loading → first photo → arrow-key forward/back (no loading spinner).
  */
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
@@ -46,10 +46,6 @@ const MOCK_IMAGE_BODIES = Object.fromEntries(
 )
 
 const VIEWPORT_WIDTH = 1280
-/** Match client SWIPE_THRESHOLD_VW and swipe-navigation E2E. */
-const SWIPE_THRESHOLD_VW = 0.0375
-const SWIPE_OVERSHOOT_VW = 0.03125
-const FRAME_EDGE_MARGIN_VW = 0.0625
 /** Dwell after each slide is ready so prefetch can warm the next image. */
 const PREFETCH_DWELL_MS = 1500
 const SLIDE_DWELL_MS = 2000
@@ -231,45 +227,6 @@ async function waitForSlideChange(page, previousId, timeout = 10_000) {
   await waitForSlideReady(page)
 }
 
-async function swipeHorizontal(page, direction) {
-  // Touch pointer events on the frame — Playwright mouse drags miss swipes once large
-  // JPEG slides decode (use-gesture listens for pointer/touch on main.frame).
-  await page.locator('main.frame').evaluate(
-    (el, { dir, marginVw, thresholdVw, overshootVw }) => {
-      const rect = el.getBoundingClientRect()
-      const margin = rect.width * marginVw
-      const distance = rect.width * thresholdVw + rect.width * overshootVw
-      const y = rect.top + rect.height / 2
-      const fromX = dir === 'left' ? rect.right - margin : rect.left + margin
-      const toX = dir === 'left' ? fromX - distance : fromX + distance
-      const base = {
-        bubbles: true,
-        cancelable: true,
-        pointerId: 1,
-        pointerType: 'touch',
-        isPrimary: true,
-        clientY: y,
-        button: 0,
-        buttons: 1,
-      }
-      el.dispatchEvent(new PointerEvent('pointerdown', { ...base, clientX: fromX }))
-      for (let step = 1; step <= 12; step += 1) {
-        const x = fromX + ((toX - fromX) * step) / 12
-        el.dispatchEvent(new PointerEvent('pointermove', { ...base, clientX: x }))
-      }
-      el.dispatchEvent(
-        new PointerEvent('pointerup', { ...base, clientX: toX, buttons: 0 }),
-      )
-    },
-    {
-      dir: direction,
-      marginVw: FRAME_EDGE_MARGIN_VW,
-      thresholdVw: SWIPE_THRESHOLD_VW,
-      overshootVw: SWIPE_OVERSHOOT_VW,
-    },
-  )
-}
-
 async function assertNoPhotoSpinner(page) {
   const count = await page.getByRole('status', { name: 'Loading photo' }).count()
   if (count > 0) {
@@ -286,34 +243,34 @@ async function dwellOnReadySlide(page, dwellMs = SLIDE_DWELL_MS) {
 }
 
 /**
- * Swipe forward/back through slides after prefetch dwell — asserts no loading spinner.
+ * Arrow-key forward/back through slides after prefetch dwell — asserts no loading spinner.
  */
-async function showSwipeNavigationRoundTrip(page, { onStep } = {}) {
+async function showKeyboardNavigationRoundTrip(page, { onStep } = {}) {
   const step = onStep ?? (async () => {})
 
   await dwellOnReadySlide(page, PREFETCH_DWELL_MS)
   await step()
   const firstId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
 
-  await swipeHorizontal(page, 'left')
+  await page.keyboard.press('ArrowRight')
   await waitForSlideChange(page, firstId)
   await dwellOnReadySlide(page, PREFETCH_DWELL_MS)
   await step()
   const secondId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
   if (!secondId || secondId === firstId) {
-    throw new Error('Swipe forward did not advance to the next photo')
+    throw new Error('ArrowRight did not advance to the next photo')
   }
 
-  await swipeHorizontal(page, 'right')
+  await page.keyboard.press('ArrowLeft')
   await waitForSlideChange(page, secondId)
   await dwellOnReadySlide(page, SLIDE_DWELL_MS)
   await step()
   const backId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
   if (backId !== firstId) {
-    throw new Error(`Swipe back expected ${firstId}, got ${backId}`)
+    throw new Error(`ArrowLeft expected ${firstId}, got ${backId}`)
   }
 
-  await swipeHorizontal(page, 'left')
+  await page.keyboard.press('ArrowRight')
   await waitForSlideChange(page, backId)
   await dwellOnReadySlide(page, SLIDE_DWELL_MS)
   await step()
@@ -337,7 +294,7 @@ async function captureVideoPlaywright(browser) {
   await page.goto(CLIENT_URL, { waitUntil: 'domcontentloaded' })
   await waitForSlideReady(page)
   await wallSleep(800)
-  await showSwipeNavigationRoundTrip(page)
+  await showKeyboardNavigationRoundTrip(page)
   await context.close()
 
   const entries = await readdir(videoDir)
@@ -386,7 +343,7 @@ async function captureVideoFrames(browser) {
 
   await snap()
   await wallSleep(400)
-  await showSwipeNavigationRoundTrip(page, {
+  await showKeyboardNavigationRoundTrip(page, {
     onStep: async () => {
       for (let i = 0; i < 5; i++) {
         await snap()
@@ -518,13 +475,13 @@ async function main() {
           type: 'video',
           path: '.github/ui-preview/app-flow.webm',
           description:
-            'Library loading → first photo → swipe forward/back without loading spinner',
+            'Library loading → first photo → arrow-key forward/back without loading spinner',
         })
         assets.push({
           type: 'gif',
           path: '.github/ui-preview/app-flow.gif',
           description:
-            'Swipe navigation round-trip with prefetched slides; embedded in PRs via npm run ui:embed',
+            'Keyboard navigation round-trip with prefetched slides; embedded in PRs via npm run ui:embed',
         })
         console.log(`video: ${webmPath}`)
         console.log(`gif (PR embed): ${gifPath}`)
