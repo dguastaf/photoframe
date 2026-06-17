@@ -337,7 +337,7 @@ async function captureVideoFrames(browser) {
 
   await showKeyboardNavigationRoundTrip(page, {
     onStep: async () => {
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 6; i++) {
         await snap()
         await wallSleep(400)
       }
