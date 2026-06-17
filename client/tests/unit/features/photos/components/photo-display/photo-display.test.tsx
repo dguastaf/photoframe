@@ -52,6 +52,21 @@ describe('PhotoDisplay', () => {
     expect(screen.queryByRole('status', { name: 'Loading photo' })).not.toBeInTheDocument()
   })
 
+  it('reveals a cached image when photoId changes', () => {
+    const { container, rerender } = render(<PhotoDisplay photoId="a" />)
+
+    const img = getImg(container)
+    fireEvent.load(img)
+    Object.defineProperty(img, 'complete', { configurable: true, value: true })
+    Object.defineProperty(img, 'naturalWidth', { configurable: true, value: 100 })
+
+    rerender(<PhotoDisplay photoId="b" />)
+
+    expect(img).toHaveAttribute('src', photoImageUrl('b'))
+    expect(img).not.toHaveAttribute('hidden')
+    expect(screen.queryByRole('status', { name: 'Loading photo' })).not.toBeInTheDocument()
+  })
+
   it('sets data-photo-id on the display root', () => {
     const { container } = render(<PhotoDisplay photoId="abc123" />)
     expect(container.querySelector('.photo-display')).toHaveAttribute(

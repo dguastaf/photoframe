@@ -15,6 +15,7 @@ type PhotoDisplayProps = {
 export function PhotoDisplay({ photoId, onStatusChange }: PhotoDisplayProps) {
   const [status, setStatus] = useState<PhotoDisplayStatus>('loading')
   const [retryCount, setRetryCount] = useState(0)
+  const imgRef = useRef<HTMLImageElement | null>(null)
   const loadTokenRef = useRef(0)
 
   const src =
@@ -27,6 +28,13 @@ export function PhotoDisplay({ photoId, onStatusChange }: PhotoDisplayProps) {
     setRetryCount(0)
     setStatus('loading')
   }, [photoId])
+
+  useLayoutEffect(() => {
+    const img = imgRef.current
+    if (img?.complete && img.naturalWidth > 0) {
+      setStatus('ready')
+    }
+  }, [src])
 
   useEffect(() => {
     onStatusChange?.(status)
@@ -61,6 +69,7 @@ export function PhotoDisplay({ photoId, onStatusChange }: PhotoDisplayProps) {
         </div>
       )}
       <img
+        ref={imgRef}
         className="photo-display__img"
         src={src}
         alt=""
