@@ -3,7 +3,7 @@
  * Capture UI screenshots and flow videos for PRs.
  * Usage: node capture.mjs [--mode screenshot|video|all]
  *
- * Video records: library loading → first photo → tap overlay → settings → back → auto-advance.
+ * Video records: first photo ready → arrow forward → arrow back (no loading spinner).
  */
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
@@ -22,13 +22,6 @@ const PORTS = JSON.parse(
   await readFile(join(ROOT, 'config/ports.json'), 'utf8'),
 )
 const CLIENT_URL = `http://${PORTS.clientDevHost}:${PORTS.clientDevPort}`
-
-const apiPathsText = await readFile(join(ROOT, 'config/api-paths.ts'), 'utf8')
-const apiV0PrefixMatch = apiPathsText.match(
-  /export const API_V0_PREFIX = ['"]([^'"]+)['"]/,
-)
-const API_V0_PREFIX = apiV0PrefixMatch?.[1] ?? '/api/v0'
-const PHOTOS_PATH = `${API_V0_PREFIX}/photos`
 
 const FIXTURES_DIR = join(__dirname, 'fixtures')
 const FIXTURE_COUNT = 15
@@ -52,7 +45,10 @@ const MOCK_IMAGE_BODIES = Object.fromEntries(
   ),
 )
 
-const DISPLAY_MS = 60_000
+const VIEWPORT_WIDTH = 1280
+/** Dwell so prefetch can warm the next slide; keep short for a tight PR GIF. */
+const PREFETCH_DWELL_MS = 1200
+const SLIDE_DWELL_MS = 1800
 
 /** Real wall-clock sleep (safe while recording video; page.waitForTimeout uses fake clock). */
 function wallSleep(ms) {
@@ -180,23 +176,9 @@ async function captureScreenshot(page) {
 }
 
 async function installPhotoRoutes(page, { libraryDelayMs = 0 } = {}) {
-  await page.route(`**${PHOTOS_PATH}**`, async (route) => {
-    const url = route.request().url()
+  await page.route(/\/api\/v0\/photos\/?(\?.*)?$/, async (route) => {
     if (route.request().method() !== 'GET') {
       await route.continue()
-      return
-    }
-    if (url.includes('/image')) {
-      const idMatch = url.match(/\/photos\/([^/?]+)\/image/)
-      const photoId = idMatch?.[1]
-      const body =
-        (photoId && MOCK_IMAGE_BODIES[photoId]) ||
-        MOCK_IMAGE_BODIES[SAMPLE_PHOTOS[0].id]
-      await route.fulfill({
-        status: 200,
-        contentType: 'image/jpeg',
-        body,
-      })
       return
     }
     if (libraryDelayMs > 0) {
@@ -206,6 +188,23 @@ async function installPhotoRoutes(page, { libraryDelayMs = 0 } = {}) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify(SAMPLE_PHOTOS),
+    })
+  })
+
+  await page.route(/\/api\/v0\/photos\/[^/]+\/image/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.continue()
+      return
+    }
+    const idMatch = route.request().url().match(/\/photos\/([^/?]+)\/image/)
+    const photoId = idMatch?.[1]
+    const body =
+      (photoId && MOCK_IMAGE_BODIES[photoId]) ||
+      MOCK_IMAGE_BODIES[SAMPLE_PHOTOS[0].id]
+    await route.fulfill({
+      status: 200,
+      contentType: 'image/jpeg',
+      body,
     })
   })
 }
@@ -225,66 +224,51 @@ async function waitForSlideChange(page, previousId, timeout = 10_000) {
     previousId,
     { timeout },
   )
-  await page.locator('[data-photo-id][data-status="ready"]').waitFor({ timeout })
-  await page.waitForTimeout(400)
-}
-
-async function tapFrame(page) {
-  await page.locator('main.frame').click()
-}
-
-async function waitForOverlayVisible(page, timeout = 5000) {
-  await page.locator('[data-overlay-visible="true"]').waitFor({ timeout })
-  await page.locator('.photo-info-overlay__date').waitFor({ timeout })
-}
-
-/** Tap overlay → settings (dwell) → back to slideshow. */
-async function showOverlaySettingsRoundTrip(
-  page,
-  { overlayHoldMs = 1500, settingsHoldMs = 3000 } = {},
-) {
-  await tapFrame(page)
-  await waitForOverlayVisible(page)
-  await wallSleep(overlayHoldMs)
-  await page.getByRole('link', { name: 'Settings' }).click()
-  await page.waitForURL('**/settings')
-  await page.locator('.settings-page').waitFor()
-  await page.getByRole('heading', { name: 'Settings' }).waitFor()
-  await page.getByLabel('Display duration unit').waitFor()
-  await page.getByRole('button', { name: 'Sync now' }).waitFor()
-  await wallSleep(settingsHoldMs)
-  await page.getByRole('link', { name: 'Back to slideshow' }).click()
   await waitForSlideReady(page)
-  await wallSleep(400)
+}
+
+async function assertNoPhotoSpinner(page) {
+  const count = await page.getByRole('status', { name: 'Loading photo' }).count()
+  if (count > 0) {
+    throw new Error('Loading photo spinner visible during UI preview capture')
+  }
+}
+
+/** Wait for ready slide, confirm no spinner, dwell for recording. */
+async function dwellOnReadySlide(page, dwellMs = SLIDE_DWELL_MS) {
+  await page.locator('[data-photo-id][data-status="ready"]').waitFor({ timeout: 20_000 })
+  await page.locator('.photo-display__img:not([hidden])').waitFor({ timeout: 20_000 })
+  await assertNoPhotoSpinner(page)
+  await wallSleep(dwellMs)
 }
 
 /**
- * Open metadata overlay, optionally capture frames while visible, then close.
- * Frame-based GIF export must pass `whileVisible` — otherwise snaps run after close.
+ * Arrow-key forward/back through slides after prefetch dwell — asserts no loading spinner.
  */
-async function showTapOverlay(
-  page,
-  { whileVisible, holdMs = 4000, closeAfter = true } = {},
-) {
-  await tapFrame(page)
-  await waitForOverlayVisible(page)
-  if (whileVisible) {
-    await whileVisible()
-  } else {
-    await page.waitForTimeout(holdMs)
+async function showKeyboardNavigationRoundTrip(page, { onStep } = {}) {
+  const step = onStep ?? (async () => {})
+
+  await dwellOnReadySlide(page, PREFETCH_DWELL_MS)
+  await step()
+  const firstId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
+
+  await page.keyboard.press('ArrowRight')
+  await waitForSlideChange(page, firstId)
+  await dwellOnReadySlide(page, PREFETCH_DWELL_MS)
+  await step()
+  const secondId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
+  if (!secondId || secondId === firstId) {
+    throw new Error('ArrowRight did not advance to the next photo')
   }
-  if (!closeAfter) {
-    return
+
+  await page.keyboard.press('ArrowLeft')
+  await waitForSlideChange(page, secondId)
+  await dwellOnReadySlide(page, SLIDE_DWELL_MS)
+  await step()
+  const backId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
+  if (backId !== firstId) {
+    throw new Error(`ArrowLeft expected ${firstId}, got ${backId}`)
   }
-  if ((await page.locator('[data-overlay-visible="true"]').count()) > 0) {
-    await tapFrame(page)
-  }
-  await page.waitForFunction(
-    () => document.querySelectorAll('[data-overlay-visible="true"]').length === 0,
-    undefined,
-    { timeout: 5000 },
-  )
-  await page.waitForTimeout(400)
 }
 
 async function captureVideoPlaywright(browser) {
@@ -294,25 +278,17 @@ async function captureVideoPlaywright(browser) {
   await mkdir(videoDir, { recursive: true })
 
   const context = await browser.newContext({
+    viewport: { width: VIEWPORT_WIDTH, height: 720 },
     recordVideo: { dir: videoDir, size: { width: 1280, height: 720 } },
   })
   const page = await context.newPage()
-  await installPhotoRoutes(page, { libraryDelayMs: 1500 })
+  await page.addInitScript(() => {
+    Math.random = () => 0
+  })
+  await installPhotoRoutes(page)
   await page.goto(CLIENT_URL, { waitUntil: 'domcontentloaded' })
   await waitForSlideReady(page)
-  const firstId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
-  // Fake clock for timer fast-forward; dwell uses wallSleep so it still appears in the recording.
-  await page.clock.install()
-  await wallSleep(1200)
-  await showOverlaySettingsRoundTrip(page)
-  await wallSleep(600)
-  await page.clock.fastForward(DISPLAY_MS)
-  await waitForSlideChange(page, firstId)
-  const secondId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
-  if (!secondId || secondId === firstId) {
-    throw new Error('Slideshow did not advance — cannot produce app-flow.webm preview')
-  }
-  await wallSleep(2500)
+  await showKeyboardNavigationRoundTrip(page)
   await context.close()
 
   const entries = await readdir(videoDir)
@@ -344,12 +320,13 @@ async function captureVideoFrames(browser) {
   await rm(framesDir, { recursive: true, force: true })
   await mkdir(framesDir, { recursive: true })
 
-  const page = await browser.newPage()
-  await installPhotoRoutes(page, { libraryDelayMs: 1500 })
+  const page = await browser.newPage({ viewport: { width: VIEWPORT_WIDTH, height: 720 } })
+  await page.addInitScript(() => {
+    Math.random = () => 0
+  })
+  await installPhotoRoutes(page)
   await page.goto(CLIENT_URL, { waitUntil: 'domcontentloaded' })
   await waitForSlideReady(page)
-  const firstId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
-  await page.clock.install()
 
   let frame = 0
   const snap = async () => {
@@ -358,37 +335,14 @@ async function captureVideoFrames(browser) {
     })
   }
 
-  await snap()
-  await wallSleep(400)
-  await snap()
-  await showTapOverlay(page, {
-    closeAfter: false,
-    whileVisible: async () => {
+  await showKeyboardNavigationRoundTrip(page, {
+    onStep: async () => {
       for (let i = 0; i < 6; i++) {
         await snap()
         await wallSleep(400)
       }
-      await page.getByRole('link', { name: 'Settings' }).click()
-      await page.waitForURL('**/settings')
-      await page.locator('.settings-page').waitFor()
-      for (let i = 0; i < 8; i++) {
-        await snap()
-        await wallSleep(450)
-      }
-      await page.getByRole('link', { name: 'Back to slideshow' }).click()
-      await waitForSlideReady(page)
-      for (let i = 0; i < 2; i++) {
-        await snap()
-        await wallSleep(300)
-      }
     },
   })
-  await page.clock.fastForward(DISPLAY_MS)
-  await waitForSlideChange(page, firstId)
-  for (let i = 0; i < 4; i++) {
-    await snap()
-    await wallSleep(300)
-  }
   await page.close()
 
   const dest = join(OUT_DIR, 'app-flow.webm')
@@ -513,13 +467,13 @@ async function main() {
           type: 'video',
           path: '.github/ui-preview/app-flow.webm',
           description:
-            'Library loading → first photo → tap overlay → settings → back → auto-advance (60s timer)',
+            'First photo → arrow forward → arrow back without loading spinner',
         })
         assets.push({
           type: 'gif',
           path: '.github/ui-preview/app-flow.gif',
           description:
-            'Same flow as WebM (overlay + settings screen); embedded in PRs via npm run ui:embed',
+            'Slideshow forward/back keyboard navigation; embedded in PRs via npm run ui:embed',
         })
         console.log(`video: ${webmPath}`)
         console.log(`gif (PR embed): ${gifPath}`)

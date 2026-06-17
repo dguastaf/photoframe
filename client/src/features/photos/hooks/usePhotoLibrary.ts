@@ -16,6 +16,16 @@ type PlaybackState = {
 
 const EMPTY_PLAYBACK: PlaybackState = { shuffledIds: [], cursor: 0 }
 
+/** Next id after goNext (wrap to index 0 at end of shuffle). */
+export function peekNextPhotoId(
+  shuffledIds: readonly string[],
+  cursor: number,
+): string | undefined {
+  if (shuffledIds.length === 0) return undefined
+  const nextIndex = cursor + 1
+  return nextIndex < shuffledIds.length ? shuffledIds[nextIndex] : shuffledIds[0]
+}
+
 async function fetchLibrary(signal: AbortSignal): Promise<Photo[]> {
   try {
     return await getPhotos({ signal })
@@ -132,6 +142,7 @@ export function usePhotoLibrary() {
   const { shuffledIds, cursor } = playback
   const currentPhotoId =
     shuffledIds.length > 0 ? shuffledIds[cursor] : undefined
+  const nextPhotoId = peekNextPhotoId(shuffledIds, cursor)
 
   const goNext = useCallback(() => {
     setPlayback((prev) => {
@@ -167,6 +178,7 @@ export function usePhotoLibrary() {
       photos: data ?? [],
       shuffledIds,
       currentPhotoId,
+      nextPhotoId,
       goNext,
       goPrev,
     }),
@@ -180,6 +192,7 @@ export function usePhotoLibrary() {
       lastRefreshAt,
       shuffledIds,
       currentPhotoId,
+      nextPhotoId,
       goNext,
       goPrev,
     ],

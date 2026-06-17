@@ -15,35 +15,34 @@ type PhotoDisplayProps = {
 export function PhotoDisplay({ photoId, onStatusChange }: PhotoDisplayProps) {
   const [status, setStatus] = useState<PhotoDisplayStatus>('loading')
   const [retryCount, setRetryCount] = useState(0)
-  const imgRef = useRef<HTMLImageElement>(null)
+  const imgRef = useRef<HTMLImageElement | null>(null)
   const loadTokenRef = useRef(0)
-
-  useLayoutEffect(() => {
-    loadTokenRef.current += 1
-    setStatus('loading')
-    setRetryCount(0)
-  }, [photoId])
-
-  useEffect(() => {
-    onStatusChange?.(status)
-  }, [status, onStatusChange, photoId])
 
   const src =
     retryCount === 0
       ? photoImageUrl(photoId)
       : `${photoImageUrl(photoId)}?retry=${retryCount}`
 
+  useLayoutEffect(() => {
+    loadTokenRef.current += 1
+    setRetryCount(0)
+    setStatus('loading')
+  }, [photoId])
+
+  useLayoutEffect(() => {
+    const img = imgRef.current
+    if (img?.complete && img.naturalWidth > 0) {
+      setStatus('ready')
+    }
+  }, [src])
+
+  useEffect(() => {
+    onStatusChange?.(status)
+  }, [status, onStatusChange, photoId])
+
   const handleRetry = () => {
     setRetryCount((n) => n + 1)
     setStatus('loading')
-  }
-
-  const handleImgRef = (node: HTMLImageElement | null) => {
-    imgRef.current = node
-    const token = loadTokenRef.current
-    if (node?.complete && node.naturalWidth > 0) {
-      setStatus((current) => (token === loadTokenRef.current ? 'ready' : current))
-    }
   }
 
   const handleLoad = () => {
@@ -70,7 +69,7 @@ export function PhotoDisplay({ photoId, onStatusChange }: PhotoDisplayProps) {
         </div>
       )}
       <img
-        ref={handleImgRef}
+        ref={imgRef}
         className="photo-display__img"
         src={src}
         alt=""

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
 
-import type { PhotoDisplayStatus } from '../features/photos/components/photo-display/photo-display'
 import { PhotoInfoOverlay } from '../features/photos/components/photo-info-overlay/photo-info-overlay'
 import { FrameMessage } from '../features/photos/components/photo-frame/frame-message'
 import { PhotoFrame } from '../features/photos/components/photo-frame/photo-frame'
@@ -8,6 +7,7 @@ import { PhotoDisplay } from '../features/photos/components/photo-display/photo-
 import { OVERLAY_DISMISS_MS } from '../features/photos/constants'
 import { usePhotoLibraryContext } from '../features/photos/photo-library-context'
 import { useManualNavigation } from '../features/photos/hooks/useManualNavigation'
+import { usePrefetchImage } from '../features/photos/hooks/usePrefetchImage'
 import { useDisplayDuration } from '../features/settings/settings-duration-context'
 import { useSlideshowTimer } from '../features/photos/hooks/useSlideshowTimer'
 
@@ -18,26 +18,24 @@ export function SlideshowPage() {
     error,
     retry,
     currentPhotoId,
+    nextPhotoId,
     goNext,
     goPrev,
   } = usePhotoLibraryContext()
-  const [slideshowPaused, setSlideshowPaused] = useState(true)
   const [overlayOpen, setOverlayOpen] = useState(false)
-
-  const handlePhotoStatusChange = useCallback((s: PhotoDisplayStatus) => {
-    setSlideshowPaused(s !== 'ready')
-  }, [])
 
   const showSlideshow = status === 'success' && currentPhotoId != null
   const { displayDurationMs } = useDisplayDuration()
 
   useSlideshowTimer({
     onTick: goNext,
-    paused: slideshowPaused,
+    paused: false,
     enabled: showSlideshow,
     resetKey: currentPhotoId,
     intervalMs: displayDurationMs,
   })
+
+  usePrefetchImage(showSlideshow ? nextPhotoId : undefined)
 
   const manualNavigation = useManualNavigation({
     onNext: goNext,
@@ -85,11 +83,7 @@ export function SlideshowPage() {
 
   return (
     <PhotoFrame {...manualNavigation} onClick={handleFrameClick}>
-      <PhotoDisplay
-        key={currentPhotoId}
-        photoId={currentPhotoId}
-        onStatusChange={handlePhotoStatusChange}
-      />
+      <PhotoDisplay photoId={currentPhotoId} />
       {overlayPhoto != null && (
         <PhotoInfoOverlay visible={overlayOpen} photo={overlayPhoto} />
       )}

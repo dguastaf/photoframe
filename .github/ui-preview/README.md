@@ -34,7 +34,7 @@ Vite is started automatically (or reused if already on port 6389). API routes ar
 - Dev server port conflict → capture fails mid-run; commit truncated WebM.
 - **Missing fixtures** → capture fails or serves empty frames. Capture uses `scripts/ui-preview/fixtures/mock-photo-*.jpg` (1280×720 landscape photos).
 
-`ui:preview` records library load, first photo, tap overlay → **settings** (several seconds of real time on screen) → back, then installs a fake clock and **fast-forwards the 60s timer** to show auto-advance. Dwell pauses use wall-clock sleep so they appear in the WebM/GIF (Playwright `waitForTimeout` after `clock.install()` does not). Validation fails if `app-flow.webm` is too small or &lt; 4s (when `ffprobe` is available), or if `app-flow.gif` is missing or too small.
+`ui:preview` records the first ready slide, then **ArrowRight → ArrowLeft** with short dwells so prefetch can warm the next image. Capture asserts the loading spinner is not visible during navigation. No settings or overlay flow. Validation fails if `app-flow.webm` is too small or &lt; 4s (when `ffprobe` is available), or if `app-flow.gif` is missing or too small.
 
 ## PR embed (automated)
 

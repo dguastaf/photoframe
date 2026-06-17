@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-06-03T16:08:14.053Z",
-  "gitCommit": "06bf8d1f997aa1e7fced4f92d831ecf842821829",
-  "uiFilesHash": "80e4d537a7ed2385",
+  "generatedAt": "2026-06-17T00:35:56.403Z",
+  "gitCommit": "01507617532b2d604923f6315e6de5f1dd39237c",
+  "uiFilesHash": "4dea5677afef3a8d",
   "assets": [
     {
       "type": "video",
       "path": ".github/ui-preview/app-flow.webm",
-      "description": "Library loading → first photo → tap overlay → settings → back → auto-advance (60s timer)"
+      "description": "First photo → arrow forward → arrow back without loading spinner"
     },
     {
       "type": "gif",
       "path": ".github/ui-preview/app-flow.gif",
-      "description": "Same flow as WebM (overlay + settings screen); embedded in PRs via npm run ui:embed"
+      "description": "Slideshow forward/back keyboard navigation; embedded in PRs via npm run ui:embed"
     }
   ]
 }
