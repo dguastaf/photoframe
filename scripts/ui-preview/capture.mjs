@@ -3,7 +3,7 @@
  * Capture UI screenshots and flow videos for PRs.
  * Usage: node capture.mjs [--mode screenshot|video|all]
  *
- * Video records: library loading → first photo → tap overlay → settings → back → auto-advance.
+ * Video records: library loading → first photo → swipe forward/back (no loading spinner).
  */
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
@@ -22,13 +22,6 @@ const PORTS = JSON.parse(
   await readFile(join(ROOT, 'config/ports.json'), 'utf8'),
 )
 const CLIENT_URL = `http://${PORTS.clientDevHost}:${PORTS.clientDevPort}`
-
-const apiPathsText = await readFile(join(ROOT, 'config/api-paths.ts'), 'utf8')
-const apiV0PrefixMatch = apiPathsText.match(
-  /export const API_V0_PREFIX = ['"]([^'"]+)['"]/,
-)
-const API_V0_PREFIX = apiV0PrefixMatch?.[1] ?? '/api/v0'
-const PHOTOS_PATH = `${API_V0_PREFIX}/photos`
 
 const FIXTURES_DIR = join(__dirname, 'fixtures')
 const FIXTURE_COUNT = 15
@@ -52,7 +45,14 @@ const MOCK_IMAGE_BODIES = Object.fromEntries(
   ),
 )
 
-const DISPLAY_MS = 60_000
+const VIEWPORT_WIDTH = 1280
+/** Match client SWIPE_THRESHOLD_VW and swipe-navigation E2E. */
+const SWIPE_THRESHOLD_VW = 0.0375
+const SWIPE_OVERSHOOT_VW = 0.03125
+const FRAME_EDGE_MARGIN_VW = 0.0625
+/** Dwell after each slide is ready so prefetch can warm the next image. */
+const PREFETCH_DWELL_MS = 1500
+const SLIDE_DWELL_MS = 2000
 
 /** Real wall-clock sleep (safe while recording video; page.waitForTimeout uses fake clock). */
 function wallSleep(ms) {
@@ -180,23 +180,9 @@ async function captureScreenshot(page) {
 }
 
 async function installPhotoRoutes(page, { libraryDelayMs = 0 } = {}) {
-  await page.route(`**${PHOTOS_PATH}**`, async (route) => {
-    const url = route.request().url()
+  await page.route(/\/api\/v0\/photos\/?(\?.*)?$/, async (route) => {
     if (route.request().method() !== 'GET') {
       await route.continue()
-      return
-    }
-    if (url.includes('/image')) {
-      const idMatch = url.match(/\/photos\/([^/?]+)\/image/)
-      const photoId = idMatch?.[1]
-      const body =
-        (photoId && MOCK_IMAGE_BODIES[photoId]) ||
-        MOCK_IMAGE_BODIES[SAMPLE_PHOTOS[0].id]
-      await route.fulfill({
-        status: 200,
-        contentType: 'image/jpeg',
-        body,
-      })
       return
     }
     if (libraryDelayMs > 0) {
@@ -206,6 +192,23 @@ async function installPhotoRoutes(page, { libraryDelayMs = 0 } = {}) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify(SAMPLE_PHOTOS),
+    })
+  })
+
+  await page.route(/\/api\/v0\/photos\/[^/]+\/image/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.continue()
+      return
+    }
+    const idMatch = route.request().url().match(/\/photos\/([^/?]+)\/image/)
+    const photoId = idMatch?.[1]
+    const body =
+      (photoId && MOCK_IMAGE_BODIES[photoId]) ||
+      MOCK_IMAGE_BODIES[SAMPLE_PHOTOS[0].id]
+    await route.fulfill({
+      status: 200,
+      contentType: 'image/jpeg',
+      body,
     })
   })
 }
@@ -225,66 +228,95 @@ async function waitForSlideChange(page, previousId, timeout = 10_000) {
     previousId,
     { timeout },
   )
-  await page.locator('[data-photo-id][data-status="ready"]').waitFor({ timeout })
-  await page.waitForTimeout(400)
-}
-
-async function tapFrame(page) {
-  await page.locator('main.frame').click()
-}
-
-async function waitForOverlayVisible(page, timeout = 5000) {
-  await page.locator('[data-overlay-visible="true"]').waitFor({ timeout })
-  await page.locator('.photo-info-overlay__date').waitFor({ timeout })
-}
-
-/** Tap overlay → settings (dwell) → back to slideshow. */
-async function showOverlaySettingsRoundTrip(
-  page,
-  { overlayHoldMs = 1500, settingsHoldMs = 3000 } = {},
-) {
-  await tapFrame(page)
-  await waitForOverlayVisible(page)
-  await wallSleep(overlayHoldMs)
-  await page.getByRole('link', { name: 'Settings' }).click()
-  await page.waitForURL('**/settings')
-  await page.locator('.settings-page').waitFor()
-  await page.getByRole('heading', { name: 'Settings' }).waitFor()
-  await page.getByLabel('Display duration unit').waitFor()
-  await page.getByRole('button', { name: 'Sync now' }).waitFor()
-  await wallSleep(settingsHoldMs)
-  await page.getByRole('link', { name: 'Back to slideshow' }).click()
   await waitForSlideReady(page)
-  await wallSleep(400)
+}
+
+async function swipeHorizontal(page, direction) {
+  // Touch pointer events on the frame — Playwright mouse drags miss swipes once large
+  // JPEG slides decode (use-gesture listens for pointer/touch on main.frame).
+  await page.locator('main.frame').evaluate(
+    (el, { dir, marginVw, thresholdVw, overshootVw }) => {
+      const rect = el.getBoundingClientRect()
+      const margin = rect.width * marginVw
+      const distance = rect.width * thresholdVw + rect.width * overshootVw
+      const y = rect.top + rect.height / 2
+      const fromX = dir === 'left' ? rect.right - margin : rect.left + margin
+      const toX = dir === 'left' ? fromX - distance : fromX + distance
+      const base = {
+        bubbles: true,
+        cancelable: true,
+        pointerId: 1,
+        pointerType: 'touch',
+        isPrimary: true,
+        clientY: y,
+        button: 0,
+        buttons: 1,
+      }
+      el.dispatchEvent(new PointerEvent('pointerdown', { ...base, clientX: fromX }))
+      for (let step = 1; step <= 12; step += 1) {
+        const x = fromX + ((toX - fromX) * step) / 12
+        el.dispatchEvent(new PointerEvent('pointermove', { ...base, clientX: x }))
+      }
+      el.dispatchEvent(
+        new PointerEvent('pointerup', { ...base, clientX: toX, buttons: 0 }),
+      )
+    },
+    {
+      dir: direction,
+      marginVw: FRAME_EDGE_MARGIN_VW,
+      thresholdVw: SWIPE_THRESHOLD_VW,
+      overshootVw: SWIPE_OVERSHOOT_VW,
+    },
+  )
+}
+
+async function assertNoPhotoSpinner(page) {
+  const count = await page.getByRole('status', { name: 'Loading photo' }).count()
+  if (count > 0) {
+    throw new Error('Loading photo spinner visible during UI preview capture')
+  }
+}
+
+/** Wait for ready slide, confirm no spinner, dwell for recording. */
+async function dwellOnReadySlide(page, dwellMs = SLIDE_DWELL_MS) {
+  await page.locator('[data-photo-id][data-status="ready"]').waitFor({ timeout: 20_000 })
+  await page.locator('.photo-display__img:not([hidden])').waitFor({ timeout: 20_000 })
+  await assertNoPhotoSpinner(page)
+  await wallSleep(dwellMs)
 }
 
 /**
- * Open metadata overlay, optionally capture frames while visible, then close.
- * Frame-based GIF export must pass `whileVisible` — otherwise snaps run after close.
+ * Swipe forward/back through slides after prefetch dwell — asserts no loading spinner.
  */
-async function showTapOverlay(
-  page,
-  { whileVisible, holdMs = 4000, closeAfter = true } = {},
-) {
-  await tapFrame(page)
-  await waitForOverlayVisible(page)
-  if (whileVisible) {
-    await whileVisible()
-  } else {
-    await page.waitForTimeout(holdMs)
+async function showSwipeNavigationRoundTrip(page, { onStep } = {}) {
+  const step = onStep ?? (async () => {})
+
+  await dwellOnReadySlide(page, PREFETCH_DWELL_MS)
+  await step()
+  const firstId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
+
+  await swipeHorizontal(page, 'left')
+  await waitForSlideChange(page, firstId)
+  await dwellOnReadySlide(page, PREFETCH_DWELL_MS)
+  await step()
+  const secondId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
+  if (!secondId || secondId === firstId) {
+    throw new Error('Swipe forward did not advance to the next photo')
   }
-  if (!closeAfter) {
-    return
+
+  await swipeHorizontal(page, 'right')
+  await waitForSlideChange(page, secondId)
+  await dwellOnReadySlide(page, SLIDE_DWELL_MS)
+  await step()
+  const backId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
+  if (backId !== firstId) {
+    throw new Error(`Swipe back expected ${firstId}, got ${backId}`)
   }
-  if ((await page.locator('[data-overlay-visible="true"]').count()) > 0) {
-    await tapFrame(page)
-  }
-  await page.waitForFunction(
-    () => document.querySelectorAll('[data-overlay-visible="true"]').length === 0,
-    undefined,
-    { timeout: 5000 },
-  )
-  await page.waitForTimeout(400)
+
+  await swipeHorizontal(page, 'left')
+  await waitForSlideChange(page, backId)
+  await dwellOnReadySlide(page, SLIDE_DWELL_MS)
+  await step()
 }
 
 async function captureVideoPlaywright(browser) {
@@ -294,25 +326,18 @@ async function captureVideoPlaywright(browser) {
   await mkdir(videoDir, { recursive: true })
 
   const context = await browser.newContext({
+    viewport: { width: VIEWPORT_WIDTH, height: 720 },
     recordVideo: { dir: videoDir, size: { width: 1280, height: 720 } },
   })
   const page = await context.newPage()
+  await page.addInitScript(() => {
+    Math.random = () => 0
+  })
   await installPhotoRoutes(page, { libraryDelayMs: 1500 })
   await page.goto(CLIENT_URL, { waitUntil: 'domcontentloaded' })
   await waitForSlideReady(page)
-  const firstId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
-  // Fake clock for timer fast-forward; dwell uses wallSleep so it still appears in the recording.
-  await page.clock.install()
-  await wallSleep(1200)
-  await showOverlaySettingsRoundTrip(page)
-  await wallSleep(600)
-  await page.clock.fastForward(DISPLAY_MS)
-  await waitForSlideChange(page, firstId)
-  const secondId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
-  if (!secondId || secondId === firstId) {
-    throw new Error('Slideshow did not advance — cannot produce app-flow.webm preview')
-  }
-  await wallSleep(2500)
+  await wallSleep(800)
+  await showSwipeNavigationRoundTrip(page)
   await context.close()
 
   const entries = await readdir(videoDir)
@@ -344,12 +369,13 @@ async function captureVideoFrames(browser) {
   await rm(framesDir, { recursive: true, force: true })
   await mkdir(framesDir, { recursive: true })
 
-  const page = await browser.newPage()
+  const page = await browser.newPage({ viewport: { width: VIEWPORT_WIDTH, height: 720 } })
+  await page.addInitScript(() => {
+    Math.random = () => 0
+  })
   await installPhotoRoutes(page, { libraryDelayMs: 1500 })
   await page.goto(CLIENT_URL, { waitUntil: 'domcontentloaded' })
   await waitForSlideReady(page)
-  const firstId = await page.locator('[data-photo-id]').getAttribute('data-photo-id')
-  await page.clock.install()
 
   let frame = 0
   const snap = async () => {
@@ -360,35 +386,14 @@ async function captureVideoFrames(browser) {
 
   await snap()
   await wallSleep(400)
-  await snap()
-  await showTapOverlay(page, {
-    closeAfter: false,
-    whileVisible: async () => {
-      for (let i = 0; i < 6; i++) {
+  await showSwipeNavigationRoundTrip(page, {
+    onStep: async () => {
+      for (let i = 0; i < 5; i++) {
         await snap()
         await wallSleep(400)
       }
-      await page.getByRole('link', { name: 'Settings' }).click()
-      await page.waitForURL('**/settings')
-      await page.locator('.settings-page').waitFor()
-      for (let i = 0; i < 8; i++) {
-        await snap()
-        await wallSleep(450)
-      }
-      await page.getByRole('link', { name: 'Back to slideshow' }).click()
-      await waitForSlideReady(page)
-      for (let i = 0; i < 2; i++) {
-        await snap()
-        await wallSleep(300)
-      }
     },
   })
-  await page.clock.fastForward(DISPLAY_MS)
-  await waitForSlideChange(page, firstId)
-  for (let i = 0; i < 4; i++) {
-    await snap()
-    await wallSleep(300)
-  }
   await page.close()
 
   const dest = join(OUT_DIR, 'app-flow.webm')
@@ -513,13 +518,13 @@ async function main() {
           type: 'video',
           path: '.github/ui-preview/app-flow.webm',
           description:
-            'Library loading → first photo → tap overlay → settings → back → auto-advance (60s timer)',
+            'Library loading → first photo → swipe forward/back without loading spinner',
         })
         assets.push({
           type: 'gif',
           path: '.github/ui-preview/app-flow.gif',
           description:
-            'Same flow as WebM (overlay + settings screen); embedded in PRs via npm run ui:embed',
+            'Swipe navigation round-trip with prefetched slides; embedded in PRs via npm run ui:embed',
         })
         console.log(`video: ${webmPath}`)
         console.log(`gif (PR embed): ${gifPath}`)

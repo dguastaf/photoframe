@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-06-17T00:23:18.421Z",
-  "gitCommit": "dacce31a046d636451fb0f7bec33c4fc4117576d",
+  "generatedAt": "2026-06-17T00:30:17.060Z",
+  "gitCommit": "9718669b3ec9b209f690fbe6b99144485c0f1f11",
   "uiFilesHash": "f553a662fff39fe6",
   "assets": [
     {
       "type": "video",
       "path": ".github/ui-preview/app-flow.webm",
-      "description": "Library loading → first photo → tap overlay → settings → back → auto-advance (60s timer)"
+      "description": "Library loading → first photo → swipe forward/back without loading spinner"
     },
     {
       "type": "gif",
       "path": ".github/ui-preview/app-flow.gif",
-      "description": "Same flow as WebM (overlay + settings screen); embedded in PRs via npm run ui:embed"
+      "description": "Swipe navigation round-trip with prefetched slides; embedded in PRs via npm run ui:embed"
     }
   ]
 }
