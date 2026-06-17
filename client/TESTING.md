@@ -9,7 +9,7 @@ client/tests/
 └── e2e/
     ├── helpers.mjs
     ├── photo-library-flow.mjs   # Playwright: library load, errors, empty, retry
-    ├── slideshow-flow.mjs       # Playwright: auto-advance, pause while loading
+    ├── slideshow-flow.mjs       # Playwright: auto-advance, prefetch next image
     ├── swipe-navigation-flow.mjs # Playwright: swipe and arrow-key navigation
     ├── tap-overlay-flow.mjs       # Playwright: tap metadata overlay toggle + swipe dismiss
     ├── settings-navigation-flow.mjs # Playwright: gear → settings → back preserves photo
@@ -37,7 +37,7 @@ CI runs `npm run test:e2e` in the `client-e2e` job (mock API on **52525**, Vite 
 | Script | Coverage |
 |--------|----------|
 | `photo-library-flow.mjs` | Loading, happy path, API errors, empty library, retry |
-| `slideshow-flow.mjs` | Auto-advance (60s), pause while loading, multi-photo cycle, empty |
+| `slideshow-flow.mjs` | Auto-advance (60s), prefetch next image while slide visible, multi-photo cycle, empty |
 | `swipe-navigation-flow.mjs` | Swipe left/right and arrow keys forward/back through shuffle |
 | `tap-overlay-flow.mjs` | Tap toggles date/folder overlay; swipe while open hides overlay and updates metadata |
 | `settings-navigation-flow.mjs` | Gear → settings → browser back / back link preserves photo; no list refetch on navigation |

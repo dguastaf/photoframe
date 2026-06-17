@@ -535,7 +535,7 @@ describe('App tap overlay', () => {
     vi.restoreAllMocks()
   })
 
-  it('does not pause slideshow timer when overlay opens', async () => {
+  it('keeps slideshow timer unpaused when overlay opens', async () => {
     mockedGetPhotos.mockResolvedValue(samplePhotos)
     const user = userEvent.setup()
 
@@ -545,12 +545,7 @@ describe('App tap overlay', () => {
       expect(document.querySelector('.photo-display__img')).toBeInTheDocument()
     })
 
-    const img = document.querySelector('.photo-display__img') as HTMLImageElement
-    fireEvent.load(img)
-
-    await waitFor(() => {
-      expect(slideshowTimerCalls.at(-1)?.paused).toBe(false)
-    })
+    expect(slideshowTimerCalls.at(-1)?.paused).toBe(false)
 
     await user.click(screen.getByRole('main'))
 

@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getPhotos } from '@/features/photos/api/photos'
-import { usePhotoLibrary } from '@/features/photos/hooks/usePhotoLibrary'
+import { usePhotoLibrary, peekNextPhotoId } from '@/features/photos/hooks/usePhotoLibrary'
 import * as shuffleLib from '@/features/photos/lib/shuffle'
 import { SETTINGS_STORAGE_KEY } from '@/features/settings/lib/constants'
 import { ApiError } from '@/lib/api-client'
@@ -42,6 +42,25 @@ afterEach(() => {
   vi.clearAllMocks()
   vi.restoreAllMocks()
   vi.useRealTimers()
+})
+
+describe('peekNextPhotoId', () => {
+  it('returns undefined for empty shuffle', () => {
+    expect(peekNextPhotoId([], 0)).toBeUndefined()
+  })
+
+  it('returns the only id for a single-photo catalog', () => {
+    expect(peekNextPhotoId(['solo'], 0)).toBe('solo')
+  })
+
+  it('returns the next id in order', () => {
+    expect(peekNextPhotoId(['a', 'b', 'c'], 0)).toBe('b')
+    expect(peekNextPhotoId(['a', 'b', 'c'], 1)).toBe('c')
+  })
+
+  it('wraps to index 0 at end of shuffle', () => {
+    expect(peekNextPhotoId(['a', 'b', 'c'], 2)).toBe('a')
+  })
 })
 
 describe('usePhotoLibrary', () => {
@@ -268,6 +287,47 @@ describe('usePhotoLibrary', () => {
     act(() => result.current.goNext())
     expect(result.current.currentPhotoId).not.toBe(first)
     expect(['a', 'b', 'c']).toContain(result.current.currentPhotoId)
+  })
+
+  it('exposes nextPhotoId matching peekNextPhotoId', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    mockedGetPhotos.mockResolvedValue(catalogThree)
+    const { result } = renderHook(() => usePhotoLibrary())
+    await waitFor(() => expect(result.current.currentPhotoId).toBeDefined())
+    expect(result.current.nextPhotoId).toBe(
+      peekNextPhotoId(result.current.shuffledIds, 0),
+    )
+    act(() => result.current.goNext())
+    expect(result.current.nextPhotoId).toBe(
+      peekNextPhotoId(result.current.shuffledIds, 1),
+    )
+  })
+
+  it('updates nextPhotoId after refetch reshuffle', async () => {
+    vi.useFakeTimers()
+    const catalog = [meta('a'), meta('b')]
+    mockedGetPhotos.mockResolvedValue(catalog)
+
+    const shuffleSpy = vi
+      .spyOn(shuffleLib, 'shuffle')
+      .mockReturnValueOnce(['a', 'b'])
+      .mockReturnValueOnce(['b', 'a'])
+
+    const { result } = renderHook(() => usePhotoLibrary())
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(result.current.nextPhotoId).toBe('b')
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000)
+      await Promise.resolve()
+    })
+
+    expect(result.current.currentPhotoId).toBe('b')
+    expect(result.current.nextPhotoId).toBe('a')
+    expect(shuffleSpy).toHaveBeenCalledTimes(2)
   })
 
   it('goNext wraps to the first slide at end of cycle', async () => {

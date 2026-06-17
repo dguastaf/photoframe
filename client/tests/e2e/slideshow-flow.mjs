@@ -1,10 +1,11 @@
 /**
- * Slideshow E2E: auto-advance, pause-while-loading, multi-photo cycle, empty library.
+ * Slideshow E2E: auto-advance, prefetch next image, multi-photo cycle, empty library.
  * Fully mocked API routes — dev server on 6389 only (API need not be running).
  */
 import { chromium } from 'playwright'
 import {
   baseUrl,
+  isPhotoImageRequest,
   mockPhotoImages,
   mockPhotoLibrary,
   record,
@@ -56,40 +57,41 @@ async function currentPhotoId(page) {
   await page.close()
 }
 
-// --- 2. Pause while image loading ---
+// --- 2. Prefetch next image ---
 {
   const page = await context.newPage()
-  await mockPhotoLibrary(page, SAMPLE_PHOTOS_TWO)
-  await mockPhotoImages(page, { delayMs: 3000 })
+  await page.addInitScript(() => {
+    Math.random = () => 0
+  })
+  await mockPhotoLibrary(page, SAMPLE_PHOTOS_THREE)
+  const imageRequests = []
+  page.on('request', (req) => {
+    if (isPhotoImageRequest(req.url(), req.method())) {
+      imageRequests.push(req.url())
+    }
+  })
+  await mockPhotoImages(page)
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' })
-  await page.locator('[data-photo-id][data-status="loading"]').waitFor({ timeout: 5000 })
-  const idWhileLoading = await currentPhotoId(page)
-  await page.clock.install()
-  await page.clock.fastForward(DISPLAY_MS)
-  const unchangedWhileLoading =
-    (await currentPhotoId(page)) === idWhileLoading &&
-    (await page.locator('[data-status="loading"]').count()) > 0
-  await waitForSlideReady(page, 15000)
-  const idAfterReady = await currentPhotoId(page)
-  await page.clock.fastForward(DISPLAY_MS)
-  const changedAfterReady = await page
-    .waitForFunction(
-      (id) => {
-        const el = document.querySelector('[data-photo-id]')
-        return el && el.getAttribute('data-photo-id') !== id
-      },
-      idAfterReady,
-      { timeout: 5000 },
-    )
-    .then(() => true)
-    .catch(() => false)
-  await shot(page, 'slide-02-pause-while-loading.png')
+  await waitForSlideReady(page)
+  const currentId = await currentPhotoId(page)
+  // Math.random=0 shuffle of [photo-1, photo-2, photo-3] => [photo-2, photo-3, photo-1]
+  const expectedNextId = 'e2e-photo-3'
+  const prefetched = imageRequests.some(
+    (url) =>
+      url.includes(encodeURIComponent(expectedNextId)) && !url.includes(currentId),
+  )
+  const currentLoaded = imageRequests.some((url) =>
+    url.includes(encodeURIComponent(currentId)),
+  )
+  await shot(page, 'slide-02-prefetch-next.png')
   record(
     results,
-    'Timer does not advance while image is loading',
-    unchangedWhileLoading,
+    'Prefetch requests next slide image while current slide is visible',
+    prefetched && currentLoaded,
+    prefetched
+      ? `current=${currentId}, prefetch=${expectedNextId}`
+      : `requests=${imageRequests.join('; ')}`,
   )
-  record(results, 'Timer advances after image becomes ready', changedAfterReady)
   await page.close()
 }
 
