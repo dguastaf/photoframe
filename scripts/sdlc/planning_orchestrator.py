@@ -16,7 +16,7 @@ from review_path import ROOT, branch_name, branch_slug, review_path
 from validate_review import _exception_ok, _phase_ok, load_review
 
 PROTECTED_BRANCHES = frozenset({"main", "master"})
-STATE_DIR = ROOT / ".cursor" / "hooks" / "state"
+STATE_DIR = ROOT / ".claude" / "state"
 PENDING_FILE = STATE_DIR / "sdlc-pending.json"
 BRANCH_RE = re.compile(r"^feature/[a-z0-9][a-z0-9._/-]*$", re.IGNORECASE)
 

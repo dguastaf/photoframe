@@ -21,7 +21,7 @@ from changed_paths import (
 )
 from review_path import review_path
 
-REQUIRED_PHASES = ("planning", "implementation")
+REQUIRED_PHASES = ("planning", "implementation", "code_review")
 EXCEPTION_KEYS = ("reason", "scope", "approver", "expires")
 PLACEHOLDER_TEST_PLAN = re.compile(
     r"^\s*(<!--.*?-->|how you verified|tbd|todo|n/?a\.?|-\s*\[\s*\])\s*$",

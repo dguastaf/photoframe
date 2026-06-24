@@ -1,4 +1,4 @@
-# Photoframe — anti-slop and quality bar
+# Photoframe — code review quality bar
 
 Apply these rules to **changed files only**. Prefer blocking bugs with file, line, and a concrete fix.
 
@@ -21,4 +21,3 @@ Apply these rules to **changed files only**. Prefer blocking bugs with file, lin
 
 - Use **blocking** severity for slop and architecture violations.
 - End review comments with a one-line summary: slop-clean vs issues-found.
-

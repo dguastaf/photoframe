@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 """Gate product implementation edits: planning review + feature branch (automated).
 
-Used by Cursor hooks:
-- preToolUse (Write/StrReplace/EditNotebook): block until planning passes
-- preToolUse (Task): only staff-engineer allowed until planning passes
-- subagentStop (staff-engineer): create branch + record planning on pass
-
 See scripts/sdlc/README.md and AI-SDLC.md control 1 + 5.
 """
 
@@ -27,7 +22,7 @@ from planning_orchestrator import (
 # Paths that may be edited while recording SDLC artifacts (no planning gate).
 EXEMPT_PREFIXES = (
     "scripts/sdlc/",
-    ".cursor/",
+    ".claude/",
 )
 
 # Test paths require the same gates as production code.

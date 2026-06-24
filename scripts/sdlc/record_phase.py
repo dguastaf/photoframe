@@ -11,7 +11,7 @@ from pathlib import Path
 
 from review_path import REVIEWS_DIR, ROOT, branch_name, review_path
 
-VALID_PHASES = frozenset({"planning", "implementation", "walkthrough", "pre_pr"})
+VALID_PHASES = frozenset({"planning", "implementation", "code_review", "walkthrough", "pre_pr"})
 VALID_OUTCOMES = frozenset({"pass", "fail", "exception"})
 
 

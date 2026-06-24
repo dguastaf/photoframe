@@ -75,17 +75,13 @@ See `.env.example` for all variables:
 
 ## Development
 
-### Cursor (automated)
+### Claude Code
 
-Opening this repo in Cursor runs project hooks that:
+Code review is a required SDLC phase. Run `/code-review high` locally before opening a PR, then record the outcome. Quality rules are in [`.claude/review-rules.md`](.claude/review-rules.md).
 
-1. Create `server/.venv` if missing (Python 3.12+)
-2. Run `pip install -e ".[dev]"` to install pytest and other dev tools
-3. Point the Python extension at `server/.venv` (see `.vscode/settings.json`)
+### Running tests
 
-Hooks: `.cursor/hooks.json` (`workspaceOpen` on folder open, `sessionStart` for agent sessions). Check **Cursor Settings → Hooks** or the **Hooks** output channel if setup does not run.
-
-After hooks run (or after a manual setup below), from `server/`:
+After setup (see below), from `server/`:
 
 ```bash
 pytest
