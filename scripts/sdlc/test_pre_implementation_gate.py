@@ -35,9 +35,9 @@ class PathClassificationTests(unittest.TestCase):
         self.assertTrue(is_exempt_path("scripts/sdlc/reviews/foo.json"))
         self.assertFalse(is_implementation_path("scripts/sdlc/record_phase.py"))
 
-    def test_cursor_paths_are_exempt(self) -> None:
-        self.assertTrue(is_exempt_path(".cursor/hooks.json"))
-        self.assertFalse(is_implementation_path(".cursor/rules/foo.mdc"))
+    def test_claude_paths_are_exempt(self) -> None:
+        self.assertTrue(is_exempt_path(".claude/settings.json"))
+        self.assertFalse(is_implementation_path(".claude/agents/staff-engineer.md"))
 
 
 class HookInputTests(unittest.TestCase):

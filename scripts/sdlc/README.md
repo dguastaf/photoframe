@@ -6,7 +6,7 @@ Scripts and review artifacts for [`AI-SDLC.md`](../../AI-SDLC.md) `staff-enginee
 | ------ | ------- |
 | `record_phase.py` | Record phase outcome in `reviews/<branch-slug>.json` |
 | `validate_review.py` | Validate review file (+ PR test plan in CI) |
-| `pre_implementation_gate.py` | Cursor hook entrypoints (edit/Task/subagentStop gates) |
+| `pre_implementation_gate.py` | Pre-implementation gate (edit/Task/subagentStop gates) |
 | `planning_orchestrator.py` | Pending branch, auto `git checkout -b`, planning record on review pass |
 | `parse_staff_review.py` | Parse staff-engineer verdict from subagent summary |
 | `review_path.py` | Resolve review file path for current branch |
@@ -27,14 +27,14 @@ scripts/sdlc/reviews/<branch-slug>.json
 
 | Check | Enforced by |
 | ----- | ----------- |
-| Feature branch (not `main` / `master`) before product/test edits | Cursor `preToolUse` hook (`.cursor/hooks/before-implementation-edit.sh`) |
-| `planning` phase recorded (`outcome: pass`) before product/test edits | Same `preToolUse` hook (owner `exception` may skip planning) |
-| `planning` + `implementation` phases recorded (`outcome: pass`) | Always — Cursor hook + CI `sdlc-policy` (owner `exception` may skip) |
+| Feature branch (not `main` / `master`) before product/test edits | Pre-implementation gate (`scripts/sdlc/pre_implementation_gate.py`) |
+| `planning` phase recorded (`outcome: pass`) before product/test edits | Same gate (owner `exception` may skip planning) |
+| `planning` + `implementation` + `code_review` phases recorded (`outcome: pass`) | Always — pre-implementation gate + CI `sdlc-policy` (owner `exception` may skip) |
 | PR **Test plan** section (non-empty, non-placeholder) | CI `sdlc-policy` when **production code** changed (`server/app/`, `client/src/`, runtime config) |
 | `walkthrough` / `pre_pr` phase records | Not enforced by hook or CI (optional audit trail) |
 | PR **Exceptions** section body fields | Not enforced (optional for now) |
 
-Workflow rules (`.cursor/rules/`) may still require walkthrough or a pre-PR `staff-engineer` run before you open a PR; that is separate from the gate above.
+The `staff-engineer` agent (`.claude/agents/staff-engineer.md`) may still require walkthrough or a pre-PR review before you open a PR; that is separate from the gate above.
 
 ### Pre-implementation hooks (planning review + branch)
 
@@ -50,7 +50,7 @@ Workflow rules (`.cursor/rules/`) may still require walkthrough or a pre-PR `sta
 
 Agent flow: attempt edit → denied → delegate **staff-engineer** with `review_phase: planning` and the full plan → on pass, branch + review file are created → edits allowed.
 
-Exempt (always allowed): `scripts/sdlc/`, `.cursor/`.
+Exempt (always allowed): `scripts/sdlc/`, `.claude/`.
 
 Manual check:
 
@@ -72,7 +72,7 @@ printf '%s' '{"tool_name":"Write","tool_input":{"path":"client/src/App.tsx"}}' \
 | **Staff-engineer** (`planning` + `implementation` in review JSON) | **Every PR** — including docs, SDLC, and README-only changes |
 | **PR test plan** (substantive **Test plan** section) | Only when **production code** changed |
 
-Production code paths: `server/app/`, `client/src/`, and runtime config (`server/pyproject.toml`, `client/package.json`, `.env.example`, Docker files). Changes only under `server/tests/`, `client/tests/`, `scripts/sdlc/`, `.cursor/`, docs, or CI wiring do **not** require a substantive test plan (CI still runs the normal test jobs).
+Production code paths: `server/app/`, `client/src/`, and runtime config (`server/pyproject.toml`, `client/package.json`, `.env.example`, Docker files). Changes only under `server/tests/`, `client/tests/`, `scripts/sdlc/`, `.claude/`, docs, or CI wiring do **not** require a substantive test plan (CI still runs the normal test jobs).
 
 Detection uses `git diff <base>...HEAD` via `changed_paths.py`.
 
@@ -88,6 +88,10 @@ Detection uses `git diff <base>...HEAD` via `changed_paths.py`.
     },
     "implementation": {
       "at": "2026-05-27T19:30:00Z",
+      "outcome": "pass"
+    },
+    "code_review": {
+      "at": "2026-05-27T20:00:00Z",
       "outcome": "pass"
     }
   },
@@ -124,6 +128,8 @@ After each `staff-engineer` subagent run for that phase:
 python3 scripts/sdlc/record_phase.py planning pass
 # implementation: final change set, before walkthrough
 python3 scripts/sdlc/record_phase.py implementation pass
+# code_review: after /code-review high passes with no blocking findings
+python3 scripts/sdlc/record_phase.py code_review pass
 
 # Optional audit trail
 python3 scripts/sdlc/record_phase.py walkthrough pass

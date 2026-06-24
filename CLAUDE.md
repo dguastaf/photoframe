@@ -8,8 +8,9 @@ Before making the first file edit for a new suite of changes, automatically crea
 
 - See `AI-SDLC.md` for the full development lifecycle.
 - Staff engineer reviews are available via the `staff-engineer` agent (`.claude/agents/staff-engineer.md`). Invoke with `review_phase: planning | implementation | pre_pr`.
+- Before opening a PR, run `/code-review high` and record the outcome with `python3 scripts/sdlc/record_phase.py code_review pass`. Quality rules are in `.claude/review-rules.md`.
 - Record outcomes with `python3 scripts/sdlc/record_phase.py <phase> <outcome>`.
-- CI validates that `planning` and `implementation` phases pass before PR merge.
+- CI validates that `planning`, `implementation`, and `code_review` phases pass before PR merge.
 
 ## Project structure
 
