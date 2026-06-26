@@ -17,6 +17,9 @@ venv/
 # Cursor hook runtime state (pending branch for SDLC orchestration)
 .cursor/hooks/state/
 
+# Claude Code runtime state
+.claude/state/
+
 # Editor / OS
 .vscode/*
 !.vscode/settings.json
