@@ -32,7 +32,7 @@ Imports use the `@/` alias to reach `src/` (configured in `vite.config.ts`).
 
 ## E2E (Playwright)
 
-CI runs `npm run test:e2e` in the `client-e2e` job (mock API on **52525**, Vite dev server on **6389**).
+CI runs `npm run test:e2e` in the `client-e2e` job (mock API on **63896**, Vite dev server on **6389**).
 
 | Script | Coverage |
 |--------|----------|

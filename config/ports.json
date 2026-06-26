@@ -1,5 +1,5 @@
 {
-  "serverPort": 52525,
+  "serverPort": 63896,
   "clientDevPort": 6389,
   "clientDevHost": "localhost"
 }
