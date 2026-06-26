@@ -29,6 +29,13 @@
     "plugins": [
       "expo-router",
       "expo-image"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9c7ad4c8-177f-4665-927b-72e5f9a13f82"
+      }
+    },
+    "owner": "dguastaf0"
   }
 }
