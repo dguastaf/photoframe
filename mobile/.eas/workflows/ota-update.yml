@@ -1,0 +1,12 @@
+name: OTA update (preview)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  update:
+    type: update
+    params:
+      branch: preview

@@ -1,0 +1,16 @@
+name: Build Android (preview)
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        type: choice
+        options: [development, preview, production]
+        required: true
+
+jobs:
+  build_android:
+    type: build
+    params:
+      platform: android
+      profile: ${{ inputs.profile }}
