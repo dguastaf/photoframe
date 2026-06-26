@@ -1,0 +1,50 @@
+name: Mobile CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+
+permissions:
+  contents: read
+
+jobs:
+  mobile-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Run tests
+        id: jest
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee jest.log
+          summary=$(grep -E '^Tests:' jest.log | tail -1 || true)
+          echo "summary=${summary}" >> "$GITHUB_OUTPUT"
+
+      - name: Test summary
+        if: always() && steps.jest.outputs.summary != ''
+        run: |
+          echo "## Mobile tests (Jest)" >> "$GITHUB_STEP_SUMMARY"
+          echo "**${{ steps.jest.outputs.summary }}**" >> "$GITHUB_STEP_SUMMARY"
