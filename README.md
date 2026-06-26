@@ -55,7 +55,7 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml up --build -d
 
 ### Advanced
 
-Dev ports are fixed in [`config/ports.json`](config/ports.json) (API **52525**, client **6389**). For local Vite dev, the API allows the client dev origin for CORS (from that file unless you set `CORS_ORIGINS`). Vite proxies `/api` to the server so fetches can use relative URLs in dev.
+Dev ports are fixed in [`config/ports.json`](config/ports.json) (API **63896**, client **6389**). For local Vite dev, the API allows the client dev origin for CORS (from that file unless you set `CORS_ORIGINS`). Vite proxies `/api` to the server so fetches can use relative URLs in dev.
 
 ### .env Configuration
 
@@ -107,7 +107,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:6389. Start the API on **52525** first (Vite proxies `/api` to that port; see `config/ports.json`):
+Open http://localhost:6389. Start the API on **63896** first (Vite proxies `/api` to that port; see `config/ports.json`):
 
 ```bash
 ./server/scripts/dev_server.sh
@@ -118,3 +118,23 @@ Open http://localhost:6389. Start the API on **52525** first (Vite proxies `/api
 For a single service on **6389** (built UI + API, no Vite), use `docker compose up` from the repo root instead — do not run that alongside `npm run dev` (both use port **6389**).
 
 Client unit tests: `cd client && npm test`. See [client/TESTING.md](client/TESTING.md) for layout (`tests/unit/`, `tests/e2e/`).
+
+### Mobile (Expo / React Native)
+
+The `mobile/` directory contains a universal Expo app targeting iOS, Android, and web. It is replacing the Vite-based `client/`.
+
+```bash
+cd mobile
+npm install
+npx expo start
+```
+
+Press `w` for web, `i` for iOS simulator, `a` for Android emulator.
+
+The app needs the API server running. Set `EXPO_PUBLIC_SERVER_URL` in `mobile/.env` (defaults to `http://localhost:63896`). Start the API first:
+
+```bash
+./server/scripts/dev_server.sh
+```
+
+Mobile tests: `cd mobile && npm test`.

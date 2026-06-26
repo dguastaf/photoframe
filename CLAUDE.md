@@ -14,7 +14,8 @@ Before making the first file edit for a new suite of changes, automatically crea
 
 ## Project structure
 
-- `client/` — React + Vite + TypeScript frontend
+- `client/` — React + Vite + TypeScript frontend (legacy, being replaced by `mobile/`)
+- `mobile/` — Expo (React Native) universal app (iOS, Android, web)
 - `server/` — Python (FastAPI) backend
 - `config/` — Shared config (ports, API paths)
-- Tests live in `client/tests/` and `server/tests/`, not alongside source files.
+- Tests live in `client/tests/`, `mobile/tests/`, and `server/tests/`, not alongside source files.
