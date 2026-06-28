@@ -11,6 +11,7 @@
     "expo-linking": "~56.0.14",
     "expo-router": "~56.2.11",
     "expo-status-bar": "~56.0.4",
+    "expo-updates": "~56.0.19",
     "luxon": "^3.7.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -38,7 +39,13 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:dev": "eas build --profile development --platform android",
+    "build:dev:ios-sim": "eas build --profile development --platform ios",
+    "build:preview": "eas build --profile preview --platform android",
+    "build:production": "eas build --profile production --platform android",
+    "update:preview": "eas update --branch preview",
+    "update:production": "eas update --branch production"
   },
   "private": true
 }

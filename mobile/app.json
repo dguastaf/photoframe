@@ -12,9 +12,11 @@
       "typedRoutes": true
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.dguastaf.photoframe"
     },
     "android": {
+      "package": "com.dguastaf.photoframe",
       "adaptiveIcon": {
         "backgroundColor": "#000000",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -26,9 +28,22 @@
       "bundler": "metro",
       "favicon": "./assets/favicon.png"
     },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/9c7ad4c8-177f-4665-927b-72e5f9a13f82"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "9c7ad4c8-177f-4665-927b-72e5f9a13f82"
+      }
+    },
+    "owner": "dguastaf",
     "plugins": [
       "expo-router",
-      "expo-image"
+      "expo-image",
+      "expo-updates"
     ]
   }
 }
