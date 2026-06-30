@@ -84,6 +84,8 @@ def gates_satisfied() -> bool:
         return False
     if _exception_ok(data.get("exception")):
         return True
+    if _exception_ok(data.get("planning_exception")):
+        return True
     phases = data.get("phases")
     if not isinstance(phases, dict):
         return False

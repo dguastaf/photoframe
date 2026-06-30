@@ -1,0 +1,20 @@
+{
+  "branch": "worktree-staff-review-ci-exception",
+  "phases": {
+    "implementation": {
+      "at": "2026-06-30T17:17:03+00:00",
+      "outcome": "pass"
+    },
+    "code_review": {
+      "at": "2026-06-30T17:17:42+00:00",
+      "outcome": "pass"
+    }
+  },
+  "exception": null,
+  "planning_exception": {
+    "reason": "Planned interactively with the owner in this Claude Code session; no agent was delegated to plan the work",
+    "scope": "Skip planning artifact only; implementation and code_review recorded as pass",
+    "approver": "dguastaferro",
+    "expires": "2026-07-14"
+  }
+}

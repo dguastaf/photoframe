@@ -2,8 +2,11 @@
 """Validate scripts/sdlc/reviews/<branch>.json and PR test plan for PR gates.
 
 Staff-engineer phases (planning + implementation) are always required unless the
-owner documents an exception. PR test plan validation runs only when production
-code changed (server/app/, client/src/, or listed runtime config paths).
+owner documents an exception. A `planning_exception` may skip only the `planning`
+phase (e.g. work was planned without delegating to an agent); `implementation`
+and `code_review` are never skippable that way. PR test plan validation runs
+only when production code changed (server/app/, client/src/, or listed runtime
+config paths).
 """
 
 from __future__ import annotations
@@ -23,6 +26,10 @@ from review_path import review_path
 
 REQUIRED_PHASES = ("planning", "implementation", "code_review")
 EXCEPTION_KEYS = ("reason", "scope", "approver", "expires")
+
+# Phases a `planning_exception` is allowed to skip. Implementation and
+# code_review review are always required and cannot be waived this way.
+PLANNING_EXCEPTION_SKIPS = ("planning",)
 PLACEHOLDER_TEST_PLAN = re.compile(
     r"^\s*(<!--.*?-->|how you verified|tbd|todo|n/?a\.?|-\s*\[\s*\])\s*$",
     re.IGNORECASE | re.DOTALL,
@@ -74,12 +81,24 @@ def validate_review(data: dict | None) -> list[str]:
             "exception must include non-empty reason, scope, approver, and expires"
         )
 
+    planning_exc = data.get("planning_exception")
+    if planning_exc is not None and not _exception_ok(planning_exc):
+        errors.append(
+            "planning_exception must include non-empty reason, scope, approver, "
+            "and expires"
+        )
+
     phases = data.get("phases")
     if not isinstance(phases, dict):
         errors.append("phases must be an object")
         return errors
 
-    required = () if _exception_ok(exc) else REQUIRED_PHASES
+    if _exception_ok(exc):
+        required: tuple[str, ...] = ()
+    elif _exception_ok(planning_exc):
+        required = tuple(p for p in REQUIRED_PHASES if p not in PLANNING_EXCEPTION_SKIPS)
+    else:
+        required = REQUIRED_PHASES
     for name in required:
         phase = phases.get(name)
         if not _phase_ok(phase):

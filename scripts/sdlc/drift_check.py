@@ -20,6 +20,7 @@ REQUIRED_PATHS = [
     "scripts/sdlc/test_pre_implementation_gate.py",
     "scripts/sdlc/test_planning_orchestrator.py",
     "scripts/sdlc/test_parse_staff_review.py",
+    "scripts/sdlc/test_validate_review.py",
     "scripts/sdlc/record_phase.py",
     "scripts/sdlc/validate_review.py",
     "scripts/sdlc/sdlc-check.sh",
