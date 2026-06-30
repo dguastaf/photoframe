@@ -1,7 +1,8 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useEffect, useState } from "react";
 import { getPhotos } from "@/features/photos/api/photos";
 import type { Photo } from "@/types/model";
+import Slideshow from "./features/photos/components/Slideshow";
 
 export default function SlideshowScreen() {
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -20,7 +21,7 @@ export default function SlideshowScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Photoframe</Text>
+      <Slideshow photos={photos} />
     </View>
   );
 }
@@ -31,9 +32,5 @@ const styles = StyleSheet.create({
     backgroundColor: "#000",
     alignItems: "center",
     justifyContent: "center",
-  },
-  text: {
-    color: "#e8e8e8",
-    fontSize: 24,
   },
 });

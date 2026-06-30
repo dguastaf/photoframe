@@ -1,4 +1,5 @@
-import { getPhotos, photoImageUrl } from '@/features/photos/api/photos'
+import { getPhotos, createPhotoUrl } from '@/features/photos/api/photos'
+import type { Photo } from '@/types/model'
 
 afterEach(() => {
   jest.restoreAllMocks()
@@ -30,14 +31,16 @@ describe('getPhotos', () => {
   })
 })
 
-describe('photoImageUrl', () => {
+describe('createPhotoUrl', () => {
+  const photo = (id: string): Photo => ({ id, taken_at: '2026-01-01T00:00:00Z', folder: 'vacation' })
+
   it('builds absolute image URL with encoded photo ID', () => {
-    const url = photoImageUrl('photo-123')
+    const url = createPhotoUrl(photo('photo-123'))
     expect(url).toContain('/api/v0/photos/photo-123/image')
   })
 
   it('encodes special characters in photo ID', () => {
-    const url = photoImageUrl('photo/with spaces')
+    const url = createPhotoUrl(photo('photo/with spaces'))
     expect(url).toContain('/api/v0/photos/photo%2Fwith%20spaces/image')
   })
 })

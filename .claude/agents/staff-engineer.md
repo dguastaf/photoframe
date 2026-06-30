@@ -56,6 +56,7 @@ Treat any of these in **production** paths (`server/app/`, `client/src/`, runtim
 | New/changed behavior without tests | Not verified |
 | Config keys optional or unset with no validation when the feature needs them | Broken or silent misconfiguration |
 | Vendor HTTP, tokens, or vendor-specific logic outside `app/photo_source/` | Boundary violation |
+| `testID`/`data-testid`/other test-only query hooks added to production components with no accessibility purpose | Bandaid for testability instead of using (and fixing gaps in) accessible attributes — `accessibilityRole`/`accessibilityLabel` (RN) or `role`/`aria-label` (web) — which give real a11y value and are queryable via `getByRole`/`getByLabelText` |
 
 ## Photoframe checklist
 
