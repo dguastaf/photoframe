@@ -28,8 +28,8 @@ scripts/sdlc/reviews/<branch-slug>.json
 | Check | Enforced by |
 | ----- | ----------- |
 | Feature branch (not `main` / `master`) before product/test edits | Pre-implementation gate (`scripts/sdlc/pre_implementation_gate.py`) |
-| `planning` phase recorded (`outcome: pass`) before product/test edits | Same gate (owner `exception` may skip planning) |
-| `planning` + `implementation` + `code_review` phases recorded (`outcome: pass`) | Always — pre-implementation gate + CI `sdlc-policy` (owner `exception` may skip) |
+| `planning` phase recorded (`outcome: pass`) before product/test edits | Same gate (owner `exception` or `planning_exception` may skip planning) |
+| `planning` + `implementation` + `code_review` phases recorded (`outcome: pass`) | Always — pre-implementation gate + CI `sdlc-policy` (owner `exception` may skip all three; `planning_exception` may skip only `planning` — `implementation`/`code_review` always required) |
 | PR **Test plan** section (non-empty, non-placeholder) | CI `sdlc-policy` when **production code** changed (`server/app/`, `client/src/`, runtime config) |
 | `walkthrough` / `pre_pr` phase records | Not enforced by hook or CI (optional audit trail) |
 | PR **Exceptions** section body fields | Not enforced (optional for now) |
@@ -168,3 +168,16 @@ Exceptions do **not** waive the test plan when production code changed.
 ```
 
 When `exception` is valid, planning/implementation phase records are not required for the PR gate.
+
+## Planning-only exception (no agent used to plan)
+
+Use when the work was planned without delegating to an agent (e.g. planned interactively with the owner) instead of via the `staff-engineer` subagent. Set `planning_exception` in the review JSON with the same fields as `exception` (reason, scope, approver, expires). Unlike `exception`, this **only** waives the `planning` phase — `implementation` and `code_review` staff-engineer records are still required.
+
+```json
+"planning_exception": {
+  "reason": "Planned interactively with the owner, no agent delegated to plan",
+  "scope": "Skip planning artifact only; implementation and code_review still required",
+  "approver": "owner-handle",
+  "expires": "2026-07-15"
+}
+```
