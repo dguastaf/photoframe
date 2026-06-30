@@ -9,6 +9,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from post_statuses import post_phase_statuses
 from review_path import REVIEWS_DIR, ROOT, branch_name, review_path
 
 VALID_PHASES = frozenset({"planning", "implementation", "code_review", "walkthrough", "pre_pr"})
@@ -72,6 +73,10 @@ def main() -> None:
     phases[args.phase] = entry
     path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
     print(f"recorded {args.phase}={args.outcome} -> {path.relative_to(ROOT)}")
+
+    # Publish the merge gate: re-assert every recorded phase as a commit status on
+    # the current HEAD (best-effort; the local file above is the source of truth).
+    post_phase_statuses(phases)
 
 
 if __name__ == "__main__":

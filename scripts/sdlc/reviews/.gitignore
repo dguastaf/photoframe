@@ -1,0 +1,5 @@
+# Per-branch SDLC phase records are LOCAL ONLY. The merge gate is commit statuses
+# (sdlc/*, see record_phase.py + .github/workflows/ci.yml), so these never get
+# committed and there is nothing to clean up on `main` after merge.
+*.json
+!example.review.json

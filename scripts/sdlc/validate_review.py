@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
-"""Validate scripts/sdlc/reviews/<branch>.json and PR test plan for PR gates.
+"""SDLC PR-gate validation.
 
-Staff-engineer phases (planning + implementation) are always required unless the
-owner documents an exception. A `planning_exception` may skip only the `planning`
-phase (e.g. work was planned without delegating to an agent); `implementation`
-and `code_review` are never skippable that way. PR test plan validation runs
-only when production code changed (server/app/, client/src/, or listed runtime
-config paths).
+Two modes:
+- ``--for-pr-create`` (local, pre-PR): validate the local
+  ``scripts/sdlc/reviews/<branch>.json`` so phases are recorded before you open a
+  PR. This file is local-only (gitignored).
+- ``--ci``: validate the PR test plan only. Phase verdicts are gated in CI by
+  commit statuses (``sdlc/planning``, ``sdlc/implementation``, ``sdlc/code-review``)
+  re-asserted onto the head SHA by the ``sdlc-policy`` workflow job — not by
+  reading a committed file. PR test plan validation runs only when production code
+  changed (server/app/, client/src/, or listed runtime config paths).
 """
 
 from __future__ import annotations
@@ -176,7 +179,10 @@ def main() -> None:
 
     errors: list[str] = []
     data: dict | None = None
-    if args.for_pr_create or args.ci:
+    # Phase verdicts are gated in CI by commit statuses (sdlc/*), not by reading a
+    # committed review file — the file is local-only and gitignored. So only the
+    # local pre-PR check inspects the review file; CI validates the test plan.
+    if args.for_pr_create:
         path = review_path(args.branch)
         data = load_review(path)
         errors.extend(validate_review(data))
