@@ -4,24 +4,40 @@ Scripts and review artifacts for [`AI-SDLC.md`](../../AI-SDLC.md) `staff-enginee
 
 | Script | Purpose |
 | ------ | ------- |
-| `record_phase.py` | Record phase outcome in `reviews/<branch-slug>.json` |
-| `validate_review.py` | Validate review file (+ PR test plan in CI) |
+| `record_phase.py` | Record phase outcome locally + post commit statuses for the merge gate |
+| `post_statuses.py` | Post `sdlc/*` commit statuses for recorded phases onto current HEAD (best-effort) |
+| `validate_review.py` | Local pre-PR review-file check; PR test-plan check in CI |
 | `pre_implementation_gate.py` | Pre-implementation gate (edit/Task/subagentStop gates) |
 | `planning_orchestrator.py` | Pending branch, auto `git checkout -b`, planning record on review pass |
 | `parse_staff_review.py` | Parse staff-engineer verdict from subagent summary |
-| `review_path.py` | Resolve review file path for current branch |
+| `review_path.py` | Resolve local review file path for current branch |
 | `drift_check.py` | Verify automation files exist |
 | `sdlc-check.sh` | Local helper: optional tests + `validate_review --for-pr-create` |
 
-## Review file location
+## Where phase verdicts live
 
-One file per branch, committed on that branch before opening a PR:
+Phase verdicts have **two homes for two jobs**, and deliberately are *not* a committed file:
 
-```
-scripts/sdlc/reviews/<branch-slug>.json
-```
+1. **Local pre-edit gate** — `scripts/sdlc/reviews/<branch-slug>.json`, written by
+   `record_phase.py`. This drives the pre-implementation hooks on your machine before a PR
+   exists. It is **local-only and gitignored** (`reviews/.gitignore`); it never enters the tree,
+   so it never lands on `main` and there is nothing to clean up after merge.
+   `<branch-slug>` is the current git branch with `/` replaced by `-` (see `review_path.py`).
 
-`<branch-slug>` is the current git branch with `/` replaced by `-` (see `review_path.py`).
+2. **Merge gate** — GitHub **commit statuses** `sdlc/planning`, `sdlc/implementation`,
+   `sdlc/code-review`, posted onto the PR head SHA. These render natively as the per-phase
+   ✅/❌ checklist on the PR. `record_phase.py` posts them (via `post_statuses.py`) for every
+   recorded phase to the current HEAD; the `sdlc-policy` CI job re-asserts the latest verdict for
+   each context onto each new head SHA on every push (so a re-push never orphans a verdict) and
+   fails red if any phase is missing or not passing.
+
+Verdict → status state: `pass` and `exception` → `success` (the exception reason rides in the
+status description); `fail` → `failure`; never recorded → `failure` ("not recorded").
+
+Posting is **best-effort**: if `gh` is missing, unauthenticated, offline, or HEAD is not yet
+pushed, `record_phase.py` warns and continues. The CI job is the authoritative gate — it runs on
+every push and fails the required `sdlc-policy` check until all three phases are green on the
+head SHA.
 
 ## What hooks and CI enforce
 
@@ -29,7 +45,7 @@ scripts/sdlc/reviews/<branch-slug>.json
 | ----- | ----------- |
 | Feature branch (not `main` / `master`) before product/test edits | Pre-implementation gate (`scripts/sdlc/pre_implementation_gate.py`) |
 | `planning` phase recorded (`outcome: pass`) before product/test edits | Same gate (owner `exception` or `planning_exception` may skip planning) |
-| `planning` + `implementation` + `code_review` phases recorded (`outcome: pass`) | Always — pre-implementation gate + CI `sdlc-policy` (owner `exception` may skip all three; `planning_exception` may skip only `planning` — `implementation`/`code_review` always required) |
+| `planning` + `implementation` + `code_review` verdicts green | CI `sdlc-policy` aggregates the `sdlc/*` commit statuses on the head SHA; fails red if any is missing or not passing (an `exception` outcome posts as `success` with its reason in the description) |
 | PR **Test plan** section (non-empty, non-placeholder) | CI `sdlc-policy` when **production code** changed (`server/app/`, `client/src/`, runtime config) |
 | `walkthrough` / `pre_pr` phase records | Not enforced by hook or CI (optional audit trail) |
 | PR **Exceptions** section body fields | Not enforced (optional for now) |
@@ -148,13 +164,23 @@ python3 scripts/sdlc/validate_review.py --for-pr-create
 # Local helper: touched-area tests + review artifact (tests also run in CI on PR)
 ./scripts/sdlc/sdlc-check.sh
 
-# CI on pull requests (review file + PR test plan)
-python3 scripts/sdlc/validate_review.py --ci --branch <head-ref> --pr-body-file /path/to/body.md
+# CI on pull requests (PR test plan only; phase verdicts gated by sdlc/* commit statuses)
+python3 scripts/sdlc/validate_review.py --ci --pr-body-file /path/to/body.md
 ```
 
 ## Approved exception (staff-engineer only)
 
-Use when the owner approves skipping required `planning` / `implementation` staff-engineer records. Set `exception` in the review JSON (reason, scope, approver, expires). You may also note it in the PR **Exceptions** section; that section is not validated by CI today.
+**For the merge gate**, record the exception *per phase* so it posts a passing `sdlc/*` commit
+status with the reason in its description:
+
+```bash
+python3 scripts/sdlc/record_phase.py planning exception "Owner approved: planned without an agent"
+```
+
+The top-level `exception` object below is still honored by the **local** `--for-pr-create` check
+(reason, scope, approver, expires), but it does not post commit statuses — the merge gate reads
+the per-phase `sdlc/*` statuses, so use a per-phase `exception` outcome for anything that must
+pass CI.
 
 Exceptions do **not** waive the test plan when production code changed.
 

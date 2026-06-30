@@ -90,7 +90,7 @@ Use three layers:
   - Confirm required docs/tests move with behavior changes
 2. **Gate** (CI required checks)
   - Tests, lint, and policy checks enforced on PR
-  - Verify PR test plan when product code changed; verify `staff-engineer` review in planning/implementation (or documented exception)
+  - Verify PR test plan when product code changed; gate on the `sdlc/planning`, `sdlc/implementation`, and `sdlc/code-review` commit statuses (posted by `record_phase.py`, re-asserted onto the head SHA by the `sdlc-policy` job). A per-phase `exception` outcome posts a passing status with its reason. Verdicts live as commit statuses, not a committed file, so nothing lands on `main`.
 3. **Detect** (audit and drift review)
   - Scheduled checks for policy drift (docs vs actual automation)
   - Spot checks of merged PRs for process adherence
@@ -118,4 +118,5 @@ Use this loop to evolve the process:
 - 2026-05-27: Control 2 — test plan required for product changes; process-only PRs exempt (see `scripts/sdlc/README.md`)
 - 2026-05-28: Pre-implementation gates — staff-engineer planning review, auto feature branch + planning record before product/test edits
 - 2026-06-24: Replaced Cursor BugBot with local `/code-review high` as required SDLC phase (`code_review`)
+- 2026-06-30: Phase verdicts moved to `sdlc/*` commit statuses (surfaced as the PR check list); per-branch review JSON is now local-only/gitignored. No committed review files on `main`, so no post-merge cleanup is needed.
 
