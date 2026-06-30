@@ -1,22 +1,39 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { getPhotos } from "@/features/photos/api/photos";
+import type { Photo } from "@/types/model";
 
 export default function SlideshowScreen() {
+  const [photos, setPhotos] = useState<Photo[]>([]);
+
+  useEffect(() => {
+    async function fetchPhotos() {
+      try {
+        const result = await getPhotos();
+        setPhotos(result);
+      } catch (err) {
+        console.error("Failed to fetch photos:", err);
+      }
+    }
+    fetchPhotos();
+  }, []);
+
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Photoframe</Text>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#000",
+    alignItems: "center",
+    justifyContent: "center",
   },
   text: {
-    color: '#e8e8e8',
+    color: "#e8e8e8",
     fontSize: 24,
   },
-})
+});
