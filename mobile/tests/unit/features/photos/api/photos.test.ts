@@ -1,4 +1,4 @@
-import { getPhotos, createPhotoUrl } from '@/features/photos/api/photos'
+import { getPhotos, createPhotoUrl, createPhotoUrlFromId } from '@/features/photos/api/photos'
 import type { Photo } from '@/types/model'
 
 afterEach(() => {
@@ -41,6 +41,19 @@ describe('createPhotoUrl', () => {
 
   it('encodes special characters in photo ID', () => {
     const url = createPhotoUrl(photo('photo/with spaces'))
+    expect(url).toContain('/api/v0/photos/photo%2Fwith%20spaces/image')
+  })
+})
+
+describe('createPhotoUrlFromId', () => {
+
+  it('builds absolute image URL with encoded photo ID', () => {
+    const url = createPhotoUrlFromId('photo-123')
+    expect(url).toContain('/api/v0/photos/photo-123/image')
+  })
+
+  it('encodes special characters in photo ID', () => {
+    const url = createPhotoUrlFromId('photo/with spaces')
     expect(url).toContain('/api/v0/photos/photo%2Fwith%20spaces/image')
   })
 })

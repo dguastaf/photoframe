@@ -11,5 +11,9 @@ export const getPhotos = (init?: RequestInit): Promise<Photo[]> => {
   return api.get<Photo[]>(PHOTOS_PATH, init)
 }
 
-export const createPhotoUrl = (photo: Photo): string =>
-  `${BASE_URL}${PHOTOS_PATH}/${encodeURIComponent(photo.id)}/image`
+export const createPhotoUrl = (photo: Photo): string => {
+  return createPhotoUrlFromId(photo.id)
+}
+
+export const createPhotoUrlFromId = (id: string): string =>
+  `${BASE_URL}${PHOTOS_PATH}/${encodeURIComponent(id)}/image`
