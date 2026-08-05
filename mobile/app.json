@@ -40,10 +40,6 @@
       }
     },
     "owner": "dguastaf",
-    "plugins": [
-      "expo-router",
-      "expo-image",
-      "expo-updates"
-    ]
+    "plugins": ["expo-router", "expo-image", "expo-updates"]
   }
 }

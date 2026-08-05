@@ -1,5 +1,5 @@
-import { Link } from 'expo-router'
-import { StyleSheet, Text, View } from 'react-native'
+import { Link } from 'expo-router';
+import { StyleSheet, Text, View } from 'react-native';
 
 export default function SettingsScreen() {
   return (
@@ -9,7 +9,7 @@ export default function SettingsScreen() {
       </Link>
       <Text style={styles.title}>Settings</Text>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -30,4 +30,4 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
   },
-})
+});
