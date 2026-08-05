@@ -18,14 +18,7 @@ The caller must specify **`review_phase`** in the prompt: `planning` | `implemen
 |-------|--------|
 | `planning` | Final plan draft scope, test strategy, boundaries, risks — not full diff polish |
 | `implementation` | Final implementation change set (branch diff + test results); incomplete work in production paths |
-| `pre_pr` | Full diff, final ship/no-ship verdict before PR (optional; not hook/CI-gated) |
-
-After each review, record the outcome:
-
-```bash
-python3 scripts/sdlc/record_phase.py <review_phase> pass
-python3 scripts/sdlc/record_phase.py <review_phase> fail "what blocked the phase"
-```
+| `pre_pr` | Full diff, final ship/no-ship verdict before PR (optional) |
 
 ## Project maturity (required)
 
@@ -100,9 +93,8 @@ Score **every row** as `pass`, `concern`, or `fail` under **Architecture**. **`c
 
 1. Read scope for the **review_phase** (plan text and/or full branch diff).
 2. Run `pytest` / `npm test` when the change affects those areas.
-3. Flag duplicate SDLC/process docs — link to `AI-SDLC.md` instead of restating.
-4. Scan incomplete-work signals; score the Photoframe checklist.
-5. Apply tests and security checklists at full production bar.
+3. Scan incomplete-work signals; score the Photoframe checklist.
+4. Apply tests and security checklists at full production bar.
 
 ## Output format
 
