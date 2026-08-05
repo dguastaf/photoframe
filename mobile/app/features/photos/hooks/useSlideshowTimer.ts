@@ -1,5 +1,5 @@
-import { DEFAULT_DISPLAY_MS } from "@/constants";
-import { useEffect } from "react";
+import { DEFAULT_DISPLAY_MS } from '@/constants';
+import { useEffect } from 'react';
 
 type UseSlideshowTimerOptions = {
   onTick: () => void;
@@ -23,6 +23,5 @@ export function useSlideshowTimer({
 
     const interval = setInterval(onTick, intervalMs);
     return () => clearInterval(interval);
-
-  },[enabled, paused, resetKey, intervalMs])
+  }, [enabled, paused, resetKey, intervalMs]);
 }
