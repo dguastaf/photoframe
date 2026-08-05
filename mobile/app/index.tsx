@@ -1,8 +1,8 @@
-import { StyleSheet, View } from "react-native";
-import { useEffect, useState } from "react";
-import { getPhotos } from "@/features/photos/api/photos";
-import type { Photo } from "@/types/model";
-import Slideshow from "./features/photos/components/Slideshow";
+import { StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { getPhotos } from '@/features/photos/api/photos';
+import type { Photo } from '@/types/model';
+import Slideshow from './features/photos/components/Slideshow';
 
 export default function SlideshowScreen() {
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -13,7 +13,7 @@ export default function SlideshowScreen() {
         const result = await getPhotos();
         setPhotos(result);
       } catch (err) {
-        console.error("Failed to fetch photos:", err);
+        console.error('Failed to fetch photos:', err);
       }
     }
     fetchPhotos();
@@ -29,8 +29,8 @@ export default function SlideshowScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: '#000',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

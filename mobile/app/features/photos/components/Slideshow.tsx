@@ -1,6 +1,6 @@
-import { Photo } from "@/types/model";
-import SlideshowImage from "./SlideshowPhoto";
-import StatusMessage from "./StatusMessage";
+import { Photo } from '@/types/model';
+import SlideshowImage from './SlideshowPhoto';
+import StatusMessage from './StatusMessage';
 
 interface SlideshowProps {
   photos: Photo[];
